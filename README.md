@@ -39,7 +39,7 @@ $ which crystmatch
 
   Append `-p` to create POSCAR files for each CSM.
 
-- To benchmark a list of SLMs by an OR, for example, $(111)_A\parallel(110)_B$ and $[1\bar10]_A\parallel[001]_B$:
+- To benchmark a list of SLMs by an OR, for example, $(111)_A\parallel(110)_B$ and $[1\overline{1}0]_A\parallel[001]_B$:
 
   ```bash
   $ crystmatch -A POSCAR_A -B POSCAR_B -L SLM_LIST -s SCORE_CSV -b 1 1 1 1 1 0 1 -1 0 0 0 1
