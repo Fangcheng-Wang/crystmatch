@@ -1,17 +1,21 @@
+If you use this code in your research, please cite our paper:
+
+- [F.-C. Wang *et al.*, Physical Review Letters **132**, 086101 (2024)](https://doi.org/10.1103/PhysRevLett.132.086101)
+
 # crystmatch
 
-Enumerate and benchmark crystal-structure matches for solid-solid phase transitions.
+Enumerating and benchmarking crystal-structure matches for solid-solid phase transitions.
 
 ## Introduction
 
-Given two crystal structures $\mathcal A$ and $\mathcal B$ with the same chemical composition, their supercell-to-supercell and atom-to-atom correspondence are characterized by the crystal-structure match (CSM) [[1]](https://arxiv.org/abs/2305.05278). A CSM can be described by a pair of POSCAR files, which specifies how the lattice deforms from $\mathcal A$ to $\mathcal B$, i.e., the sublattice match (SLM), and the permutation of particles indicates the atomic correspondence.
+A solid-solid phase transition establishes an *atom-to-atom correspondence* between crystal structures $\mathcal A$ and $\mathcal B$. Such correspondence is called a crystal-structure match (CSM) [[1]](https://arxiv.org/abs/2305.05278). A CSM can be described by a pair of POSCAR files, which specifies how the lattice deforms from $\mathcal A$ to $\mathcal B$ and the correspondence between the atoms in supercells of $\mathcal A$ and $\mathcal B$.
 
-The main goals of `crystmatch`:
+The main goals of `crystmatch` are:
 
-- Given the POSCAR files of $\mathcal A$ and $\mathcal B$ with $\mu_\text{max}$ and $\kappa_\text{max}$ specified, return a comprehensive list of candidate CSMs.
-- Score each CSM by root-mean-square-strain and RMSD.
+- Provide a comprehensive list of candidate CSMs between two given POSCAR files of $\mathcal A$ and $\mathcal B$.
+- Score CSMs by root-mean-square strain (RMSS) and root-mean-square displacement (RMSD).
 - Benchmark CSMs by the deviation from an orientation relationship (OR).
-- Save CSMs as POSCAR or XDATCAR files.
+- Save CSMs as pairs of POSCAR files.
 
 ## Installation
 
@@ -24,7 +28,7 @@ $ pip3 install .
 Check whether `crystmatch` is successfully installed:
 
 ```bash
-$ which crystmatch
+$ crystmatch --version
 ```
 
 ## Usage (as command-line tool)
