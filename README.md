@@ -15,13 +15,7 @@ The main goals of `crystmatch`:
 
 ## Installation
 
-From our group website [https://www.phy.pku.edu.cn/xzli/RESEARCH.htm](https://www.phy.pku.edu.cn/xzli/RESEARCH.htm) download `crystmatch-1.0.5.zip`, and then:
-
-```bash
-$ pip3 install crystmatch-1.0.5.zip
-```
-
-Or in the unzipped directory (which contains `setup.py`) run:
+In the directory where `setup.py` is located, run:
 
 ```bash
 $ pip3 install .
