@@ -1,3 +1,21 @@
+Metadata-Version: 2.1
+Name: crystmatch
+Version: 1.1.0
+Summary: Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.
+Home-page: https://github.com/Fangcheng-Wang/crystmatch
+Author: Fang-Cheng Wang
+Author-email: wfc@pku.edu.cn
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: matplotlib
+Requires-Dist: spglib
+
 # crystmatch
 
 If you use this code in your research, please cite the following paper:
@@ -8,13 +26,14 @@ You are also welcome to contact me at `wfc@pku.edu.cn` for any questions or comm
 
 ## Introduction
 
-A solid-solid phase transition establishes an *atom-to-atom correspondence* between crystal structures $\mathcal A$ and $\mathcal B$. Such correspondence is called a *crystal-structure match* (CSM) [[1]](https://arxiv.org/abs/2305.05278). A CSM can be described by a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, which specifies how the lattice deforms from $\mathcal A$ to $\mathcal B$ and the correspondence between atoms in a supercell of $\mathcal A$ and those in $\mathcal B$.
+A solid-solid phase transition establishes an *atom-to-atom correspondence* between crystal structures $\mathcal A$ and $\mathcal B$. Such correspondence is called a *crystal-structure match* (CSM) [[1]](https://arxiv.org/abs/2305.05278). A CSM can be described by a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, which specifies how the lattice deforms from $\mathcal A$ to $\mathcal B$ and the correspondence between atoms in a supercell of $\mathcal A$ and atoms in $\mathcal B$.
 
 The main functions of `crystmatch` are as follows:
 
 - **Enumeration**:
-  - Provide a complete list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
-  - (In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and RMSD.
+  - Provide a comprehensive list of candidate sublattice matches (SLMs) [[1]](https://arxiv.org/abs/2305.05278) between two given crystal structures, with user-specified upper bounds on the multiplicity [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
+  - Provide the representative CSM of a given SLM, i.e., the CSM with the lowest root-mean-square displacement (RMSD).
+  - (In progress) Provide a list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and RMSD.
 
 - **Analysis**:
   - Read a CSM from a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, and save CSMs in the same format.
@@ -54,22 +73,20 @@ If you don't specify any mode or crystal structures, `crystmatch` will ask for i
 
 ## Examples
 
-- To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with a maximum multiplicity of `4` and a maximum RMSS of `0.2`:
+- To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with a maximum multiplicity of `2` and a maximum RMSS of `0.1`:
 
   ```
-  $ crystmatch --initial fcc --final bcc --enumerate 4 -0.2
+  $ crystmatch --initial fcc --final bcc --enumerate 2 -0.1
   ```
   
   The following files will be created in the current directory:
 
   ```text
   ./
-  ├── CSM_LIST(fcc-bcc-m4s0.20).dat    # stores the enumerated CSMs.
-  ├── PLOT(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
-  └── TABLE(fcc-bcc-m4s0.20).csv       # organizes the properties of each CSM.
+  ├── CSM_LIST(fcc-bcc-m2s0.1).dat    # stores the enumerated CSMs and their properties.
+  ├── PLOT(fcc-bcc-m2s0.1).pdf        # shows the RMSD-RMSS distribution of the CSMs.
+  └── TABLE(fcc-bcc-m2s0.1).csv       # organizes the properties of each CSM.
   ```
-
-  We strongly recommend you to try small multiplicity (`2` or `4`) and RMSS between `0.2` and `0.5` first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
 
 - To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).dat`:
 

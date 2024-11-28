@@ -8,32 +8,66 @@ from .core import *
 from .analysis import *
 from os import makedirs
 
+epilog = 'The current version of crystmatch may contain bugs; \
+        please see https://github.com/Fangcheng-Wang/crystmatch for the latest version. \
+        You are also welcome to report any issues or suggestions to wfc@pku.edu.cn. \
+        If you use crystmatch in your research, please cite the following paper: \n\n\
+        [1] F.-C. Wang et al., Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278).'
+
 def main():
     t0 = time()
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-A", "--cryst_a", type=str, default='./POSCAR_A', help="POSCAR file of crystal structure A")
-    parser.add_argument("-B", "--cryst_b", type=str, default='./POSCAR_B', help="POSCAR file of crystal structure B")
-    parser.add_argument("-E", "--enumerate", nargs=2, type=float, help="Enumeration: MU_MAX KAPPA_MAX")
-    parser.add_argument("-L", "--load_slm", nargs='?', type=str, const='./SLM_LIST.npy', help="Load from file: SLM_LIST")
-    parser.add_argument("-s", "--load_score", nargs='?', type=str, const='./SCORE.csv', help="Load SCORE.csv")
-    parser.add_argument("-i", "--index", nargs='+', type=int, help="Specify CSM (SLM) indices")
-    parser.add_argument("-p", "--poscar", action='store_true', help="Create POSCAR files for each CSM")
-    parser.add_argument("-x", "--xdatcar", nargs='?', type=int, const=50, help="Create XDATCAR file from given CSM")
-    parser.add_argument("-o", "--outdir", type=str, default='.', help="Output directory")
-    parser.add_argument("-b", "--bm", nargs=12, type=float, help="Benchmark by an OR. See documentation")
-    parser.add_argument("--fixusp", action='store_true', help="Fix USP when determining OR")
-    parser.add_argument("--nocsv", action='store_true', help="Not creating SCORE.csv")
-    parser.add_argument("--noplot", action='store_true', help="Not plotting")
+    parser = argparse.ArgumentParser(
+        prog='crystmatch',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.',
+        epilog=epilog)
+    parser.add_argument("-I", "--initial", type=str, metavar='POSCAR_I',
+                        help="POSCAR file of the initial crystal structure")
+    parser.add_argument("-F", "--final", type=str, metavar='POSCAR_F',
+                        help="POSCAR file of the final crystal structure")
+    parser.add_argument("-E", "--enumerate", nargs=2, metavar=('MAX_MU', 'MAX_RMSS'), type=float,
+                        help="Enumeration mode with MAX_MU and MAX_RMSS")
+    parser.add_argument("-A", "--analyze", nargs='?', metavar='SLM_LIST', const=-1, type=str,
+                        help="Analysis mode, using the CSM given by the initial and final POSCARs, or SLMs loaded from SLM_LIST")
+    parser.add_argument("-s", "--load_score", nargs='?', type=str, const='./SCORE.csv',
+                        help="Load SCORE.csv")
+    parser.add_argument("-i", "--index", nargs='+', type=int,
+                        help="Specify CSM (SLM) indices")
+    parser.add_argument("-p", "--poscar", action='store_true',
+                        help="Create POSCAR files for each CSM")
+    parser.add_argument("-x", "--xdatcar", nargs='?', type=int, const=50,
+                        help="Create XDATCAR file from given CSM")
+    parser.add_argument("-o", "--outdir", type=str, default='.',
+                        help="Output directory")
+    parser.add_argument("-b", "--bm", nargs=12, type=float,
+                        help="Benchmark by an OR. See documentation")
+    parser.add_argument("--fixusp", action='store_true',
+                        help="Fix USP when determining OR")
+    parser.add_argument("--nocsv", action='store_true',
+                        help="Not creating SCORE.csv")
+    parser.add_argument("--noplot", action='store_true',
+                        help="Not plotting")
+    parser.add_argument("-h", "--help", action='store_true',
+                        help="Not plotting")
+    parser.add_argument("-B", "--poscar_B", type=str)       # deprecated
     args = parser.parse_args()
-    # enumerate or load SLMs, optimize atomic correspondences for CSMs
-    crystA = load_poscar(args.cryst_a)
-    crystB = load_poscar(args.cryst_b)
+
+    if args.poscar_B != None:
+        print("Error: '-B' is deprecated, use '-F' instead. See 'crystmatch -h' for help.")
+        return
+    
+    crystA = load_poscar(args.initial)
+    crystB = load_poscar(args.final)
     check_chem_comp(crystA[1], crystB[1])
     makedirs(args.outdir, exist_ok=True)
-    mode = 'none'
-    label = args.cryst_a + ',' + args.cryst_b
-    if args.enumerate != None:                  # mode: enumeration
-        mode = 'enum'
+    label = args.initial + '-to-' + args.final
+    
+    # Determine mode: Enumeration / Analysis (from POSCARs) / Analysis (from SLM_LIST)
+    
+    mode = None
+    if args.enumerate != None:
+        # mode: enumeration
+        mode = 'enumerate'
         print("\nMode: Enumerate SLMs")
         mu_max, kappa_max = args.enumerate
         mu_max = np.rint(mu_max).astype(int)
@@ -47,8 +81,8 @@ def main():
         for s in slist:
             d, crystA_sup, crystB_sup, _ = minimize_rmsd(crystA, crystB, s)
             if args.poscar:
-                save_poscar(f'{args.outdir}/CSM({mode},{label})/CSM_{len(rmsdlist)}_A', crystA_sup, crystname=args.cryst_a)
-                save_poscar(f'{args.outdir}/CSM({mode},{label})/CSM_{len(rmsdlist)}_B', crystB_sup, crystname=args.cryst_b)
+                save_poscar(f'{args.outdir}/CSM({mode},{label})/CSM_{len(rmsdlist)}_A', crystA_sup, crystname=args.initial)
+                save_poscar(f'{args.outdir}/CSM({mode},{label})/CSM_{len(rmsdlist)}_B', crystB_sup, crystname=args.final)
             rmsdlist.append(d)
         rmsdlist = np.array(rmsdlist).round(decimals=4)
         print(f"{slist.shape[0]} CSMs (with lowest RMSDs under own SLMs) generated (in {time()-t:.2f} seconds)")
@@ -59,14 +93,18 @@ def main():
         rmsdlist = rmsdlist[ind]
         np.save(f'{args.outdir}/SLM_LIST({mode},{label}).npy', slist)
         ind = np.arange(slist.shape[0])
-    elif args.load_slm != None:                 # mode: load SLMs from file
-        mode = 'load'
+    elif args.analyze == -1:
+        # mode: analysis (from POSCARs)
+        mode = 'analyze'
+    elif args.analyze != None:
+        # mode: analysis (from SLM_LIST)
+        mode = 'analyze'
         print("\nMode: Load SLMs from file")
-        slist = np.load(args.load_slm)
+        slist = np.load(args.analyze)
         ind = np.arange(slist.shape[0])
         if args.index != None: ind = np.array(args.index, dtype=int)
         slist = slist[ind]
-        print(f"\n{slist.shape[0]} SLMs loaded from '{args.load_slm}'")
+        print(f"\n{slist.shape[0]} SLMs loaded from '{args.analyze}'")
         if args.load_score != None:
             mulist, kappalist, rmsdlist = np.loadtxt(args.load_score, delimiter=',', usecols=(0,1,2,3), unpack=True)
             print(f"\nScores loaded from '{args.load_score}'")
@@ -80,17 +118,20 @@ def main():
             for i in range(slist.shape[0]):
                 d, crystA_sup, crystB_sup, _ = minimize_rmsd(crystA, crystB, slist[i])
                 if args.poscar:
-                    save_poscar(f'{args.outdir}/CSM({mode},{label})/CSM_{ind[i]}_A', crystA_sup, crystname=args.cryst_a)
-                    save_poscar(f'{args.outdir}/CSM({mode},{label})/CSM_{ind[i]}_B', crystB_sup, crystname=args.cryst_b)
+                    save_poscar(f'{args.outdir}/CSM({mode},{label})/CSM_{ind[i]}_A', crystA_sup, crystname=args.initial)
+                    save_poscar(f'{args.outdir}/CSM({mode},{label})/CSM_{ind[i]}_B', crystB_sup, crystname=args.final)
                 if args.xdatcar != None:
                     save_trajectory(f'{args.outdir}/CSM({mode},{label})/TRAJECTORY_{ind[i]}', crystA_sup, crystB_sup, num=args.xdatcar, \
-                        crystname=f'{args.cryst_a}-{args.cryst_b}')
+                        crystname=f'{args.initial}-{args.final}')
                 rmsdlist.append(d)
             rmsdlist = np.array(rmsdlist)
             print(f"{slist.shape[0]} CSMs (with lowest RMSDs under own SLMs) generated (in {time()-t:.2f} seconds)")
-    if mode == 'none':
+    else:
         print("Error: Must choose a mode using '-E' or '-L'")
         return
+    
+    # Output control
+    
     if not args.noplot:                         # plot RMSS-RMSD-multiplicity
         scatter_colored(kappalist, rmsdlist, multiplicity(crystA, crystB, slist), cbarlabel='Multiplicity $\mu$', \
             save=f'{args.outdir}/SCORE({mode},{label}).pdf')
