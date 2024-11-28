@@ -1,2 +1,4 @@
-build
 pyproject.toml
+build
+crystmatch.egg-info
+crystmatch/__pycache__
