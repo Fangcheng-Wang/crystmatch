@@ -1,24 +1,29 @@
-site_name: Crystmatch
+site_name: Crystmatch Documentation
+site_author: Fang-Cheng Wang
+repo_url: https://github.com/Fangcheng-Wang/crystmatch
+repo_name: crystmatch
 
 theme:
   name: 'material'
-  highlight:
-    enable: true
-    style: 'colorful'
+
+extra_javascript:
+  - javascripts/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
+
+extra_css:
+  - https://unpkg.com/katex@0/dist/katex.min.css
 
 nav:
   - Tutorial: index.md
   - Python API: api.md
 
 markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
   - admonition
   - codehilite:
       guess_lang: false
-
-extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/Fangcheng-Wang/crystmatch
 
 plugins:
   - mkdocstrings

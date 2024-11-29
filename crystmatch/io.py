@@ -123,7 +123,9 @@ def load_from_dat(filename: str, index: int) -> Cryst:
 
     Returns
     -------
-    crystA, crystB : 3-tuples
+    crystA : 3-tuple
+        `(lattice, species, positions)`, representing a crystal structure, usually obtained by `load_poscar` or `minimize_rmsd`.
+    crystB : 3-tuple
         `(lattice, species, positions)`, representing a crystal structure, usually obtained by `load_poscar` or `minimize_rmsd`.
     csm : 3-tuple
         `(slm, permutation, translation)`, representing a CSM between `crystA` and `crystB`.

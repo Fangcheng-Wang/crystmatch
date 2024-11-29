@@ -73,13 +73,13 @@ def main():
         
         # mode: enumeration
         print("\nMode: Enumeration")
-        mu_max, rmss_max = args.enumerate
-        mu_max = np.rint(mu_max).astype(int)
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
         crystA = load_poscar(args.initial, symprec=args.symprec)
         crystB = load_poscar(args.final, symprec=args.symprec)
         check_chem_comp(crystA[1], crystB[1])
+        mu_max, rmss_max = args.enumerate
+        mu_max = np.rint(mu_max).astype(int)
         job = f"{args.initial}-{args.final}-m{mu_max:d}s{rmss_max:.2f}"
         
         # start enumeration

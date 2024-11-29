@@ -46,9 +46,9 @@ $ crystmatch --version
 To run `crystmatch`, one of the following modes must be selected:
 
 1. **Enumeration mode**: Use `-E` or `--enumerate` to generate a list of CSMs, then perform preliminary analysis.
-2. **Analysis mode**: Use `-A` or `--analyze` to read CSM(s) from [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files (or `CSM_LIST.dat` if provided), then perform detailed analysis. If `CSM_LIST.dat` is provided, you can export specific CSMs using `--export index1 [index2 ...]`.
+2. **Analysis mode**: Use `-A` or `--analyze` to read CSM(s) from [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files (or `CSM_LIST.npz` if provided), then perform detailed analysis. If `CSM_LIST.npz` is provided, you can export specific CSMs using `--export index1 [index2 ...]`.
 
-The initial and final crystal structures should be specified in the form of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, unless in the analysis mode and `CSM_LIST.dat` is provided.
+The initial and final crystal structures should be specified in the form of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, unless in the analysis mode and `CSM_LIST.npz` is provided.
 
 If you don't specify any mode or crystal structures, `crystmatch` will ask for input.
 
@@ -64,35 +64,37 @@ If you don't specify any mode or crystal structures, `crystmatch` will ask for i
 
   ```text
   ./
-  ├── CSM_LIST(fcc-bcc-m4s0.20).dat    # stores the enumerated CSMs.
+  ├── CSM_LIST(fcc-bcc-m4s0.20).npz    # stores the enumerated CSMs and metadata.
   ├── PLOT(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
-  └── TABLE(fcc-bcc-m4s0.20).csv       # organizes the properties of each CSM.
+  └── TABLE(fcc-bcc-m4s0.20).csv       # organizes the multiplicity, RMSS, and RMSD of each CSM.
   ```
 
   We strongly recommend you to try small multiplicity (`2` or `4`) and RMSS between `0.2` and `0.5` first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
 
-- To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).dat`:
+- To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).npz`:
 
   ```
-  $ crystmatch --analyze CSM_LIST(foo).dat --export 7 10
+  $ crystmatch --analyze CSM_LIST(foo).npz --export 7 10
   ```
 
-  Two folders will be created in the current directory, each containing a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files representing the CSM, as:
+  Two folders will be created in the current directory, each containing a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files representing the CSM as:
 
   ```
   ./
-  ├── CSM_7(foo)/
+  ├── CSM_7(m3s0.15d0.83)/
   │   ├── POSCAR_I
   │   └── POSCAR_F
-  └── CSM_10(foo)/
+  └── CSM_10(m4s0.11d0.90)/
       ├── POSCAR_I
       └── POSCAR_F
   ```
 
-- To benchmark CSMs in `CSM_LIST(foo).dat` by their deviation angles from the OR $(111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B$:
+  The values in the brackets represent the basic attributes of CSMs. For example, `m3s0.15d0.83` indicates a multiplicity of `3`, RMSS of `0.15`, and RMSD of `0.83`.
+
+- To benchmark CSMs in `CSM_LIST(foo).npz` by their deviation angles from the OR $(111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B$:
 
   ```
-  $ crystmatch --analyze CSM_LIST(foo).dat --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
+  $ crystmatch --analyze CSM_LIST(foo).npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
   ```
 
   The arguments after `--orientation` must be **cartesian coordinates**.
@@ -105,6 +107,6 @@ If you don't specify any mode or crystal structures, `crystmatch` will ask for i
   $ crystmatch --help
   ```
 
-## As Python package
+## Python API
 
-`crystmatch` is more flexible in Python scripts. Please see the [documentation (in progress)]().
+`crystmatch` is more flexible as a Python package. Please see the [documentation (in progress)]().
