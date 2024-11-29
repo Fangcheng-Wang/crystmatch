@@ -1,3 +1,4 @@
 build
+crystmatch.egg-info
 crystmatch/__pycache__
 pyproject.toml
