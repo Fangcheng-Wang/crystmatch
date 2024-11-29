@@ -3,8 +3,6 @@ SLM and periodic atomic correspondenc (PAC) analysis.
 """
 
 from .core import *
-import numpy as np
-import numpy.linalg as la
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.rcParams.update({
@@ -14,14 +12,12 @@ matplotlib.rcParams.update({
     'pgf.rcfonts': False,
     'figure.dpi': 150,
 })
-from typing import Union, Tuple, List
-from numpy.typing import NDArray, ArrayLike
 
 np.set_printoptions(suppress=True)
-Cryst = Tuple[NDArray[np.float_], NDArray[np.str_], NDArray[np.float_]]
-SLM = Tuple[NDArray[np.int_], NDArray[np.int_], NDArray[np.int_]]
+Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
+SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
-def multiplicity(crystA: Cryst, crystB: Cryst, slist: Union[SLM, List[SLM], NDArray[np.int_]]) -> Union[int, NDArray[np.int_]]:
+def multiplicity(crystA: Cryst, crystB: Cryst, slist: Union[SLM, List[SLM], NDArray[np.int32]]) -> Union[int, NDArray[np.int32]]:
     """Return multiplicities of elements in `slist`.
 
     Parameters
@@ -46,7 +42,7 @@ def multiplicity(crystA: Cryst, crystB: Cryst, slist: Union[SLM, List[SLM], NDAr
     else:
         return la.det(slist[:,0,:,:]).round().astype(int) // dA
 
-def sing_val(crystA: Cryst, crystB: Cryst, slist: Union[List[SLM], NDArray[np.int_]]) -> NDArray[np.float_]:
+def sing_val(crystA: Cryst, crystB: Cryst, slist: Union[List[SLM], NDArray[np.int32]]) -> NDArray[np.float64]:
     """Return singular values of elements in `slist`.
 
     Parameters
@@ -70,7 +66,7 @@ def sing_val(crystA: Cryst, crystB: Cryst, slist: Union[List[SLM], NDArray[np.in
     sv = la.svd(s_mat, compute_uv=False)
     return sv
 
-def distance_slm(slist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cryst) -> NDArray[np.float_]:
+def distance_slm(slist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cryst) -> NDArray[np.float64]:
     """The Frobenius distance between SLMs.
 
     Parameters
@@ -166,7 +162,7 @@ def distance_pac(crystA: Cryst, j1: Tuple[Cryst, Cryst], j2: Tuple[Cryst, Cryst]
     i0 = np.argmin(l1d_list)
     return l1d_list[i0]
 
-def orientation_relation(vA1: ArrayLike, vB1: ArrayLike, vA2: ArrayLike, vB2: ArrayLike) -> NDArray[np.float_]:
+def orientation_relation(vA1: ArrayLike, vB1: ArrayLike, vA2: ArrayLike, vB2: ArrayLike) -> NDArray[np.float64]:
     """Rotation matrix `r` such that `r @ vA1` parallel to `vB1` and `r @ vA2` parallel to `vB2`.
 
     Parameters
@@ -193,8 +189,8 @@ def orientation_relation(vA1: ArrayLike, vB1: ArrayLike, vA2: ArrayLike, vB2: Ar
     return r
 
 def compare_orientation(
-    crystA: Cryst, crystB: Cryst, slist: Union[List[SLM], NDArray[np.int_]], r: NDArray[np.float_], fix_usp: bool = False
-) -> NDArray[np.float_]:
+    crystA: Cryst, crystB: Cryst, slist: Union[List[SLM], NDArray[np.int32]], r: NDArray[np.float64], fix_usp: bool = False
+) -> NDArray[np.float64]:
     """Calculate how much each SLM in `slist` differ from a given orientation relationship.
 
     Parameters

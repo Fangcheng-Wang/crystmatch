@@ -1,88 +1,110 @@
-If you use this code in your research, please cite our paper:
-
-- [F.-C. Wang *et al.*, Physical Review Letters **132**, 086101 (2024)](https://doi.org/10.1103/PhysRevLett.132.086101)
-
 # crystmatch
 
-Enumerating and benchmarking crystal-structure matches for solid-solid phase transitions.
+If you use this code in your research, please cite the following paper:
+
+[1] [F.-C. Wang et al., *Physical Review Letters* **132**, 086101 (2024)](https://arxiv.org/abs/2305.05278)
+
+You are also welcome to contact me at `wfc@pku.edu.cn` for any questions or comments.
 
 ## Introduction
 
-A solid-solid phase transition establishes an *atom-to-atom correspondence* between crystal structures $\mathcal A$ and $\mathcal B$. Such correspondence is called a crystal-structure match (CSM) [[1]](https://arxiv.org/abs/2305.05278). A CSM can be described by a pair of POSCAR files, which specifies how the lattice deforms from $\mathcal A$ to $\mathcal B$ and the correspondence between the atoms in supercells of $\mathcal A$ and $\mathcal B$.
+A solid-solid phase transition establishes an *atom-to-atom correspondence* between crystal structures $\mathcal A$ and $\mathcal B$. Such correspondence is called a *crystal-structure match* (CSM) [[1]](https://arxiv.org/abs/2305.05278). A CSM can be described by a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, which specifies how the lattice deforms from $\mathcal A$ to $\mathcal B$ and the correspondence between atoms in a supercell of $\mathcal A$ and those in $\mathcal B$.
 
-The main goals of `crystmatch` are:
+The main functions of `crystmatch` are as follows:
 
-- Provide a comprehensive list of candidate CSMs between two given POSCAR files of $\mathcal A$ and $\mathcal B$.
-- Score CSMs by root-mean-square strain (RMSS) and root-mean-square displacement (RMSD).
-- Benchmark CSMs by the deviation from an orientation relationship (OR).
-- Save CSMs as pairs of POSCAR files.
+- **Enumeration**:
+  - Provide a complete list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
+  - (In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and RMSD.
+
+- **Analysis**:
+  - Read a CSM from a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, and save CSMs in the same format.
+  - Score CSMs by RMSS and root-mean-square displacement (RMSD).
+  - Benchmark a CSM by its deviation angle from an orientation relationship (OR).
 
 ## Installation
 
-In the directory where `setup.py` is located, run:
+Make sure you have **Python 3.9 or later** installed. You can check it by running:
 
-```bash
+```
+$ python3 --version
+```
+
+Clone this repository and navigate to the directory where `setup.py` is located, run:
+
+```
 $ pip3 install .
 ```
 
 Check whether `crystmatch` is successfully installed:
 
-```bash
+```
 $ crystmatch --version
 ```
 
-## Usage (as command-line tool)
+## Usage
 
-### Commonly Used
+To run `crystmatch`, one of the following modes must be selected:
 
-- To generate a comprehensive list of CSMs (scored and plotted):
+1. **Enumeration mode**: Use `-E` or `--enumerate` to generate a list of CSMs, then perform preliminary analysis.
+2. **Analysis mode**: Use `-A` or `--analyze` to read CSM(s) from [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files (or `CSM_LIST.dat` if provided), then perform detailed analysis. If `CSM_LIST.dat` is provided, you can export specific CSMs using `--export index1 [index2 ...]`.
 
-  ```bash
-  $ crystmatch -A POSCAR_A -B POSCAR_B -E MU_MAX KAPPA_MAX
+The initial and final crystal structures should be specified in the form of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, unless in the analysis mode and `CSM_LIST.dat` is provided.
+
+If you don't specify any mode or crystal structures, `crystmatch` will ask for input.
+
+## Examples
+
+- To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with a maximum multiplicity of `4` and a maximum RMSS of `0.2`:
+
+  ```
+  $ crystmatch --initial fcc --final bcc --enumerate 4 -0.2
+  ```
+  
+  The following files will be created in the current directory:
+
+  ```text
+  ./
+  ├── CSM_LIST(fcc-bcc-m4s0.20).dat    # stores the enumerated CSMs.
+  ├── PLOT(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
+  └── TABLE(fcc-bcc-m4s0.20).csv       # organizes the properties of each CSM.
   ```
 
-  Append `-p` to create POSCAR files for each CSM.
+  We strongly recommend you to try small multiplicity (`2` or `4`) and RMSS between `0.2` and `0.5` first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
 
-- To benchmark a list of SLMs by an OR, for example, $(111)_A\parallel(110)_B$ and $[1\overline{1}0]_A\parallel[001]_B$:
+- To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).dat`:
 
-  ```bash
-  $ crystmatch -A POSCAR_A -B POSCAR_B -L SLM_LIST -s SCORE_CSV -b 1 1 1 1 1 0 1 -1 0 0 0 1
+  ```
+  $ crystmatch --analyze CSM_LIST(foo).dat --export 7 10
   ```
 
-  Please use *Cartesian coordinates* to specify the OR. Append `--fixusp` to determine OR with fixed uniformly scaled plane.
+  Two folders will be created in the current directory, each containing a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files representing the CSM, as:
 
-- To create POSCAR files for CSMs generated from `SLM_LIST`:
-
-  ```bash
-  $ crystmatch -A POSCAR_A -B POSCAR_B -L SLM_LIST --poscar
+  ```
+  ./
+  ├── CSM_7(foo)/
+  │   ├── POSCAR_I
+  │   └── POSCAR_F
+  └── CSM_10(foo)/
+      ├── POSCAR_I
+      └── POSCAR_F
   ```
 
-  Append `-i INDEX1 INDEX2 ...` to specify certain CSMs in the list.
+- To benchmark CSMs in `CSM_LIST(foo).dat` by their deviation angles from the OR $(111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B$:
 
-- To get help:
+  ```
+  $ crystmatch --analyze CSM_LIST(foo).dat --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
+  ```
 
-  ```bash
+  The arguments after `--orientation` must be **cartesian coordinates**.
+
+  The ORs are determined via the rotation-free manner by default, and you can also use `--fixusp` to determine ORs via the USF-fixed manner; see Ref. [[1]](https://arxiv.org/abs/2305.05278) for their definitions.
+
+- To see all available options:
+
+  ```
   $ crystmatch --help
   ```
 
-### Mandatory Arguments
-
-Please specify one of the following modes:
-
-1. `-E MU_MAX KAPPA_MAX`: Enumerate SLMs. Results are saved as `SLM_LIST.npy`
-2. `-L SLM_LIST`: Load SLMs from file
-
-Either mode needs to specify crystal structures by `-A POSCAR_A` and `-B POSCAR_B`
-
-### Optional Arguments
-
-- By default, `SCORE.csv` and `score.pdf` are created, which can be disabled by `--nocsv` and `--noplot`
-- Change output directory: `-o OUTDIR`
-- Load scores from file (only in `-L` mode): `-s SCORE`
-- Load CSMs with specified indices (only in `-L` mode): `-i INDEX1 INDEX2 ...`
-- Benchmark SLMs by an OR: `-b v1x v1y v1z w1x w1y w1z v2x v2y v2z w2x w2y w2z`
-- Determine OR with fixed uniformly scaled plane (only use together with `-b`): `--fixusp`
-
-## Usage (as Python package)
+## As Python package
 
 `crystmatch` is more flexible in Python scripts. Please see the [documentation (in progress)]().
