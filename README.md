@@ -1,4 +1,4 @@
-# crystmatch
+# Crystmatch
 
 If you use this code in your research, please cite the following paper:
 
@@ -13,12 +13,12 @@ A solid-solid phase transition establishes an *atom-to-atom correspondence* betw
 The main functions of `crystmatch` are as follows:
 
 - **Enumeration**:
-  - Provide a complete list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
-  - (In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and RMSD.
+  - Provide a complete list of *representative* [[1]](https://arxiv.org/abs/2305.05278) CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
+  - (In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and root-mean-square displacement (RMSD).
 
 - **Analysis**:
   - Read a CSM from a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, and save CSMs in the same format.
-  - Score CSMs by RMSS and root-mean-square displacement (RMSD).
+  - Score CSMs by RMSS and RMSD.
   - Benchmark a CSM by its deviation angle from an orientation relationship (OR).
 
 ## Installation

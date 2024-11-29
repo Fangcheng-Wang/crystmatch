@@ -1,0 +1,25 @@
+site_name: Crystmatch
+
+theme:
+  name: 'material'
+  highlight:
+    enable: true
+    style: 'colorful'
+
+nav:
+  - Tutorial: index.md
+  - Python API: api.md
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Fangcheng-Wang/crystmatch
+
+plugins:
+  - mkdocstrings
+  - search

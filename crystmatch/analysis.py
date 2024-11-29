@@ -2,6 +2,7 @@
 SLM and periodic atomic correspondenc (PAC) analysis.
 """
 
+from .io import *
 from .core import *
 import matplotlib
 import matplotlib.pyplot as plt

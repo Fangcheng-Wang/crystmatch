@@ -638,7 +638,7 @@ def minimize_rmsd(
                 break
     t_cell, _ = niggli_cell(np.array(t_cell).T)      # The irreducible translation domain cell.
     # Optimize the translation vector and the ion order in `crystB`.
-    z = brute(lambda z: local_minimum_rmsd(c_com, species_com, pA_sup, pB_sup + t_cell @ z.reshape(3,1))[0], ((0,1),(0,1),(0,1)), Ns=n_grid, finish=False)
+    z = brute(lambda z: local_minimum_rmsd(c_com, species_com, pA_sup, pB_sup + t_cell @ z.reshape(3,1))[0], ((0,1),(0,1),(0,1)), Ns=n_grid, finish=None)
     rmsd, pB_sup_m = local_minimum_rmsd(c_com, species_com, pA_sup, pB_sup + t_cell @ z.reshape(3,1))
     crystA_sup = (cA_sup.T, species_com, pA_sup.T)
     crystB_sup = (cB_sup.T, species_com, pB_sup_m.T)

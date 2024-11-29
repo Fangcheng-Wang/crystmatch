@@ -26,13 +26,12 @@ def load_poscar(filename: str, to_primitive: bool = True, symprec: float = 1e-5)
     -------
     cryst : 3-tuple
         `(lattice, species, positions)`, representing a crystal structure.
-        
-        lattice : (3, 3) array
-            In accord with the POSCAR format and the scaling factor is multiplied.
-        species : (N,) array of strs
-            Respective species of the ions.
-        positions : (N, 3) array
-            In accord with the POSCAR format ('Direct' mode).
+    lattice : (3, 3) array
+        In accord with the POSCAR format and the scaling factor is multiplied.
+    species : (N,) array of strs
+        Respective species of the ions.
+    positions : (N, 3) array
+        In accord with the POSCAR format ('Direct' mode).
 
     Examples
     --------
@@ -84,12 +83,12 @@ def save_poscar(filename: str, cryst: Cryst, crystname: Union[str, None] = None)
 
     Parameters
     ----------
-        filename : str
-            The name of the file to save, must not already exist in current directory.
-        cryst : 3-tuple
-            `(lattice, species, positions)`, representing a crystal structure, usually obtained by `load_poscar` or `minimize_rmsd`.
-        crystname : str, optional
-            A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
+    filename : str
+        The name of the file to save, must not already exist in current directory.
+    cryst : 3-tuple
+        `(lattice, species, positions)`, representing a crystal structure, usually obtained by `load_poscar` or `minimize_rmsd`.
+    crystname : str, optional
+        A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
     
     Examples
     --------
@@ -173,14 +172,14 @@ def save_trajectory(filename: str, crystA_sup: Cryst, crystB_sup: Cryst, images:
     
     Parameters
     ----------
-        filename : str
-            The name of the file to save, must not already exist in current directory.
-        crystA_sup, crystB_sup : 3-tuple
-            The initial and final crystal structures with specified atomic correspondence, usually obtained by `minimize_rmsd`.
-        images : int, optional
-            Number of interpolations to generate, must be non-negative. Default is 50.
-        crystname : str, optional
-            A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
+    filename : str
+        The name of the file to save, must not already exist in current directory.
+    crystA_sup, crystB_sup : 3-tuple
+        The initial and final crystal structures with specified atomic correspondence, usually obtained by `minimize_rmsd`.
+    images : int, optional
+        Number of interpolations to generate, must be non-negative. Default is 50.
+    crystname : str, optional
+        A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
     
     Examples
     --------
