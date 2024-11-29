@@ -1,4 +1,6 @@
+.DS_Store
 pyproject.toml
-build
 crystmatch.egg-info
 crystmatch/__pycache__
+crystmatch/.DS_Store
+build
