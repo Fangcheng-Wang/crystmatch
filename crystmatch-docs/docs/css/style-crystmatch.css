@@ -1,0 +1,19 @@
+.md-header { background-color: #003399; }
+
+.md-typeset a { color: #0044dd; }
+
+.md-typeset a:hover { color: #66ccff; }
+
+.md-typeset code { color: #dd0099; }
+
+.md-nav__item .md-nav__link:hover{ color: #dd0099; }
+
+.md-nav__item .md-nav__link--active { color: #0044dd; font-weight: bold; }
+
+.md-nav__item .md-nav__link--active:hover { color: #66ccff; font-weight: bold; }
+
+h2.doc-heading code { color: #0044dd; font-weight: bold; }
+
+h3.doc-heading code span { color: #dd0099; }
+
+h3.doc-heading code span.n:first-of-type { color: #0044dd; font-weight: bold; }

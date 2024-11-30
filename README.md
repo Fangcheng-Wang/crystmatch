@@ -2,7 +2,7 @@
 
 If you use this code in your research, please cite the following paper:
 
-[1] [F.-C. Wang et al., *Physical Review Letters* **132**, 086101 (2024)](https://arxiv.org/abs/2305.05278)
+\[1\] [F.-C. Wang et al., *Physical Review Letters* **132**, 086101 (2024)](https://arxiv.org/abs/2305.05278)
 
 You are also welcome to contact me at `wfc@pku.edu.cn` for any questions or comments.
 
@@ -13,13 +13,13 @@ A solid-solid phase transition establishes an *atom-to-atom correspondence* betw
 The main functions of `crystmatch` are as follows:
 
 - **Enumeration**:
-  - Provide a complete list of *representative* [[1]](https://arxiv.org/abs/2305.05278) CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
-  - (In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and root-mean-square displacement (RMSD).
+    - Provide a complete list of *representative* [[1]](https://arxiv.org/abs/2305.05278) CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
+    - (In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and root-mean-square displacement (RMSD).
 
 - **Analysis**:
-  - Read a CSM from a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, and save CSMs in the same format.
-  - Score CSMs by RMSS and RMSD.
-  - Benchmark a CSM by its deviation angle from an orientation relationship (OR).
+    - Read a CSM from a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, and save CSMs in the same format.
+    - Score CSMs by RMSS and RMSD.
+    - Benchmark a CSM by its deviation angle from an orientation relationship (OR).
 
 ## Installation
 
@@ -52,61 +52,63 @@ The initial and final crystal structures should be specified in the form of [POS
 
 If you don't specify any mode or crystal structures, `crystmatch` will ask for input.
 
+To see all available options, run:
+
+```
+$ crystmatch --help
+```
+
 ## Examples
 
-- To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with a maximum multiplicity of `4` and a maximum RMSS of `0.2`:
+### Enumerating CSMs
 
-  ```
-  $ crystmatch --initial fcc --final bcc --enumerate 4 -0.2
-  ```
-  
-  The following files will be created in the current directory:
+To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with a maximum multiplicity of `4` and a maximum RMSS of `0.2`:
 
-  ```text
-  ./
-  ├── CSM_LIST(fcc-bcc-m4s0.20).npz    # stores the enumerated CSMs and metadata.
-  ├── PLOT(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
-  └── TABLE(fcc-bcc-m4s0.20).csv       # organizes the multiplicity, RMSS, and RMSD of each CSM.
-  ```
+```
+$ crystmatch --initial fcc --final bcc --enumerate 4 -0.2
+```
 
-  We strongly recommend you to try small multiplicity (`2` or `4`) and RMSS between `0.2` and `0.5` first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
+The following files will be created in the current directory:
 
-- To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).npz`:
+```
+./
+├── CSM_LIST(fcc-bcc-m4s0.20).npz    # stores the enumerated CSMs and metadata.
+├── PLOT(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
+└── TABLE(fcc-bcc-m4s0.20).csv       # organizes the multiplicity, RMSS, and RMSD of each CSM.
+```
 
-  ```
-  $ crystmatch --analyze CSM_LIST(foo).npz --export 7 10
-  ```
+We strongly recommend you to try small multiplicity (`2` or `4`) and RMSS between `0.2` and `0.5` first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
 
-  Two folders will be created in the current directory, each containing a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files representing the CSM as:
+### Exporting CSMs from an NPZ file
 
-  ```
-  ./
-  ├── CSM_7(m3s0.15d0.83)/
-  │   ├── POSCAR_I
-  │   └── POSCAR_F
-  └── CSM_10(m4s0.11d0.90)/
-      ├── POSCAR_I
-      └── POSCAR_F
-  ```
+To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).npz`:
 
-  The values in the brackets represent the basic attributes of CSMs. For example, `m3s0.15d0.83` indicates a multiplicity of `3`, RMSS of `0.15`, and RMSD of `0.83`.
+```
+$ crystmatch --analyze CSM_LIST(foo).npz --export 7 10
+```
 
-- To benchmark CSMs in `CSM_LIST(foo).npz` by their deviation angles from the OR $(111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B$:
+Two folders will be created in the current directory, each containing a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files representing the CSM as:
 
-  ```
-  $ crystmatch --analyze CSM_LIST(foo).npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
-  ```
+```
+./
+├── CSM_7(m3s0.15d0.83)/
+│   ├── POSCAR_I
+│   └── POSCAR_F
+└── CSM_10(m4s0.11d0.90)/
+    ├── POSCAR_I
+    └── POSCAR_F
+```
 
-  The arguments after `--orientation` must be **cartesian coordinates**.
+The values in the brackets represent the basic attributes of CSMs. For example, `m3s0.15d0.83` indicates a multiplicity of `3`, RMSS of `0.15`, and RMSD of `0.83`.
 
-  The ORs are determined via the rotation-free manner by default, and you can also use `--fixusp` to determine ORs via the USF-fixed manner; see Ref. [[1]](https://arxiv.org/abs/2305.05278) for their definitions.
+### Orientation relationship analysis
 
-- To see all available options:
+To benchmark CSMs in `CSM_LIST(foo).npz` by their deviation angles from the OR $(111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B$:
 
-  ```
-  $ crystmatch --help
-  ```
+```
+$ crystmatch --analyze CSM_LIST(foo).npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
+```
 
-## Python API
+The arguments after `--orientation` must be **cartesian coordinates**.
 
-`crystmatch` is more flexible as a Python package. Please see the [documentation (in progress)]().
+The ORs are determined via the rotation-free manner by default, and you can also use `--fixusp` to determine ORs via the USF-fixed manner; see Ref. [[1]](https://arxiv.org/abs/2305.05278) for their definitions.

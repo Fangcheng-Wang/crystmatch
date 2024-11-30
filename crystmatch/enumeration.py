@@ -1,11 +1,10 @@
 """
-The core of crystmatch, including enumeration and optimization algorithms.
+Enumerate SLMs and CSMs.
 """
 
-from .io import *
+from .utils import *
 from copy import deepcopy
 from time import time
-from spglib import get_symmetry
 from scipy.optimize import brentq, linear_sum_assignment, brute
 from scipy.stats.qmc import Sobol
 from scipy.spatial.transform import Rotation
@@ -14,48 +13,7 @@ np.set_printoptions(suppress=True)
 Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
 SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
-def get_pure_rotation(cryst: Cryst, symprec: float = 1e-5) -> NDArray[np.int32]:
-    """Find all pure rotations appeared in the space group of `cryst`.
-
-    Parameters
-    ----------
-    cryst : 3-tuple
-        `(lattice, species, positions)`, representing the crystal structure, usually obtained by `load_poscar`.
-    
-    Returns
-    -------
-    g : (..., 3, 3) array of ints
-        A point group of the first kind, containing all pure rotations appeared in the space group of `cryst`, \
-            elements of which are integer matrices (under fractional coordinates).
-
-    Examples
-    --------
-        >>> cryst1 = load_poscar('graphite.txt')
-        >>> g1 = get_pure_rotation(cryst1)
-    """
-    species = cryst[1]
-    n = len(species)
-    numbers = np.zeros(n, dtype=int)
-    temp_s = ''
-    temp_n = 0
-    for i in range(n):
-        if species[i] != temp_s:
-            temp_n = temp_n + 1
-            temp_s = species[i]
-        numbers[i] = temp_n
-    g = get_symmetry((cryst[0],cryst[2],numbers), symprec=symprec)['rotations']
-    g = g[la.det(g).round(decimals=4)==1,:,:]
-    g = np.unique(g, axis=0)
-    return g
-
-def check_chem_comp(speciesA, speciesB):
-    spA, ctA = np.unique(speciesA, return_counts=True)
-    spB, ctB = np.unique(speciesB, return_counts=True)
-    assert (spA == spB).all()
-    assert np.dot(ctA, ctA) * np.dot(ctB, ctB) == np.dot(ctA, ctB) ** 2
-    return
-
-def root_mean_square_strain(x: NDArray[np.float64]) -> NDArray[np.float64]:
+def rmss(x: NDArray[np.float64]) -> NDArray[np.float64]:
     """Root-mean-square strain of given singular values.
 
     Parameters
@@ -67,12 +25,6 @@ def root_mean_square_strain(x: NDArray[np.float64]) -> NDArray[np.float64]:
     -------
     rms_strain : (...) array
         Root-mean-square of `x - 1`.
-
-    Examples
-    --------
-        >>> x = np.array([[1.1, 0.9, 0.9], [1.2, 1.1, 0.9]])
-        >>> root_mean_square_strain(x)
-        [0.1        0.14142136]
     """
     return np.sqrt(np.mean((x - 1) ** 2, axis=-1))
 
@@ -88,11 +40,6 @@ def int_fact(n: int) -> List[Tuple[int, int]]:
     -------
     l : list of 2-tuples of ints
         Contains all `(a, b)` such that a*b=n.
-    
-    Examples
-    --------
-        >>> int_fact(6)
-        [(1, 6), (2, 3), (3, 2), (6, 1)]
     """
     l = []
     for a in range(1,n+1):
@@ -111,11 +58,6 @@ def hnf_list(det: int) -> NDArray[np.int32]:
     -------
     l : (..., 3, 3) array of ints
         Contains all HNFs with determinant `det`.
-    
-    Examples
-    --------
-        >>> hnf_list(2).shape
-        (7, 3, 3)
     """
     # Enumerate 3-factorizations of `det`.
     diag_list = []
@@ -150,10 +92,6 @@ def hnf_decomposition(m: NDArray[np.int32]) -> tuple[NDArray[np.int32], NDArray[
         The column-style Hermite normal form of `m`.
     q : (N, N) array of ints
         The unimodular matrix satisfying `m` = `h @ q`.
-    
-    Examples
-    --------
-        ?
     """
     assert m.dtype == np.int32 and la.det(m) > 0
     N = m.shape[0]
@@ -170,87 +108,12 @@ def hnf_decomposition(m: NDArray[np.int32]) -> tuple[NDArray[np.int32], NDArray[
     q = (la.inv(h) @ m).round().astype(int)
     return h, q
 
-def hnf_rational(m: ArrayLike, max_divisor = 10000) -> NDArray[np.float64]:
-    """The Hermite normal form (HNF) of full-row-rank rational matrix `m` (not necessarily square or integer).
-    
-    Parameters
-    ----------
-    m : (M, N) array_like, M <= N
-        The full-row-rank rational matrix to reduce.
-    max_divisor : int
-        A positive integer. The least common multiple of all divisors in `m` should not be greater than `max_divisor`.
-    
-    Returns
-    -------
-    h : (M, N) array
-        The HNF of `m` obtained via elementary column operations over integers.
-    
-    Examples
-    --------
-        ?
-    """
-    for divisor in range(1, max_divisor+1):
-        if (np.absolute(np.rint(m * divisor) - m * divisor) <= 1 / max(10000,max_divisor)).all(): break
-        elif divisor == max_divisor: print('Warning: input matrix should be rational!')
-    h = (m * divisor).round().astype(int)
-    M, N = h.shape
-    assert M <= N and la.matrix_rank(h, tol=1/max(10000,max_divisor)) == M
-    for i in range(M):
-        while not (h[i,i+1:] == 0).all():
-            col_nonzero = i + np.nonzero(h[i,i:])[0]
-            i0 = col_nonzero[np.argpartition(np.abs(h[i,col_nonzero]), kth=0)[0]]
-            h[:,[i,i0]] = h[:,[i0,i]]
-            if h[i,i] < 0: h[:,i] = - h[:,i]
-            h[:,i+1:] = h[:,i+1:] - np.outer(h[:,i], (h[i,i+1:] / h[i,i]).round().astype(int))
-        if h[i,i] < 0: h[:,i] = - h[:,i]
-        h[:,:i] = h[:,:i] - np.outer(h[:,i], h[i,:i] // h[i,i])
-    return h / divisor
-
-def matrix_gcd(m1: ArrayLike, m2: ArrayLike, max_divisor = 10000) -> NDArray[np.float64]:
-    """Return a greatest common divisor of rational matrices `m1` and `m2`.
-    
-    Parameters
-    ----------
-    m1, m2 : (3, 3) array_like
-        Nonsingular rational matrices.
-    max_divisor : int
-        A positive integer. The least common multiple of all divisors in `m` should not be greater than `max_divisor`.
-    
-    Returns
-    -------
-    d : (3, 3) array
-        The greatest common divisor of `m1` and `m2` in Hermite normal form.
-    """
-    assert (la.det([m1, m2]) != 0).all()
-    d = hnf_rational(np.hstack((m1, m2)))[:,:3]
-    if m1.dtype == np.int32 and m2.dtype == np.int32: return d.round().astype(int)
-    return d
-
-def matrix_lcm(m1: ArrayLike, m2: ArrayLike) -> NDArray[np.int32]:
-    """Return a least common multiple of integer matrices `m1` and `m2`.
-    
-    Parameters
-    ----------
-    m1, m2 : (3, 3) array_like
-        Nonsingular integer matrices.
-    
-    Returns
-    -------
-    m : (3, 3) array
-        The least common multiple of `m1` and `m2` in Hermite normal form.
-    """
-    assert m1.dtype == np.int32 and m2.dtype == np.int32
-    assert (la.det([m1, m2]) != 0).all()
-    h = hnf_rational(np.hstack((la.inv(m1.T), la.inv(m2.T))))[:,:3]
-    m = la.inv(h.T).round().astype(int)
-    return m
-
 def equiv_class_representative(s: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
     """The representative of the equivalence class of `s`.
 
     Parameters
     ----------
-    s : 3-tuple of (3, 3) arrays of ints
+    s : slm
         `(hA, hB, q)`, representing a SLM.
     gA : (..., 3, 3) array of ints
         The rotation group of the initial crystal structure, whose elements are \
@@ -261,7 +124,7 @@ def equiv_class_representative(s: Union[SLM, NDArray[np.int32]], gA: NDArray[np.
 
     Returns
     -------
-    ss : 3-tuple of (3, 3) arrays of ints
+    ss : slm
         The representative of the equivalence class of `s`.
     len_cl : int
         The size of the equivalence class of `s`.
@@ -277,16 +140,16 @@ def equiv_class_representative(s: Union[SLM, NDArray[np.int32]], gA: NDArray[np.
 
 def enumerate_slm(
     crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float,
-    kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = root_mean_square_strain,
+    kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss,
     likelihood_ratio: float = 1e2, max_power: int = 1, print_detail: int = 0
 ) -> List[SLM]:
     """Enumerating all SLMs of multiplicity `mu` with `kappa` smaller than `kappa_max`.
 
     Parameters
     ----------
-    crystA : 3-tuple
+    crystA : cryst
         The initial crystal structure, usually obtained by `load_poscar`.
-    crystB : 3-tuple
+    crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
     kappa_max : float
         A positive threshold value of `kappa` to determine the range of singular values to generate.
@@ -304,14 +167,8 @@ def enumerate_slm(
 
     Returns
     -------
-    slist : list of 3-tuples of (3, 3) arrays of ints
+    slist : list of slm
         Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
-    
-    Examples
-    --------
-        >>> slist = enumerate_slm(austenite, martensite, 6, 0.15)
-        >>> slist[0]
-        ?
     """
     assert mu >= 1
     cA = crystA[0].T
@@ -386,15 +243,15 @@ def enumerate_slm(
 
 def complete_slm_list(
     crystA: Cryst, crystB: Cryst, mu_max: int, kappa_max: float,
-    kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = root_mean_square_strain
+    kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss
 ) -> NDArray[np.int32]:
     """Enumerating all SLMs with multiplicity not bigger than `mu` and `kappa` not bigger than `kappa_max`.
 
     Parameters
     ----------
-    crystA : 3-tuple
+    crystA : cryst
         The initial crystal structure, usually obtained by `load_poscar`.
-    crystB : 3-tuple
+    crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
     mu_max : int
         The maximum value of `mu`.
@@ -408,12 +265,6 @@ def complete_slm_list(
     -------
     slist : (..., 3, 3, 3) array of ints
         Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
-    
-    Examples
-    --------
-        >>> slist = complete_slm_list(austenite, martensite, 6, 0.15)
-        >>> slist[-1]
-        ?
     """
     slist = []
     for mu in range(1,mu_max+1):
@@ -441,10 +292,6 @@ def vector_reduce(v: NDArray, divisors: NDArray) -> NDArray:
     -------
     vv : (N,) array
         The reduced `v` with minimum Euclidean norm.
-
-    Examples
-    --------
-        ?
     """
     vv = deepcopy(v)
     converged = False
@@ -474,10 +321,6 @@ def niggli_cell(c: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np
         The Niggli cell, with shortest right-handed cell vectors.
     q : (3, 3) array of ints
         The unimodular matrix satisfying `cc = c @ q`.
-
-    Examples
-    --------
-        ?
     """
     c0 = np.zeros((3,3))
     cc = deepcopy(c)
@@ -488,32 +331,6 @@ def niggli_cell(c: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np
     if la.det(cc) < 0: cc = -cc
     q = (la.inv(c) @ cc).round().astype(int)
     return cc, q
-
-def int_vectors_inside(c: NDArray[np.int32]) -> NDArray[np.int32]:
-    """Integer vectors inside the cell `c` whose elements are integers.
-
-    Parameters
-    ----------
-    c : (3, 3) array of ints
-        A matrix whose columns are integer cell vectors.
-    
-    Returns
-    -------
-    v_int : (3, ...) array of ints
-        Its columns are vectors satisfying `v = c @ k`, where 0 <= `k[0]`, `k[1]`, `k[2]` < 1.
-    
-    Examples
-    --------
-        ?
-    """
-    assert c.dtype == np.int32
-    vertices = c @ np.mgrid[0:2,0:2,0:2].reshape(3,-1)
-    candidates = np.mgrid[np.amin(vertices[0,:]):np.amax(vertices[0,:])+1, np.amin(vertices[1,:]):np.amax(vertices[1,:])+1, \
-        np.amin(vertices[2,:]):np.amax(vertices[2,:])+1].reshape(3,-1)
-    fractional = (la.inv(c) @ candidates).round(decimals=7)
-    is_inside = (np.prod(fractional < 1, axis=0) * np.prod(fractional >= 0, axis=0)).astype(bool)
-    assert np.sum(is_inside) == la.det(c).round().astype(int)
-    return candidates[:,is_inside]
 
 def local_minimum_rmsd(
     c: NDArray[np.float64], species: NDArray[np.str_], pA: NDArray[np.float64], pB: NDArray[np.float64]
@@ -536,10 +353,6 @@ def local_minimum_rmsd(
         The minimized RMSD (calculated under periodic boundary condition).
     pB_m : (3, N) array
         Modified `pB` with ions permuted, collectively translated, and respectively shifted by lattice vectors.
-    
-    Examples
-    --------
-        ?
     """
     assert pA.shape[1] == pB.shape[1]
     # Determine best lattice-vector shift.
@@ -568,9 +381,9 @@ def minimize_rmsd(
 
     Parameters
     ----------
-    crystA : 3-tuple
+    crystA : cryst
         The initial crystal structure, usually obtained by `load_poscar`.
-    crystB : 3-tuple
+    crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
     s : (3, 3, 3) array_like of ints
         Triplets of integer matrices like `(hA, hB, q)`, representing a SLM.
@@ -581,16 +394,12 @@ def minimize_rmsd(
     -------
     rmsd : float
         The minimum atomic displacement (RMSD) between distorted `crystA_sup` and `crystB_sup`.
-    crystA_sup : 3-tuple
+    crystA_sup : cryst
         The crystal structure identical with `crystA`, but described by supercell `cA @ hA`.
-    crystB_sup : 3-tuple
+    crystB_sup : cryst
         The crystal structure identical with `crystB`, transformed from `crystA` along the path of minimum `distance`. One may \
             generate a linear transition path using `cryst_interpolation(crystA_sup, crystB_sup, num)`.
-    cryst_com : 3-tuple
-        ?
-    
-    Examples
-    --------
+    cryst_com : cryst
         ?
     """
     # Create distorted `crystA_sup` and `crystB_sup` that share a common periodicity.

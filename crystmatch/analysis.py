@@ -1,9 +1,8 @@
 """
-SLM and periodic atomic correspondenc (PAC) analysis.
+Analyze and visualize CSMs.
 """
 
-from .io import *
-from .core import *
+from .utils import *
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.rcParams.update({
@@ -23,9 +22,9 @@ def multiplicity(crystA: Cryst, crystB: Cryst, slist: Union[SLM, List[SLM], NDAr
 
     Parameters
     ----------
-    crystA : 3-tuple
+    crystA : cryst
         The initial crystal structure, usually obtained by `load_poscar`.
-    crystB : 3-tuple
+    crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
     slist : {(3, 3, 3), (..., 3, 3, 3)} array_like of ints
         Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
@@ -48,11 +47,11 @@ def sing_val(crystA: Cryst, crystB: Cryst, slist: Union[List[SLM], NDArray[np.in
 
     Parameters
     ----------
-    crystA : 3-tuple
+    crystA : cryst
         The initial crystal structure, usually obtained by `load_poscar`.
-    crystB : 3-tuple
+    crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
-    slist : (..., 3, 3, 3) array_like of ints
+    slist : list of slm
         Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
 
     Returns
@@ -72,11 +71,11 @@ def distance_slm(slist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cryst) 
 
     Parameters
     ----------
-    slist : (..., 3, 3, 3) array_like of ints
+    slist : list of slm
         Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
-    s0 : 3-tuple of (3, 3) arrays of ints
+    s0 : slm
         `(hA, hB, q)`, representing a SLM.
-    crystA, crystB : 3-tuple
+    crystA, crystB : cryst
         `(lattice, species, positions)`, representing the crystal structure, usually obtained by `load_poscar`.
     
     Returns
@@ -96,12 +95,12 @@ def distance_slm(slist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cryst) 
     dlist = np.amin(la.norm(ss.reshape(-1,1,9), cl0.reshape(1,-1,9), axis=2),axis=1)
     return dlist
 
-def distance_pac(crystA: Cryst, j1: Tuple[Cryst, Cryst], j2: Tuple[Cryst, Cryst]) -> float:
-    """The RMSD between PACs.
+def distance_shuffle(crystA: Cryst, j1: Tuple[Cryst, Cryst], j2: Tuple[Cryst, Cryst]) -> float:
+    """The RMSD between shuffles.
     
     Parameters
     ----------
-    crystA : 3-tuple
+    crystA : cryst
         `(lattice, species, positions)`, representing the crystal structure, usually obtained by `load_poscar`.
     j1, j2 : 2-tuple
         `(crystA_sup, crystB_sup)`, representing a CSM.
@@ -109,7 +108,7 @@ def distance_pac(crystA: Cryst, j1: Tuple[Cryst, Cryst], j2: Tuple[Cryst, Cryst]
     Returns
     -------
     d : float
-        The RMSD between `j10` and `j20`, the PACs obtained by omitting the lattice deformation in `j1` and `j2`.
+        The RMSD between `j10` and `j20`, the shuffles obtained by omitting the lattice deformation in `j1` and `j2`.
     """
     # cell geometry
     cA = crystA[0].T
@@ -177,10 +176,6 @@ def orientation_relation(vA1: ArrayLike, vB1: ArrayLike, vA2: ArrayLike, vB2: Ar
     -------
     r : (3, 3) array
         A rotation matrix representing the given orientation relationship, which rotates `vA1` to `vB1` and `vA2` to `vB2`.
-    
-    Examples
-    --------
-        ?
     """
     b = np.array([vA1, np.cross(vA1, vA2), np.cross(vA1, np.cross(vA1, vA2))]).T
     c = np.array([vB1, np.cross(vB1, vB2), np.cross(vB1, np.cross(vB1, vB2))]).T
@@ -196,9 +191,9 @@ def compare_orientation(
 
     Parameters
     ----------
-    crystA : 3-tuple
+    crystA : cryst
         The initial crystal structure, usually obtained by `load_poscar`.
-    crystB : 3-tuple
+    crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
     slist : (..., 3, 3, 3) array_like of ints
         Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
@@ -211,10 +206,6 @@ def compare_orientation(
     -------
     anglelist : (...,) array
         Contains rotation angles that measure the difference of each SLM and the given orientation.
-    
-    Examples
-    --------
-        ?
     """
     assert la.det(r).round(decimals=4) == 1
     cA = crystA[0].T
