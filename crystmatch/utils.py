@@ -35,7 +35,7 @@ def load_poscar(filename: str, to_primitive: bool = True, symprec: float = 1e-5)
         In accord with the POSCAR format ('Direct' mode).
     """
     f = open(filename, mode='r')
-    print("\nCrystal structure '" + f.readline()[:-1] + "' loaded")
+    print(f"Loading crystal structure '{f.readline()[:-1]}' from file '{filename}'...")
     a = np.array(f.readline()[:-1], dtype=float)
     lattice = np.zeros((3,3), dtype=float)
     for i in range(3):
@@ -63,14 +63,15 @@ def load_poscar(filename: str, to_primitive: bool = True, symprec: float = 1e-5)
     numbers = np.zeros(N, dtype=int)
     for i in range(1, len(species_counts)):
         numbers[np.sum(species_counts[:i]):] = numbers[np.sum(species_counts[:i]):] + 1
-    print('Space group: ' + get_spacegroup((lattice, positions, numbers), symprec=symprec))
+    print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=symprec)}")
     if to_primitive:
         lattice, positions, numbers = find_primitive((lattice, positions, numbers))
         if len(numbers) != len(species):
-            print(f"Cell given by the POSCAR file is not primitive. Using primitive cell (Z = {len(numbers):.0f}) now.")
+            print(f"\tCell in POSCAR file is not primitive! Using primitive cell (Z = {len(numbers):d}) now.")
         else:
-            print(f"Cell given by POSCAR file is primitive (Z = {len(numbers):.0f}).")
+            print(f"\tCell in POSCAR file is already primitive (Z = {len(numbers):d}).")
         species = np.array(species_name)[numbers]
+    else: print(f"\tUsing cell in POSCAR file (Z = {len(numbers):d}).")
     cryst = (lattice, species, positions)
     return cryst
 
@@ -165,7 +166,7 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     # Computing output.
     crystA_sup = (cA_sup.T, species_sup, pA_sup.T)
     crystB_sup_final = (cB_sup_final.T, species_sup, pB_sup.T)
-    c_translate = niggli_cell(matrix_gcd(la.inv(mA) @ int_vec_inside(mA), la.inv(mB) @ int_vec_inside(mB)))[0]
+    c_translate = niggli_cell(matrix_gcd(la.inv(mA), la.inv(mB)))[0]
     return crystA_sup, crystB_sup_final, c_sup_half, c_translate
 
 def int_arrays_to_crysts(crystA: Cryst, crystB: Cryst, slm: SLM,
@@ -261,7 +262,7 @@ def int_vec_inside(c: NDArray[np.int32]) -> NDArray[np.int32]:
     v_int : (3, ...) array of ints
         Its columns are vectors satisfying `v = c @ k`, where 0 <= `k[0]`, `k[1]`, `k[2]` < 1.
     """
-    assert c.dtype == np.int32
+    assert c.dtype == int
     vertices = c @ np.mgrid[0:2,0:2,0:2].reshape(3,-1)
     candidates = np.mgrid[np.amin(vertices[0,:]):np.amax(vertices[0,:])+1, np.amin(vertices[1,:]):np.amax(vertices[1,:])+1, \
         np.amin(vertices[2,:]):np.amax(vertices[2,:])+1].reshape(3,-1)
@@ -285,9 +286,9 @@ def matrix_gcd(m1: ArrayLike, m2: ArrayLike, max_divisor = 10000) -> NDArray[np.
     d : (3, 3) array
         The greatest common divisor of `m1` and `m2` in Hermite normal form.
     """
-    assert (la.det([m1, m2]) != 0).all()
+    assert la.det(m1) != 0 and la.det(m2) != 0
     d = hnf_rational(np.hstack((m1, m2)))[:,:3]
-    if m1.dtype == np.int32 and m2.dtype == np.int32: d = d.round().astype(int)
+    if m1.dtype == int and m2.dtype == int: d = d.round().astype(int)
     return d
 
 def matrix_lcm(m1: ArrayLike, m2: ArrayLike) -> NDArray[np.int32]:
@@ -303,7 +304,7 @@ def matrix_lcm(m1: ArrayLike, m2: ArrayLike) -> NDArray[np.int32]:
     m : (3, 3) array
         The least common multiple of `m1` and `m2` in Hermite normal form.
     """
-    assert m1.dtype == np.int32 and m2.dtype == np.int32
+    assert m1.dtype == int and m2.dtype == int
     assert (la.det([m1, m2]) != 0).all()
     h = hnf_rational(np.hstack((la.inv(m1.T), la.inv(m2.T))))[:,:3]
     m = la.inv(h.T).round().astype(int)
@@ -374,7 +375,7 @@ def hnf_int(m: NDArray[np.int32]) -> tuple[NDArray[np.int32], NDArray[np.int32]]
     q : (N, N) array of ints
         The unimodular matrix satisfying `m` = `h @ q`.
     """
-    assert m.dtype == np.int32 and la.det(m) > 0
+    assert m.dtype == int and la.det(m) > 0
     N = m.shape[0]
     h = deepcopy(m)
     for i in range(N):

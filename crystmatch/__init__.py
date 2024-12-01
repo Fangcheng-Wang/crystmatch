@@ -28,7 +28,7 @@ def main():
                         help="POSCAR file of the initial crystal structure")
     parser.add_argument("-F", "--final", type=str, metavar='POSCAR_F',
                         help="POSCAR file of the final crystal structure")
-    parser.add_argument("-E", "--enumeration", nargs='?', const=-1, type=float, metavar='MAX_MU MAX_RMSS',
+    parser.add_argument("-E", "--enumeration", nargs=2, type=float, metavar=('MAX_MU','MAX_RMSS'),
                         help="enumeration mode, using MAX_MU and MAX_RMSS as upper bounds")
     parser.add_argument("-A", "--analysis", nargs='?', const=-1, type=str, metavar='CSM_LIST',
                         help="analysis mode, using the CSM given by POSCAR_I and POSCAR_F (or from CSM_LIST if provided)")
@@ -73,18 +73,8 @@ def main():
         
         # mode: enumeration
         print("\nMode: Enumeration.")
-        if args.enumeration == -1:
-            mu_max = int(input("Enter the maximum multiplicity: "))
-            rmss_max = float(input("Enter the maximum root-mean-square-strain: "))
-        elif not isinstance(args.enumeration, (list, tuple)):
-            mu_max = int(args.enumeration)
-            rmss_max = float(input("Enter the maximum root-mean-square-strain: "))
-        elif len(args.enumeration) == 2:
-            mu_max, rmss_max = args.enumeration
-            mu_max = np.rint(mu_max).astype(int)
-        else:
-            print("\nError: Too many arguments for '-E'")
-            return
+        mu_max, rmss_max = args.enumeration
+        mu_max = np.rint(mu_max).astype(int)
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
         crystA = load_poscar(args.initial, symprec=args.symprec)
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
@@ -94,15 +84,16 @@ def main():
         job = f"{args.initial}-{args.final}-m{mu_max:d}s{rmss_max:.2f}"
         
         # enumerating SLMs
+        print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f} ...")
         slmlist = []
         for mu in range(1,mu_max+1): slmlist = slmlist + enumerate_slm(crystA, crystB, mu, rmss_max)
         print(f"\nA total of {len(slmlist):d} incongruent SLMs are enumerated.")
         slmlist = np.array(slmlist)
-        slmlist = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0)
+        _, ind = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0, return_index=True)
+        slmlist = slmlist[ind]
         mulist = multiplicity(crystA, crystB, slmlist)
         rmsslist = rmss(sing_val(crystA, crystB, slmlist))
-        print(f"Among them, there are {len(slmlist):d} distinct deformation gradients, \
-            and thus {len(slmlist):d} representative CSMs.")
+        print(f"They have {len(slmlist):d} distinct deformation gradients, and thus {len(slmlist):d} representative CSMs.")
 
         # computing representative CSMs
         mu_bins = []
@@ -115,34 +106,65 @@ def main():
                 mu_bins.append(None)
                 continue
             shufflelist = np.zeros((n_csm, mu * zlcm, 4), dtype=int)
-            for i in n_csm:
+            for i in range(n_csm):
                 d, p, ks = minimize_rmsd_translation(crystA, crystB, slmlist[mulist == mu][i])
                 rmsdlist.append(d)
                 shufflelist[i,:,0] = p
                 shufflelist[i,:,1:] = ks.T
             mu_bins.append(shufflelist)
         rmsdlist = np.array(rmsdlist)
-        print(f"Representative CSMs produced (in {time()-t:.2f} seconds).")
+        print(f"\tObtained representative CSMs and their RMSDs (in {time()-t:.2f} seconds).")
+        
+        # saving results in NPZ format
+        print(f"\nSaving results to CSM_LIST({job}).npz ...")
+        metadata = np.array([job, crystA, crystB, mu_max, rmss_max, args.symprec], dtype=object)
         ind = np.lexsort((rmsdlist.round(decimals=4), rmsslist.round(decimals=4), mulist))
         slmlist = slmlist[ind]
         mulist = mulist[ind]
         rmsslist = rmsslist[ind]
         rmsdlist = rmsdlist[ind]
-        np.savez(f".{sep}CSM_LIST({job}).npz", *mu_bins, slmlist=slmlist, head=['index', 'slm_index', 'mu', 'rmss', 'rmsd'],
-                table=np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist]).T)
+        table = np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist], dtype=float).T
+        np.savez(f".{sep}CSM_LIST({job}).npz", *mu_bins, metadata=metadata, slmlist=slmlist, table=table)
 
     elif args.analysis == -1:
         
-        # mode: analysis (from POSCARs)
+        # mode: analysis (single CSM given by POSCARs)
+        print("\nMode: Analysis (single CSM given by POSCARs).")
+        if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
+        crystA = load_poscar(args.initial, symprec=args.symprec, to_primitive=False)
+        if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
+        crystB = load_poscar(args.final, symprec=args.symprec, to_primitive=False)
+        check_chem_comp(crystA[1], crystB[1])
+        job = f"{args.initial}-{args.final}"
+        if args.orientation != None: job += "-OR" + "".join(map(str, args.orientation))
+        
+        # analyzing the CSM
         pass
     
     else:
 
-        # mode: analysis (from SLM_LIST)
+        # mode: analysis (loading CSM_LIST from NPZ file)
+        print("\nMode: Analysis (loading CSM_LIST from {args.analysis}).")
+        data = np.load(args.analysis)
+        job, crystA, crystB, mu_max, rmss_max, symprec = data['metadata']
+        print(f"Enumeration job: {job}\n\tMAX_MU: {mu_max}\n\tMAX_RMSS: {rmss_max}\n\tSYMPREC: {symprec}")
+
+        # analyzing the CSMs
         pass
     
     # save and plot results
-    pass
+    if not args.nocsv:
+        if args.orientation == None:
+            np.savetxt(f".{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
+                        header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å')
+        else:
+            np.savetxt(f".{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.6f',
+                        header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å, theta/°')
+    
+    if not args.noplot:
+        pass
+        if args.orientation != None:
+            pass
     
     print(f"\nTotal time spent: {time()-t0:.2f} seconds")
 

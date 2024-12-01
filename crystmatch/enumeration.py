@@ -106,7 +106,7 @@ def enumerate_slm(
     b = brentq(diff_kappa, det_s**(1/3), 10)
     max_strain = max(abs(a-1), abs(b-1))
     # Enumerate SLMs.
-    print(f"Enumerating SLMs (mu = {mu:.0f}, {kappa.__name__} <= {kappa_max:.4f}) ...")
+    print(f"Enumerating SLMs (mu = {mu:d}, {kappa.__name__} <= {kappa_max:.4f}) ...")
     if print_detail >= 1:
         print(f"\tprototype sampling domain: SO(3) (±{max_strain:.2f} for each matrix element)")
         print(f"\tassumed maximum probability ratio among classes: {max_prob_ratio:.1f}")
@@ -133,7 +133,8 @@ def enumerate_slm(
         index1 = np.nonzero(index1)[0]
         index1 = np.unravel_index(index1, (s0.shape[0], hA.shape[0], hB.shape[0]))
         # Check strains of `s`s.
-        index2 = np.nonzero(kappa(la.svd(cB @ hB[index1[2]] @ q[index1] @ hA_inv[index1[1]] @ la.inv(cA), compute_uv=False)) < kappa_max)[0]                                          
+        index2 = np.nonzero(kappa(la.svd(cB @ hB[index1[2]] @ q[index1] @ hA_inv[index1[1]] @ la.inv(cA),
+                                        compute_uv=False)) < kappa_max)[0]                                          
         for i in index2:
             s = (hA[index1[1][i]], hB[index1[2][i]], q[index1[0][i], index1[1][i], index1[2][i]])
             s, _ = equiv_class_representative(s, gA, gB)
@@ -150,10 +151,10 @@ def enumerate_slm(
                 m = 0
         num_s0 += s0.shape[0]
         if print_detail >= 2:
-            print(f"\t{num_s0}\t{m}\t{(1 + len(slmlist) * max_prob_ratio) * np.log(likelihood_ratio):.0f}\t{time()-t:.2f}")
+            print(f"\t{num_s0}\t{m}\t{(1 + len(slmlist) * max_prob_ratio) * np.log(likelihood_ratio):d}\t{time()-t:.2f}")
         iter = iter + 1
         if iter > 50 and len(slmlist) == 0: break
-    print(f'Find {len(slmlist):.0f} inequivalent SLMs (in {time()-t:.2f} seconds).')
+    print(f'\tFound {len(slmlist):d} incongruent SLMs (in {time()-t:.2f} seconds).')
     return slmlist
 
 def minimize_rmsd_fixed(
@@ -226,10 +227,11 @@ def minimize_rmsd_translation(
     ks : (3, Z) array of ints
         The ks of the atoms in `pB_sup[:,p]` that minimizes the RMSD.
     """
-    crystA_sup, crystB_sup, c_sup_half, c_translate = create_common_supercell(crystA, crystB, slm, n_grid)
+    crystA_sup, crystB_sup, c_sup_half, c_translate = create_common_supercell(crystA, crystB, slm)
     species = crystA_sup[1]
-    pA_sup = crystA_sup[2]
-    pB_sup = crystB_sup[2]
-    z = brute(lambda z: minimize_rmsd_fixed(c_sup_half, species, pA_sup, pB_sup + c_translate @ z.reshape(3,1))[0], ((0,1),(0,1),(0,1)), Ns=n_grid, finish=None)
-    rmsd, p, ks = minimize_rmsd_fixed(c_sup_half, species, pA_sup, pB_sup + c_translate @ z.reshape(3,1))
+    pA_sup = crystA_sup[2].T
+    pB_sup = crystB_sup[2].T
+    t0 = brute(lambda z: minimize_rmsd_fixed(c_sup_half, species, pA_sup, pB_sup + c_translate @ z.reshape(3,1))[0],
+            ((0,1),(0,1),(0,1)), Ns=n_grid, finish=None)
+    rmsd, p, ks = minimize_rmsd_fixed(c_sup_half, species, pA_sup, pB_sup + c_translate @ t0.reshape(3,1))
     return rmsd, p, ks

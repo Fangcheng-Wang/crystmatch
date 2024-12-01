@@ -1,4 +1,4 @@
-# Tutorial
+# Crystmatch
 
 If you use this code in your research, please cite the following paper:
 
@@ -65,7 +65,7 @@ $ crystmatch --help
 To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with a maximum multiplicity of `4` and a maximum RMSS of `0.2`:
 
 ```
-$ crystmatch --initial fcc --final bcc --enumerate 4 -0.2
+$ crystmatch --initial fcc --final bcc --enumeration 4 -0.2
 ```
 
 The following files will be created in the current directory:
@@ -84,7 +84,7 @@ We strongly recommend you to try small multiplicity (`2` or `4`) and RMSS betwee
 To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).npz`:
 
 ```
-$ crystmatch --analyze CSM_LIST(foo).npz --export 7 10
+$ crystmatch --analysis CSM_LIST(foo).npz --export 7 10
 ```
 
 Two folders will be created in the current directory, each containing a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files representing the CSM as:
@@ -106,7 +106,7 @@ The values in the brackets represent the basic attributes of CSMs. For example, 
 To benchmark CSMs in `CSM_LIST(foo).npz` by their deviation angles from the OR $(111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B$:
 
 ```
-$ crystmatch --analyze CSM_LIST(foo).npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
+$ crystmatch --analysis CSM_LIST(foo).npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
 ```
 
 The arguments after `--orientation` must be **cartesian coordinates**.
