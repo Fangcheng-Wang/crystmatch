@@ -11,7 +11,7 @@ __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
 __url__ = 'https://github.com/Fangcheng-Wang/crystmatch'
-__epilog__ = 'The current version (' + __version__ + ') may contain bugs. To get the latest version, please see: \
+__epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To get the latest version, please see: \
 \n\n\t' + __url__ + '\n\nIf you use crystmatch in your research, please cite the following paper: \n\n\t\
 [1] F.-C. Wang et al., Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
 You are also welcome to contact me at ' + __email__ + ' for any questions or comments.'
@@ -34,11 +34,11 @@ def main():
                         help="analysis mode, using the CSM given by POSCAR_I and POSCAR_F (or from CSM_LIST if provided)")
     parser.add_argument("-e", "--export", nargs='+', type=int, metavar=('index1', 'index2'),
                         help="export CSMs from CSM_LIST with the given indices")
+    parser.add_argument("-s", "--symprec", type=float, default=1e-5, metavar='TOL',
+                        help="tolerance for determining crystal symmetry, default is 1e-5")
     parser.add_argument("--orientation", nargs=12, type=float, metavar=('vix','viy','viz','vfx','vfy','vfz','wix','wiy','wiz','wfx','wfy','wfz'),
                         help="benchmark CSMs by the orientation relationship (OR) vi||vf, wi||wf")
     parser.add_argument("--fixusp", action='store_true', help="use USP-fixed manner [1] when determining OR")
-    parser.add_argument("--symprec", type=float, default=1e-5, metavar='TOL',
-                        help="tolerance for determining crystal symmetry, default is 1e-5")
     parser.add_argument("--nocsv", action='store_true', help="not creating CSV file")
     parser.add_argument("--noplot", action='store_true', help="not creating PDF plots")
     parser.add_argument("-B", nargs='*', type=str, metavar='', help="deprecated")
@@ -90,31 +90,46 @@ def main():
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
         crystB = load_poscar(args.final, symprec=args.symprec)
         check_chem_comp(crystA[1], crystB[1])
+        zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
         job = f"{args.initial}-{args.final}-m{mu_max:d}s{rmss_max:.2f}"
         
-        # start enumeration
-        slist = complete_slm_list(crystA, crystB, mu_max, rmss_max)
-        mulist = multiplicity(crystA, crystB, slist)
-        rmsslist = rmss(sing_val(crystA, crystB, slist)).round(decimals=4)
-        t = time()
+        # enumerating SLMs
+        slmlist = []
+        for mu in range(1,mu_max+1): slmlist = slmlist + enumerate_slm(crystA, crystB, mu, rmss_max)
+        print(f"\nA total of {len(slmlist):d} incongruent SLMs are enumerated.")
+        slmlist = np.array(slmlist)
+        slmlist = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0)
+        mulist = multiplicity(crystA, crystB, slmlist)
+        rmsslist = rmss(sing_val(crystA, crystB, slmlist))
+        print(f"Among them, there are {len(slmlist):d} distinct deformation gradients, \
+            and thus {len(slmlist):d} representative CSMs.")
+
+        # computing representative CSMs
+        mu_bins = []
         rmsdlist = []
-        makedirs(f".{sep}CSM_LIST({job})")  # in progress!
-        print(f"\nOptimizing atomic correspondences for {slist.shape[0]} SLMs ...")
-        for i in slist.shape[0]:
-            d, crystA_sup, crystB_sup, _ = minimize_rmsd(crystA, crystB, slist[i])
-            if args.export != None:
-                save_poscar(f".{sep}CSM_{i:d}({job}){sep}POSCAR_I", crystA_sup, crystname=args.initial)
-                save_poscar(f".{sep}CSM_{i:d}({job}){sep}POSCAR_F", crystB_sup, crystname=args.final)
-            rmsdlist.append(d)
-        rmsdlist = np.array(rmsdlist).round(decimals=4)
-        print(f"{slist.shape[0]} CSMs (with lowest RMSDs under own SLMs) generated (in {time()-t:.2f} seconds)")
-        ind = np.lexsort((rmsdlist, rmsslist, mulist))
-        slist = slist[ind]
+        print(f"\nOptimizing RMSDs for {slmlist.shape[0]} shuffles ...")
+        t = time()
+        for mu in range(1,mu_max+1):
+            n_csm = np.sum(mulist == mu)
+            if n_csm == 0:
+                mu_bins.append(None)
+                continue
+            shufflelist = np.zeros((n_csm, mu * zlcm, 4), dtype=int)
+            for i in n_csm:
+                d, p, ks = minimize_rmsd_translation(crystA, crystB, slmlist[mulist == mu][i])
+                rmsdlist.append(d)
+                shufflelist[i,:,0] = p
+                shufflelist[i,:,1:] = ks.T
+            mu_bins.append(shufflelist)
+        rmsdlist = np.array(rmsdlist)
+        print(f"Representative CSMs produced (in {time()-t:.2f} seconds).")
+        ind = np.lexsort((rmsdlist.round(decimals=4), rmsslist.round(decimals=4), mulist))
+        slmlist = slmlist[ind]
         mulist = mulist[ind]
         rmsslist = rmsslist[ind]
         rmsdlist = rmsdlist[ind]
-        np.save(f'.' + sep + 'SLM_LIST({mode},{label}).npy', slist)
-        ind = np.arange(slist.shape[0])
+        np.savez(f".{sep}CSM_LIST({job}).npz", *mu_bins, slmlist=slmlist, head=['index', 'slm_index', 'mu', 'rmss', 'rmsd'],
+                table=np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist]).T)
 
     elif args.analysis == -1:
         

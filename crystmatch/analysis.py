@@ -66,8 +66,8 @@ def sing_val(crystA: Cryst, crystB: Cryst, slist: Union[List[SLM], NDArray[np.in
     sv = la.svd(s_mat, compute_uv=False)
     return sv
 
-def distance_slm(slist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cryst) -> NDArray[np.float64]:
-    """The Frobenius distance between SLMs.
+def deform_distance(slist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cryst) -> NDArray[np.float64]:
+    """The Frobenius distance between deformation gradients.
 
     Parameters
     ----------
@@ -94,73 +94,6 @@ def distance_slm(slist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cryst) 
     ss = cB @ slist[:,1,:,:] @ slist[:,2,:,:] @ la.inv(cA @ slist[:,0,:,:])
     dlist = np.amin(la.norm(ss.reshape(-1,1,9), cl0.reshape(1,-1,9), axis=2),axis=1)
     return dlist
-
-def distance_shuffle(crystA: Cryst, j1: Tuple[Cryst, Cryst], j2: Tuple[Cryst, Cryst]) -> float:
-    """The RMSD between shuffles.
-    
-    Parameters
-    ----------
-    crystA : cryst
-        `(lattice, species, positions)`, representing the crystal structure, usually obtained by `load_poscar`.
-    j1, j2 : 2-tuple
-        `(crystA_sup, crystB_sup)`, representing a CSM.
-    
-    Returns
-    -------
-    d : float
-        The RMSD between `j10` and `j20`, the shuffles obtained by omitting the lattice deformation in `j1` and `j2`.
-    """
-    # cell geometry
-    cA = crystA[0].T
-    cA_sup_1 = j1[0][0].T
-    cA_sup_2 = j2[0][0].T
-    mA1 = (la.inv(cA) @ cA_sup_1).round().astype(int)
-    mA2 = (la.inv(cA) @ cA_sup_2).round().astype(int)
-    mA_hyp = matrix_lcm(mA1, mA2)
-    nA1 = (la.inv(mA1) @ mA_hyp).round().astype(int)
-    nA2 = (la.inv(mA2) @ mA_hyp).round().astype(int)
-    # fractional coordinates in hypercells
-    pA_sup_1 = j1[0][2].T
-    pB_sup_1 = j1[1][2].T
-    pA_hyp_1 = la.inv(nA1) @ (pA_sup_1.reshape(3,1,-1) + int_vectors_inside(nA1).reshape(3,-1,1)).reshape(3,-1)
-    pB_hyp_1 = la.inv(nA1) @ (pB_sup_1.reshape(3,1,-1) + int_vectors_inside(nA1).reshape(3,-1,1)).reshape(3,-1)
-    pA_sup_2 = j2[0][2].T
-    pB_sup_2 = j2[1][2].T
-    pA_hyp_2 = la.inv(nA2) @ (pA_sup_2.reshape(3,1,-1) + int_vectors_inside(nA2).reshape(3,-1,1)).reshape(3,-1)
-    pB_hyp_2 = la.inv(nA2) @ (pB_sup_2.reshape(3,1,-1) + int_vectors_inside(nA2).reshape(3,-1,1)).reshape(3,-1)
-    # shift each coordinate of `pA_hyp_2` into [0,1)
-    pA_hyp_2 = pA_hyp_2.round(decimals=7)
-    pB_hyp_2 -= np.floor(pA_hyp_2)
-    pA_hyp_2 -= np.floor(pA_hyp_2)
-    pA_hyp_2, ind = np.unique(pA_hyp_2.round(decimals=7), axis=1, return_index=True)
-    pB_hyp_2 = pB_hyp_2[:,ind]
-    # try every translation element in L_A
-    tA = la.inv(mA_hyp) @ int_vectors_inside(matrix_gcd(mA1, mA2))
-    l1d_list = []
-    for i in range(tA.shape[1]):
-        t = tA[:,i]
-        pA_hyp_1_t = (pA_hyp_1 + t.reshape(3,1)).round(decimals=7)
-        pB_hyp_1_t = pB_hyp_1 + t.reshape(3,1)
-        pB_hyp_1_t -= np.floor(pA_hyp_1_t)
-        pA_hyp_1_t -= np.floor(pA_hyp_1_t)
-        pA_hyp_1_t, ind = np.unique(pA_hyp_1_t.round(decimals=7), axis=1, return_index=True)
-        pB_hyp_1_t = pB_hyp_1_t[:,ind]
-        if not ((pA_hyp_1_t - pA_hyp_2).round(decimals=7) == 0).all():
-            print(pA_hyp_1_t.mean(axis=1), pA_hyp_2.mean(axis=1))
-            assert False
-        # print(la.norm(cA @ mA_hyp @ (pB_hyp_1_t - pB_hyp_2), axis=0))
-        l1d_list.append(la.norm(cA @ mA_hyp @ (pB_hyp_1_t - pB_hyp_2), axis=0).mean())
-        '''
-        for j in range(pA_hyp_1.shape[1]):
-            diff = (pA_hyp_1[:,j] + t).reshape(-1,1) - pA_hyp_2
-            ind = np.nonzero((diff.round() == diff.round(decimals=7-1)).all(axis=0))[0]
-            assert len(ind) == 1
-            ind = ind[0]
-            d += np.sum((cA @ mA_hyp @ (pB_hyp_1[:,j] + t - diff[:,ind].round() - pB_hyp_2[:,ind])) ** 2)
-        rmsdlist.append((d / pA_hyp_1.shape[1]) ** 0.5)
-        '''
-    i0 = np.argmin(l1d_list)
-    return l1d_list[i0]
 
 def orientation_relation(vA1: ArrayLike, vB1: ArrayLike, vA2: ArrayLike, vB2: ArrayLike) -> NDArray[np.float64]:
     """Rotation matrix `r` such that `r @ vA1` parallel to `vB1` and `r @ vA2` parallel to `vB2`.
