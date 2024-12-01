@@ -1,4 +1,4 @@
-# Crystmatch
+# Tutorial
 
 If you use this code in your research, please cite the following paper:
 
@@ -68,10 +68,10 @@ To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSM
 $ crystmatch --initial fcc --final bcc --enumeration 4 -0.2
 ```
 
-The following files will be created in the current directory:
+The following files will be created in the `fcc-bcc-m4s0.20` directory:
 
 ```
-./
+fcc-bcc-m4s0.20/
 ├── CSM_LIST(fcc-bcc-m4s0.20).npz    # stores the enumerated CSMs and metadata.
 ├── PLOT(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
 └── TABLE(fcc-bcc-m4s0.20).csv       # organizes the multiplicity, RMSS, and RMSD of each CSM.
@@ -87,10 +87,10 @@ To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).npz`:
 $ crystmatch --analysis CSM_LIST(foo).npz --export 7 10
 ```
 
-Two folders will be created in the current directory, each containing a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files representing the CSM as:
+Two folders will be created in the `foo` directory, each containing a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files representing the CSM as:
 
 ```
-./
+foo/
 ├── CSM_7(m3s0.15d0.83)/
 │   ├── POSCAR_I
 │   └── POSCAR_F

@@ -2,7 +2,7 @@ from .utils import *
 from .enumeration import *
 from .analysis import *
 from os import makedirs
-from os.path import sep
+from os.path import sep, exists
 import argparse
 
 __name__ = "crystmatch"
@@ -67,6 +67,14 @@ def main():
             print("\nError: Invalid mode.")
             return
     
+    if (args.analysis == None or args.analysis == -1) and args.export != None:
+        print("\nError: Cannot export CSMs without specifying the CSM_LIST file.")
+        args.export = None
+    
+    if args.analysis == None and args.orientation != None:
+        print("\nWarning: Cannot perform orientation analysis in enumeration mode.")
+        args.orientation = None
+    
     # main computation (enumeration or analysis)
 
     if args.enumeration != None:
@@ -81,7 +89,7 @@ def main():
         crystB = load_poscar(args.final, symprec=args.symprec)
         check_chem_comp(crystA[1], crystB[1])
         zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
-        job = f"{args.initial}-{args.final}-m{mu_max:d}s{rmss_max:.2f}"
+        job = f"{args.initial.split('.')[0]}-{args.final.split('.')[0]}-m{mu_max:d}s{rmss_max:.2f}"
         
         # enumerating SLMs
         print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f} ...")
@@ -114,17 +122,6 @@ def main():
             mu_bins.append(shufflelist)
         rmsdlist = np.array(rmsdlist)
         print(f"\tObtained representative CSMs and their RMSDs (in {time()-t:.2f} seconds).")
-        
-        # saving results in NPZ format
-        print(f"\nSaving results to CSM_LIST({job}).npz ...")
-        metadata = np.array([job, crystA, crystB, mu_max, rmss_max, args.symprec], dtype=object)
-        ind = np.lexsort((rmsdlist.round(decimals=4), rmsslist.round(decimals=4), mulist))
-        slmlist = slmlist[ind]
-        mulist = mulist[ind]
-        rmsslist = rmsslist[ind]
-        rmsdlist = rmsdlist[ind]
-        table = np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist], dtype=float).T
-        np.savez(f".{sep}CSM_LIST({job}).npz", *mu_bins, metadata=metadata, slmlist=slmlist, table=table)
 
     elif args.analysis == -1:
         
@@ -135,7 +132,7 @@ def main():
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
         crystB = load_poscar(args.final, symprec=args.symprec, to_primitive=False)
         check_chem_comp(crystA[1], crystB[1])
-        job = f"{args.initial}-{args.final}"
+        job = f"{args.initial.split('.')[0]}-{args.final.split('.')[0]}"
         if args.orientation != None: job += "-OR" + "".join(map(str, args.orientation))
         
         # analyzing the CSM
@@ -153,18 +150,36 @@ def main():
         pass
     
     # save and plot results
+    outdir = job
+    if exists(f"{job}"):
+        r = 1
+        while exists(f"{job}_{r}"): r += 1
+        outdir = f"{job}_{r}"
+        
+    if args.enumeration != None:
+        # saving enumeration results in NPZ format
+        print(f"\nSaving results to CSM_LIST({job}).npz ...")
+        metadata = np.array([job, crystA, crystB, mu_max, rmss_max, args.symprec], dtype=object)
+        ind = np.lexsort((rmsdlist.round(decimals=4), rmsslist.round(decimals=4), mulist))
+        slmlist = slmlist[ind]
+        mulist = mulist[ind]
+        rmsslist = rmsslist[ind]
+        rmsdlist = rmsdlist[ind]
+        table = np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist], dtype=float).T
+        np.savez(f"{outdir}{sep}CSM_LIST({job}).npz", *mu_bins, metadata=metadata, slmlist=slmlist, table=table)
+    
     if not args.nocsv:
-        if args.orientation == None:
-            np.savetxt(f".{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
+        if args.orientation != None:
+            np.savetxt(f"{outdir}{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å')
         else:
-            np.savetxt(f".{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.6f',
+            np.savetxt(f"{outdir}{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.6f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å, theta/°')
     
     if not args.noplot:
-        pass
+        pass    # plot mu
         if args.orientation != None:
-            pass
+            pass    # plot OR
     
     print(f"\nTotal time spent: {time()-t0:.2f} seconds")
 
