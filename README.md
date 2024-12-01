@@ -73,7 +73,7 @@ The following files will be created in the `fcc-bcc-m4s0.20` directory:
 ```
 fcc-bcc-m4s0.20/
 ├── CSM_LIST(fcc-bcc-m4s0.20).npz    # stores the enumerated CSMs and metadata.
-├── PLOT(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
+├── rmsd-rmss-mu(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
 └── TABLE(fcc-bcc-m4s0.20).csv       # organizes the multiplicity, RMSS, and RMSD of each CSM.
 ```
 

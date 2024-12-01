@@ -132,7 +132,7 @@ def main():
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
         crystB = load_poscar(args.final, symprec=args.symprec, to_primitive=False)
         check_chem_comp(crystA[1], crystB[1])
-        job = f"{args.initial.split('.')[0]}-{args.final.split('.')[0]}"
+        job = f"{args.initial.split('.')[0]}-{args.final.split('.')[0]}-single"
         if args.orientation != None: job += "-OR" + "".join(map(str, args.orientation))
         
         # analyzing the CSM
@@ -144,8 +144,9 @@ def main():
         print("\nMode: Analysis (loading CSM_LIST from {args.analysis}).")
         data = np.load(args.analysis)
         job, crystA, crystB, mu_max, rmss_max, symprec = data['metadata']
-        print(f"Enumeration job: {job}\n\tMAX_MU: {mu_max}\n\tMAX_RMSS: {rmss_max}\n\tSYMPREC: {symprec}")
-
+        print(f"Loaded: {job}\n\tMAX_MU: {mu_max}\n\tMAX_RMSS: {rmss_max}\n\tSYMPREC: {symprec}")
+        if args.orientation != None: job += "-OR" + "".join(map(str, args.orientation))
+        
         # analyzing the CSMs
         pass
     
@@ -155,10 +156,11 @@ def main():
         r = 1
         while exists(f"{job}_{r}"): r += 1
         outdir = f"{job}_{r}"
-        
+    makedirs(outdir)
+    
     if args.enumeration != None:
         # saving enumeration results in NPZ format
-        print(f"\nSaving results to CSM_LIST({job}).npz ...")
+        print(f"\nSaving results to {outdir}{sep}CSM_LIST({job}).npz ...")
         metadata = np.array([job, crystA, crystB, mu_max, rmss_max, args.symprec], dtype=object)
         ind = np.lexsort((rmsdlist.round(decimals=4), rmsslist.round(decimals=4), mulist))
         slmlist = slmlist[ind]
@@ -169,7 +171,8 @@ def main():
         np.savez(f"{outdir}{sep}CSM_LIST({job}).npz", *mu_bins, metadata=metadata, slmlist=slmlist, table=table)
     
     if not args.nocsv:
-        if args.orientation != None:
+        print(f"\nSaving results to {outdir}{sep}TABLE({job}).csv ...")
+        if args.orientation == None:
             np.savetxt(f"{outdir}{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å')
         else:
@@ -177,7 +180,8 @@ def main():
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å, theta/°')
     
     if not args.noplot:
-        pass    # plot mu
+        print(f"\nCreating plots in {outdir}{sep}PLOT({job}).pdf ...")
+        scatter_colored(f"{outdir}{sep}rmsd-rmss-mu({job}).pdf", rmsslist, rmsdlist, mulist, "Multiplicity")
         if args.orientation != None:
             pass    # plot OR
     

@@ -165,12 +165,18 @@ def compare_orientation(
     return anglelist.round(decimals=7)
 
 def scatter_colored(
-    kappalist: ArrayLike, rmsdlist: ArrayLike, colorlist: ArrayLike, cbarlabel: str = 'Benchmark', save: Union[str, None] = None
+    filename : str,
+    rmsslist: ArrayLike,
+    rmsdlist: ArrayLike,
+    colorlist: ArrayLike,
+    cbarlabel: str,
 ) -> None:
     """Scatter plot of the CSMs with colorbar.
 
     Parameters
     ----------
+    filename : str
+        The filename of the saved plot.
     kappalist : (N,) array_like
         The root-mean-square strain of each CSM.
     rmsdlist : (N,) array_like
@@ -178,32 +184,28 @@ def scatter_colored(
     colorlist : (N,) array_like
         Some quantity of each CSM, which is to be colored.
     cbarlabel : str
-        The label of the colorbar. Default is `Benchmark`.
-    save : str, optional
-        The filename to save. Directly show the figure if not given.
+        The label of the colorbar.
     """
-    kappalist = np.array(kappalist)
+    rmsslist = np.array(rmsslist)
     rmsdlist = np.array(rmsdlist)
     colorlist = np.array(colorlist)
     plt.figure()
     ax = plt.subplot()
     ind = np.argsort(colorlist)[::-1]
-    sc = plt.scatter(kappalist[ind], rmsdlist[ind], marker='d', c=colorlist[ind], cmap=plt.cm.get_cmap('rainbow'), s=20)
+    sc = plt.scatter(rmsslist[ind], rmsdlist[ind], marker='d', c=colorlist[ind], cmap=plt.cm.get_cmap('rainbow'), s=20)
     ind0 = colorlist==0
     n0 = np.sum(ind0)
     if n0 >= 1:
         print(f"\nThere are {n0:d} CSMs (indices: {', '.join(np.nonzero(ind0)[0].astype(str).tolist())}) with {cbarlabel}=0, emphasized by pink stars in the plot.")
-        plt.scatter(kappalist[ind0], rmsdlist[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
-    plt.xlabel('Root-mean-square strain $\kappa$', fontsize=15)
-    plt.ylabel('RMSD $d$ (\AA)', fontsize=15)
-    plt.xlim(0, np.amax(kappalist) * 1.05)
+        plt.scatter(rmsslist[ind0], rmsdlist[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
+    plt.xlabel("Root-mean-square strain (RMSS)", fontsize=15)
+    plt.ylabel("RMSD / Å", fontsize=15)
+    plt.xlim(0, np.amax(rmsslist) * 1.05)
     plt.ylim(min(0, np.amin(rmsdlist) - 0.1), np.amax(rmsdlist) * 1.05)
-    cbar = plt.colorbar(sc, aspect=40)
+    if colorlist.dtype == int: cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
+    else: cbar = plt.colorbar(sc, aspect=40)
     cbar.set_label(cbarlabel, fontsize=13)
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.tick_params(axis='both', which='minor', labelsize=8)
-    if save == None:
-        plt.show()
-    else:
-        plt.savefig(f"{save}")
-        print(f"\nScatter plot saved as '{save}'")
+    plt.savefig(f"{filename}")
+    return
