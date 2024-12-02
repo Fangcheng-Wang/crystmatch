@@ -194,12 +194,13 @@ def int_arrays_to_pair(crystA: Cryst, crystB: Cryst, slm: SLM,
         The final structure, whose lattice vectors and atoms are matched to `crystA_sup` according to the CSM, with rotation-free orientation.
     """
     crystA_sup, crystB_sup, _, _ = create_common_supercell(crystA, crystB, slm)
-    positionsB_sup = crystB_sup[2][p,:] + ks.T
+    pA_sup = crystA_sup[2].T
+    pB_sup = crystB_sup[2].T[:,p] + ks
     if centered:
-        positionsB_sup = positionsB_sup - np.mean(positionsB_sup - crystA_sup[2], axis=0)
-    return crystA_sup, (crystB_sup[0], crystB_sup[1][p], positionsB_sup)
+        pB_sup = pB_sup - np.mean(pB_sup - pA_sup, axis=1, keepdims=True)
+    return crystA_sup, (crystB_sup[0], crystB_sup[1][p], pB_sup.T)
 
-def rms_minus1(x: NDArray[np.float64]) -> NDArray[np.float64]:
+def rmss(x: NDArray[np.float64]) -> NDArray[np.float64]:
     """Root-mean-square strain of given singular values.
 
     Parameters

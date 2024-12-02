@@ -67,10 +67,6 @@ def main():
             print("\nError: Invalid mode.")
             return
     
-    if (args.analysis == None or args.analysis == -1) and args.export != None:
-        print("\nError: Cannot export CSMs without specifying the CSM_LIST file.")
-        args.export = None
-    
     if args.analysis == None and args.orientation != None:
         print("\nWarning: Cannot perform orientation analysis in enumeration mode.")
         args.orientation = None
@@ -89,7 +85,7 @@ def main():
         crystB = load_poscar(args.final, symprec=args.symprec)
         check_chem_comp(crystA[1], crystB[1])
         zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
-        job = f"{args.initial.split('.')[0]}-{args.final.split('.')[0]}-m{mu_max:d}s{rmss_max:.2f}"
+        job = f"{args.initial[:4]}-{args.final[:4]}-m{mu_max:d}s{rmss_max:.2f}"
         
         # enumerating SLMs
         print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f} ...")
@@ -100,7 +96,7 @@ def main():
         _, ind = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0, return_index=True)
         slmlist = slmlist[ind]
         mulist = multiplicity(crystA, crystB, slmlist)
-        rmsslist = rms_minus1(sing_val(crystA, crystB, slmlist))
+        rmsslist = rmss(sing_val(crystA, crystB, slmlist))
         ind = np.lexsort((rmsslist.round(decimals=4), mulist))
         slmlist = slmlist[ind]
         mulist = mulist[ind]
@@ -142,8 +138,8 @@ def main():
         if not (crystA_sup[1] == crystB_sup[1]).all():
             print("\nError: Atom species in two crysts do not match!")
             return
-        job = f"{args.initial.split('.')[0]}-{args.final.split('.')[0]}-single"
-        if args.orientation != None: job += "-OR" + "".join(map(str, args.orientation))
+        job = f"{args.initial[:4]}-{args.final[:4]}-single"
+        if args.orientation != None: job += "-orient"
         
         # computing mu
         _, numbers = np.unique(crystA_sup[1], return_inverse=True)
@@ -154,7 +150,7 @@ def main():
         cA_sup = crystA_sup[0].T
         cB_sup = crystB_sup[0].T
         _, sigma, vT = la.svd(cB_sup @ la.inv(cA_sup))
-        rmsslist = [rms_minus1(sigma)]
+        rmsslist = [rmss(sigma)]
         # computing rmsd
         cB_sup_final = vT.T @ np.diag(sigma) @ vT @ cA_sup
         c_sup_half = vT.T @ np.diag(sigma ** 0.5) @ vT @ cA_sup
@@ -167,6 +163,7 @@ def main():
         pB_sup_final = pB_sup + ks + t0
         rmsdlist = [la.norm(c_sup_half @ (pA_sup - pB_sup_final)) / np.sqrt(pA_sup.shape[1])]
         assert args.orientation == None, "Error: Sorry, this function is still in development."
+        pass    # OR analysis
         print(f"\nThe CSM has properties:\n\tmultiplicity = {mulist[0]}\n\tprincipal strains = " + 
                 ", ".join([f"{100*(s-1):.2f}%" for s in sigma]) + f"\n\trmss = {rmsslist[0]:.4f}\n\trmsd = {rmsdlist[0]:.4f} Å.")
         table = np.array([[0], [0], mulist, rmsslist, rmsdlist], dtype=float).T
@@ -174,11 +171,13 @@ def main():
     else:
 
         # mode: analysis (loading CSM_LIST from NPZ file)
-        print("\nMode: Analysis (loading CSM_LIST from {args.analysis}).")
-        data = np.load(args.analysis)
+        print(f"\nMode: Analysis (load CSM_LIST from {args.analysis}).")
+        data = np.load(args.analysis, allow_pickle=True)
+        table = data['table']
         job, crystA, crystB, mu_max, rmss_max, symprec = data['metadata']
-        print(f"Loaded: {job}\n\tMAX_MU: {mu_max}\n\tMAX_RMSS: {rmss_max}\n\tSYMPREC: {symprec}")
-        if args.orientation != None: job += "-OR" + "".join(map(str, args.orientation))
+        if args.export != None: job += "-export"
+        if args.orientation != None: job += "-orient"
+        print(f"CSM_LIST metadata:\n\tmultipliticy <= {mu_max}\n\trms strain <= {rmss_max}\n\tsymmetry tolerance: {symprec}")
         
         # analyzing the CSMs
         pass
@@ -188,8 +187,8 @@ def main():
     outdir = job
     if exists(f"{job}"):
         r = 1
-        while exists(f"{job}_{r}"): r += 1
-        outdir = f"{job}_{r}"
+        while exists(f"{job}-{r}"): r += 1
+        outdir = f"{job}-{r}"
     makedirs(outdir)
     
     if args.enumeration != None:
@@ -203,10 +202,23 @@ def main():
             to {outdir}{sep}POSCAR_F ...")
         save_poscar(f"{outdir}{sep}POSCAR_I", crystA_sup, crystname = args.initial.split('.')[0])
         save_poscar(f"{outdir}{sep}POSCAR_F", (cB_sup_final.T, crystB_sup[1], pB_sup_final.T),
-                    crystname = args.final.split('.')[0] + "-final")
+                    crystname = args.final.split('.')[0] + "(rotation-free, RMSD-minimized)")
     
     if args.export != None:
-        pass
+        if args.enumeration != None or args.analysis == -1:
+            print("\nWarning: Cannot export CSMs without specifying the CSM_LIST file.")
+        else:
+            print(f"\nSaving CSMs with indices {', '.join(map(str, args.export))} in {args.analysis} to {outdir}{sep} ...")
+            for i in args.export:
+                slm = data['slmlist'][table[i,1].round().astype(int)]
+                mu = table[i,2].round().astype(int)
+                ind = np.sum(table[:i,2].round().astype(int) == mu)
+                p = data[f'arr_{mu:d}'][ind,:,0]
+                ks = data[f'arr_{mu:d}'][ind,:,1:].T
+                crystA_sup, crystB_sup = int_arrays_to_pair(crystA, crystB, slm, p, ks)
+                makedirs(f"{outdir}{sep}CSM_{i:d}")
+                save_poscar(f"{outdir}{sep}CSM_{i:d}{sep}POSCAR_I", crystA_sup, crystname = job.split('-')[0])
+                save_poscar(f"{outdir}{sep}CSM_{i:d}{sep}POSCAR_F", crystB_sup, crystname = job.split('-')[1])
     
     if not args.nocsv:
         print(f"\nSaving results to {outdir}{sep}TABLE({job}).csv ...")
@@ -218,8 +230,8 @@ def main():
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å, theta/°')
     
     if not (args.noplot or args.analysis == -1):
-        print(f"\nCreating plots in {outdir}{sep}PLOT({job}).pdf ...")
-        scatter_colored(f"{outdir}{sep}rmsd-rmss-mu({job}).pdf", rmsslist, rmsdlist, mulist, cbarlabel="Multiplicity")
+        print(f"\nCreating plots in {outdir}{sep}rmsd-rmss-mu({job}).pdf ...")
+        scatter_colored(f"{outdir}{sep}rmsd-rmss-mu({job}).pdf", table[:,3], table[:,4], table[:,2], cbarlabel="Multiplicity")
         if args.orientation != None:
             pass    # plot OR
     

@@ -68,20 +68,20 @@ To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSM
 $ crystmatch --initial fcc --final bcc --enumeration 4 -0.2
 ```
 
+> We **strongly recommend** you to try small multiplicity (`2` or `4`) and RMSS between `0.2` and `0.5` first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
+
 The following files will be created in the `fcc-bcc-m4s0.20` directory:
 
 ```
 fcc-bcc-m4s0.20/
-├── CSM_LIST(fcc-bcc-m4s0.20).npz    # stores the enumerated CSMs and metadata.
-├── rmsd-rmss-mu(fcc-bcc-m4s0.20).pdf        # shows the RMSD-RMSS distribution of the CSMs.
-└── TABLE(fcc-bcc-m4s0.20).csv       # organizes the multiplicity, RMSS, and RMSD of each CSM.
+├── CSM_LIST(fcc-bcc-m4s0.20).npz       # stores the enumerated CSMs and metadata.
+├── rmsd-rmss-mu(fcc-bcc-m4s0.20).pdf   # shows the RMSD-RMSS distribution of the CSMs.
+└── TABLE(fcc-bcc-m4s0.20).csv          # organizes the multiplicity, RMSS, and RMSD of each CSM.
 ```
-
-We strongly recommend you to try small multiplicity (`2` or `4`) and RMSS between `0.2` and `0.5` first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
 
 ### Exporting CSMs from an NPZ file
 
-To export the CSMs with indices `7` and `10` from `CSM_LIST(foo).npz`:
+To export the CSMs with indices `7` and `10` in `TABLE(foo).csv` from `CSM_LIST(foo).npz`:
 
 ```
 $ crystmatch --analysis CSM_LIST(foo).npz --export 7 10

@@ -12,12 +12,12 @@ np.set_printoptions(suppress=True)
 Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
 SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
-def equiv_class_representative(s: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
+def equiv_class_representative(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
     """The representative of the equivalence class of `s`.
 
     Parameters
     ----------
-    s : slm
+    slm : slm
         `(hA, hB, q)`, representing a SLM.
     gA : (..., 3, 3) array of ints
         The rotation group of the initial crystal structure, whose elements are \
@@ -33,7 +33,7 @@ def equiv_class_representative(s: Union[SLM, NDArray[np.int32]], gA: NDArray[np.
     len_cl : int
         The size of the equivalence class of `s`.
     """
-    hA, hB, q = s
+    hA, hB, q = slm
     cl = np.transpose(np.dot((gB @ hB) @ q, la.inv(gA @ hA)), axes=[2,0,1,3]).reshape(-1,9)
     cl, i = np.unique(cl.round(decimals=4), axis=0, return_index=True)
     iA, iB = np.unravel_index(i[0], (gA.shape[0], gB.shape[0]))
@@ -44,7 +44,7 @@ def equiv_class_representative(s: Union[SLM, NDArray[np.int32]], gA: NDArray[np.
 
 def enumerate_slm(
     crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float,
-    kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rms_minus1,
+    kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss,
     likelihood_ratio: float = 1e2, print_detail: int = 0
 ) -> List[SLM]:
     """Enumerating all SLMs of multiplicity `mu` with `kappa` smaller than `kappa_max`.
