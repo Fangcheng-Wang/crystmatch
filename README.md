@@ -115,4 +115,4 @@ The ORs are determined via the rotation-free manner by default, and you can also
 
 ## Python API
 
-You can also use `crystmatch` as a Python module in your own Python scripts. See the [documentation (in progress)]() for details.
+You can also use `crystmatch` as a Python module in your own Python scripts. See the [documentation](https://fangcheng-wang.github.io/crystmatch/) for details.

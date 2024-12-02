@@ -5,3 +5,4 @@ crystmatch.egg-info/
 crystmatch/__pycache__
 crystmatch/.DS_Store
 test/
+site/
