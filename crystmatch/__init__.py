@@ -30,17 +30,17 @@ def main():
                         help="POSCAR file of the final crystal structure")
     parser.add_argument("-E", "--enumeration", nargs=2, type=float, metavar=('MAX_MU','MAX_RMSS'),
                         help="enumeration mode, using MAX_MU and MAX_RMSS as upper bounds")
+    parser.add_argument("-s", "--symprec", type=float, default=1e-5, metavar='TOL',
+                        help="tolerance for determining crystal symmetry; default is 1e-5")
     parser.add_argument("-A", "--analysis", nargs='?', const=-1, type=str, metavar='CSM_LIST',
-                        help="analysis mode, using the CSM given by POSCAR_I and POSCAR_F (or from CSM_LIST if provided)")
+                        help="analysis mode, the CSM is given by POSCAR_I and POSCAR_F (or from CSM_LIST if provided)")
     parser.add_argument("-e", "--export", nargs='+', type=int, metavar=('index1', 'index2'),
                         help="export CSMs from CSM_LIST with the given indices")
-    parser.add_argument("-s", "--symprec", type=float, default=1e-5, metavar='TOL',
-                        help="tolerance for determining crystal symmetry, default is 1e-5")
-    parser.add_argument("--orientation", nargs=12, type=float, metavar=('vix','viy','viz','vfx','vfy','vfz','wix','wiy','wiz','wfx','wfy','wfz'),
+    parser.add_argument("-o", "--orientation", nargs=12, type=float, metavar=('vix','viy','viz','vfx','vfy','vfz','wix','wiy','wiz','wfx','wfy','wfz'),
                         help="benchmark CSMs by the orientation relationship (OR) vi||vf, wi||wf")
-    parser.add_argument("--fixusp", action='store_true', help="use USP-fixed manner [1] when determining OR")
-    parser.add_argument("--nocsv", action='store_true', help="not creating CSV file")
-    parser.add_argument("--noplot", action='store_true', help="not creating PDF plots")
+    parser.add_argument("-u", "--uspfix", action='store_true', help="use USP-fixed manner [1] when determining OR")
+    parser.add_argument("-c", "--csv", action='store_true', help="create CSV file")
+    parser.add_argument("-p", "--plot", action='store_true', help="create scatter plot")
     parser.add_argument("-B", nargs='*', type=str, metavar='', help="deprecated")
     args = parser.parse_args()
 
@@ -127,7 +127,6 @@ def main():
         
         # mode: analysis (single CSM given by POSCARs)
         print("\nMode: Analysis (single CSM).")
-        print("\nWarning: The CSM is uniquely determined by initial and final POSCAR files. I hope you know what you are doing.")
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
         crystA_sup = load_poscar(args.initial, symprec=args.symprec, to_primitive=False)
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
@@ -162,11 +161,16 @@ def main():
         t0 = (pA_sup - pB_sup - ks).mean(axis=1)
         pB_sup_final = pB_sup + ks + t0
         rmsdlist = [la.norm(c_sup_half @ (pA_sup - pB_sup_final)) / np.sqrt(pA_sup.shape[1])]
-        assert args.orientation == None, "Error: Sorry, this function is still in development."
-        pass    # OR analysis
-        print(f"\nThe CSM has properties:\n\tmultiplicity = {mulist[0]}\n\tprincipal strains = " + 
+        print(f"\nSuccessfully loaded a CSM from the initial and final POSCAR files:\n\tmultiplicity = {mulist[0]}\n\tprincipal strains = " + 
                 ", ".join([f"{100*(s-1):.2f}%" for s in sigma]) + f"\n\trmss = {rmsslist[0]:.4f}\n\trmsd = {rmsdlist[0]:.4f} Å.")
-        table = np.array([[0], [0], mulist, rmsslist, rmsdlist], dtype=float).T
+        if args.orientation == None:
+            table = np.array([[0], [0], mulist, rmsslist, rmsdlist], dtype=float).T
+        else:
+            theta = 0
+            pass    # compute OR
+            print(f"\n\tdeviation from the given OR: {theta * 180/np.pi:.4f}°")
+            table = np.array([[0], [0], mulist, rmsslist, rmsdlist, [theta]], dtype=float).T
+            print("\nSorry: This feature is not implemented yet.")
     
     else:
 
@@ -175,12 +179,15 @@ def main():
         data = np.load(args.analysis, allow_pickle=True)
         table = data['table']
         job, crystA, crystB, mu_max, rmss_max, symprec = data['metadata']
-        if args.export != None: job += "-export"
-        if args.orientation != None: job += "-orient"
         print(f"CSM_LIST metadata:\n\tmultipliticy <= {mu_max}\n\trms strain <= {rmss_max}\n\tsymmetry tolerance: {symprec}")
-        
-        # analyzing the CSMs
-        pass
+        if args.export != None: job += "-export"
+        if args.orientation != None:
+            job += "-orient"
+            vix, viy, viz, vfx, vfy, vfz, wix, wiy, wiz, wfx, wfy, wfz = args.orientation
+            print(f"\nComparing each CSM with the given OR:\n\t[{vix},{viy},{viz}]||[{vfx},{vfy},{vfz}]"
+                    + f"\n\t[{wix},{wiy},{wiz}]||[{wfx},{wfy},{wfz}]")
+            r = orientation_relation([vix,viy,viz], [vfx,vfy,vfz], [wix,wiy,wiz], [wfx,wfy,wfz])
+            table = np.hstack((table, compare_orientation(crystA, crystB, data['slmlist'], r, fix_usp=args.uspfix).reshape(-1,1)))
     
     # save and plot results
     
@@ -198,8 +205,7 @@ def main():
         np.savez(f"{outdir}{sep}CSM_LIST({job}).npz", *mu_bins, metadata=metadata, slmlist=slmlist, table=table)
     elif args.analysis == -1:
         # saving final POSCAR (rotation-free and RMSD-minimized)
-        print(f"\nSaving final crystal structure (with rotation-free orientation and RMSD-minimized positions) \
-            to {outdir}{sep}POSCAR_F ...")
+        print(f"\nSaving final crystal structure (rotation-free, RMSD-minimized) to {outdir}{sep}POSCAR_F ...")
         save_poscar(f"{outdir}{sep}POSCAR_I", crystA_sup, crystname = args.initial.split('.')[0])
         save_poscar(f"{outdir}{sep}POSCAR_F", (cB_sup_final.T, crystB_sup[1], pB_sup_final.T),
                     crystname = args.final.split('.')[0] + "(rotation-free, RMSD-minimized)")
@@ -216,24 +222,27 @@ def main():
                 p = data[f'arr_{mu:d}'][ind,:,0]
                 ks = data[f'arr_{mu:d}'][ind,:,1:].T
                 crystA_sup, crystB_sup = int_arrays_to_pair(crystA, crystB, slm, p, ks)
-                makedirs(f"{outdir}{sep}CSM_{i:d}")
+                makedirs(f"{outdir}{sep}CSM_{i:d}(m{mu:d}s{table[i,3]:.2f}d{table[i,4]:.2f})")
                 save_poscar(f"{outdir}{sep}CSM_{i:d}{sep}POSCAR_I", crystA_sup, crystname = job.split('-')[0])
                 save_poscar(f"{outdir}{sep}CSM_{i:d}{sep}POSCAR_F", crystB_sup, crystname = job.split('-')[1])
     
-    if not args.nocsv:
+    if args.csv or args.enumeration != None or args.orientation != None:
         print(f"\nSaving results to {outdir}{sep}TABLE({job}).csv ...")
         if args.orientation == None:
             np.savetxt(f"{outdir}{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å')
         else:
-            np.savetxt(f"{outdir}{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.6f',
+            np.savetxt(f"{outdir}{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.4f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å, theta/°')
     
-    if not (args.noplot or args.analysis == -1):
+    if args.plot or args.enumeration != None:
         print(f"\nCreating plots in {outdir}{sep}rmsd-rmss-mu({job}).pdf ...")
         scatter_colored(f"{outdir}{sep}rmsd-rmss-mu({job}).pdf", table[:,3], table[:,4], table[:,2], cbarlabel="Multiplicity")
-        if args.orientation != None:
-            pass    # plot OR
+
+    if args.orientation != None:
+        print(f"\nPlotting orientation deviation in {outdir}{sep}orientation({job}).pdf ...")
+        scatter_colored(f"{outdir}{sep}orientation({job}).pdf", table[:,3], table[:,4], table[:,5], 
+                        cbarlabel="Deviation / °", cmap=plt.cm.get_cmap('jet'))
     
     print(f"\nTotal time spent: {time()-time0:.2f} seconds")
 

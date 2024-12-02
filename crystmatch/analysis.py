@@ -24,8 +24,8 @@ def multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], ND
         The initial crystal structure, usually obtained by `load_poscar`.
     crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
-    slmlist : {(3, 3, 3), (..., 3, 3, 3)} array_like of ints
-        Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
+    slmlist : list of slm
+        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
 
     Returns
     -------
@@ -50,7 +50,7 @@ def sing_val(crystA: Cryst, crystB: Cryst, slmlist: Union[List[SLM], NDArray[np.
     crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
     slmlist : list of slm
-        Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
+        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
 
     Returns
     -------
@@ -70,7 +70,7 @@ def deform_distance(slmlist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cr
     Parameters
     ----------
     slmlist : list of slm
-        Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
+        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
     s0 : slm
         `(hA, hB, q)`, representing a SLM.
     crystA, crystB : cryst
@@ -93,30 +93,34 @@ def deform_distance(slmlist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cr
     dlist = np.amin(la.norm(ss.reshape(-1,1,9), cl0.reshape(1,-1,9), axis=2),axis=1)
     return dlist
 
-def orientation_relation(vA1: ArrayLike, vB1: ArrayLike, vA2: ArrayLike, vB2: ArrayLike) -> NDArray[np.float64]:
-    """Rotation matrix `r` such that `r @ vA1` parallel to `vB1` and `r @ vA2` parallel to `vB2`.
+def orientation_relation(vi: ArrayLike, vf: ArrayLike, wi: ArrayLike, wf: ArrayLike) -> NDArray[np.float64]:
+    """Rotation matrix `r` such that `r @ vi` || `vf` and `r @ wi` || `wf`.
 
     Parameters
     ----------
-    vA1, vB1 : (3,) array_like
-        Vectors (in cartesian coordinates) such that `r @ vA1` parallel to `vB1`.
-    vA2, vB2 : (3,) array_like
-        The same as `vA1` and `vB1`.
+    vi, vf : (3,) array_like
+        Vectors (cartesian coordinates) that satisfy `r @ vi` || `vf`.
+    wi, wf : (3,) array_like
+        Vectors (cartesian coordinates) that satisfy `r @ wi` || `wf`.
         
     Returns
     -------
     r : (3, 3) array
-        A rotation matrix representing the given orientation relationship, which rotates `vA1` to `vB1` and `vA2` to `vB2`.
+        A rotation matrix representing the given orientation relationship.
     """
-    b = np.array([vA1, np.cross(vA1, vA2), np.cross(vA1, np.cross(vA1, vA2))]).T
-    c = np.array([vB1, np.cross(vB1, vB2), np.cross(vB1, np.cross(vB1, vB2))]).T
+    b = np.array([vi, np.cross(vi, wi), np.cross(vi, np.cross(vi, wi))]).T
+    c = np.array([vf, np.cross(vf, wf), np.cross(vf, np.cross(vf, wf))]).T
     b = b * la.norm(b, axis=0).reshape(1,3) ** -1
     c = c * la.norm(c, axis=0).reshape(1,3) ** -1
     r = c @ b.T
     return r
 
 def compare_orientation(
-    crystA: Cryst, crystB: Cryst, slmlist: Union[List[SLM], NDArray[np.int32]], r: NDArray[np.float64], fix_usp: bool = False
+    crystA: Cryst,
+    crystB: Cryst,
+    slmlist: Union[List[SLM], NDArray[np.int32]],
+    r: NDArray[np.float64],
+    fix_usp: bool = False
 ) -> NDArray[np.float64]:
     """Calculate how much each SLM in `slmlist` differ from a given orientation relationship.
 
@@ -126,8 +130,8 @@ def compare_orientation(
         The initial crystal structure, usually obtained by `load_poscar`.
     crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
-    slmlist : (..., 3, 3, 3) array_like of ints
-        Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
+    slmlist : list of slm
+        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
     r : (3, 3) array
         A rotation matrix representing the given orientation relationship.
     fix_usp : bool, optional
