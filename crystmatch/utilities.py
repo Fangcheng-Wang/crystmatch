@@ -60,9 +60,7 @@ def load_poscar(filename: str, to_primitive: bool = True, symprec: float = 1e-5)
         for i in range(N):
             positions[i,:] = np.dot(la.inv(lattice.transpose()), np.array(f.readline().split()[:3], dtype=float))
     f.close()
-    numbers = np.zeros(N, dtype=int)
-    for i in range(1, len(species_counts)):
-        numbers[np.sum(species_counts[:i]):] = numbers[np.sum(species_counts[:i]):] + 1
+    _, numbers = np.unique(species, return_inverse=True)
     print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=symprec)}")
     if to_primitive:
         lattice, positions, numbers = find_primitive((lattice, positions, numbers))
@@ -129,8 +127,9 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
         The supercell of the final structure, but deformed to have the same cell vectors as (S^T S)^(1/2) `crystA_sup` (rotation-free).
     c_sup_half : (3, 3) array of floats
         The half-distorted supercell, i.e., (S^T S)^(1/4) `latticeA_sup` = (S^T S)^(-1/4) `latticeB_sup_final`.
-    c_translate : (3, 3) array of floats
-        The translation cell of the shuffle, i.e., gcd( (S^T S)^(1/4) `latticeA_sup` , (S^T S)^(-1/4) `latticeB_sup_final` ).
+    f_translate : (3, 3) array of floats
+        The translation cell (fractional coordinates) of the shuffle, i.e., \
+            gcd( (S^T S)^(1/4) `latticeA_sup` , (S^T S)^(-1/4) `latticeB_sup_final` ).
     """
     # Unpacking crystal structures.
     cA = crystA[0].T
@@ -166,13 +165,13 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     # Computing output.
     crystA_sup = (cA_sup.T, species_sup, pA_sup.T)
     crystB_sup_final = (cB_sup_final.T, species_sup, pB_sup.T)
-    c_translate = niggli_cell(matrix_gcd(la.inv(mA), la.inv(mB)))[0]
-    return crystA_sup, crystB_sup_final, c_sup_half, c_translate
+    f_translate = niggli_cell(matrix_gcd(la.inv(mA), la.inv(mB)))[0]
+    return crystA_sup, crystB_sup_final, c_sup_half, f_translate
 
-def int_arrays_to_crysts(crystA: Cryst, crystB: Cryst, slm: SLM,
+def int_arrays_to_pair(crystA: Cryst, crystB: Cryst, slm: SLM,
     p: NDArray[np.int32], ks: NDArray[np.int32], centered: bool = True
 ) -> Tuple[Cryst, Cryst]:
-    """Convert the integer arrays representation `(slm, p, translations)` of a CSM to initial and final cryst.
+    """Convert the integer arrays representation `(slm, p, translations)` of a CSM to a pair of crysts.
     
     Parameters
     ----------
@@ -200,25 +199,20 @@ def int_arrays_to_crysts(crystA: Cryst, crystB: Cryst, slm: SLM,
         positionsB_sup = positionsB_sup - np.mean(positionsB_sup - crystA_sup[2], axis=0)
     return crystA_sup, (crystB_sup[0], crystB_sup[1][p], positionsB_sup)
 
-def crysts_to_int_arrays(crystA: Cryst, crystB: Cryst) -> Tuple[SLM, NDArray[np.int32], NDArray[np.int32]]:
-    """Convert the CSM determined by initial and final crysts to its integer arrays representation `(slm, p, translations)`.
-    
+def rms_minus1(x: NDArray[np.float64]) -> NDArray[np.float64]:
+    """Root-mean-square strain of given singular values.
+
     Parameters
     ----------
-    crystA, crystB : cryst
-        The initial and final structures used to determine the CSM.
-
+    x : (..., 3) array
+        The singular values of 3*3 matrices.
+    
     Returns
     -------
-    slm : slm
-        The SLM of the CSM.
-    p : (Z, ) array of ints
-        The p of the shuffle.
-    ks : (3, Z) array of ints
-        The lattice-vector translations of the shuffle.
+    rms_strain : (...) array
+        Root-mean-square of `x - 1`.
     """
-    pass
-    return 
+    return np.sqrt(np.mean((x - 1) ** 2, axis=-1))
 
 def get_pure_rotation(cryst: Cryst, symprec: float = 1e-5) -> NDArray[np.int32]:
     """Find all pure rotations appeared in the space group of `cryst`.

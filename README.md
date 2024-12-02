@@ -112,3 +112,7 @@ $ crystmatch --analysis CSM_LIST(foo).npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
 The arguments after `--orientation` must be **cartesian coordinates**.
 
 The ORs are determined via the rotation-free manner by default, and you can also use `--fixusp` to determine ORs via the USF-fixed manner; see Ref. [[1]](https://arxiv.org/abs/2305.05278) for their definitions.
+
+## Python API
+
+You can also use `crystmatch` as a Python module in your own Python scripts. See the [documentation (in progress)]() for details.

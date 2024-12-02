@@ -24,7 +24,7 @@
         show_root_heading: true
         show_source: false
 
-::: crystmatch.utils
+::: crystmatch.utilities
     handler: python
     options:
         docstring_style: numpy

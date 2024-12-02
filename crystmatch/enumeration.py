@@ -2,7 +2,7 @@
 Enumerate SLMs and CSMs.
 """
 
-from .utils import *
+from .utilities import *
 from time import time
 from scipy.optimize import brentq, linear_sum_assignment, brute
 from scipy.stats.qmc import Sobol
@@ -11,21 +11,6 @@ from scipy.spatial.transform import Rotation
 np.set_printoptions(suppress=True)
 Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
 SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
-
-def rmss(x: NDArray[np.float64]) -> NDArray[np.float64]:
-    """Root-mean-square strain of given singular values.
-
-    Parameters
-    ----------
-    x : (..., 3) array
-        The singular values of 3*3 matrices.
-    
-    Returns
-    -------
-    rms_strain : (...) array
-        Root-mean-square of `x - 1`.
-    """
-    return np.sqrt(np.mean((x - 1) ** 2, axis=-1))
 
 def equiv_class_representative(s: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
     """The representative of the equivalence class of `s`.
@@ -59,7 +44,7 @@ def equiv_class_representative(s: Union[SLM, NDArray[np.int32]], gA: NDArray[np.
 
 def enumerate_slm(
     crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float,
-    kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss,
+    kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rms_minus1,
     likelihood_ratio: float = 1e2, print_detail: int = 0
 ) -> List[SLM]:
     """Enumerating all SLMs of multiplicity `mu` with `kappa` smaller than `kappa_max`.
@@ -157,14 +142,13 @@ def enumerate_slm(
     print(f'\tFound {len(slmlist):d} incongruent SLMs (in {time()-t:.2f} seconds).')
     return slmlist
 
-def minimize_rmsd_fixed(
+def minimize_rmsd_t(
     c: NDArray[np.float64],
     species: NDArray[np.str_],
     pA: NDArray[np.float64],
     pB: NDArray[np.float64]
 ) -> tuple[float, NDArray[np.int32], NDArray[np.int32]]:
-    """
-    The local minimum root-mean-square distance (RMSD) between two crystal structures with same cells.
+    """Minimize the RMSD with fixed SLM, overall translation, variable permutation and lattice-vector translations.
 
     Parameters
     ----------
@@ -173,12 +157,12 @@ def minimize_rmsd_fixed(
     species : (N,) array of strs
         The array that specifies the type of each ion.
     pA, pB : (3, N) array
-        The matrices whose columns are fractional coordinates of the ions in the crystal structures.
+        The matrices whose columns are fractional coordinates of atoms.
         
     Returns
     -------
     rmsd : float
-        The minimized RMSD (calculated under periodic boundary condition).
+        The minimized RMSD.
     p : (Z, ) array of ints
         The permutation of the atoms in `pB` that minimizes the RMSD.
     ks : (3, Z) array of ints
@@ -201,11 +185,39 @@ def minimize_rmsd_fixed(
     rmsd = la.norm(c @ (pB[:,p] + ks - pA)) / np.sqrt(pA.shape[1])
     return rmsd, p, ks
 
-def minimize_rmsd_translation(
-    crystA: Cryst, crystB: Cryst, slm: Union[SLM, NDArray[np.int32]], n_grid: int = 5
-) -> tuple[float, NDArray[np.int32], NDArray[np.int32]]:
+def minimize_rmsd_tp(
+    c: NDArray[np.float64],
+    pA: NDArray[np.float64],
+    pB: NDArray[np.float64]
+) -> Tuple[float, NDArray[np.int32]]:
+    """Minimize the RMSD with fixed SLM, overall translation, permutation, and variable lattice-vector translations.
+    
+    Parameters
+    ----------
+    c : (3, 3) array
+        The matrix whose columns are cell vectors of both crystal structures.
+    pA, pB : (3, N) array
+        The matrices whose columns are fractional coordinates of atoms.
+        
+    Returns
+    -------
+    rmsd : float
+        The minimized RMSD.
+    ks : (3, Z) array of ints
+        The lattice-vector translations (fractional coordinates) of the atoms in `pB` that minimizes the RMSD.
     """
-    Minimize the RMSD by optimizing the translation and atomic correspondence compatible with SLM `s`.
+    assert pA.shape[1] == pB.shape[1]
+    shift = np.mgrid[-1:2, -1:2, -1:2].reshape(3,1,-1)
+    relative_position = np.tensordot(c, (pA.reshape(3,-1,1) - pB.reshape(3,-1,1) - shift), axes=[1,0])
+    d2_matrix = np.sum(relative_position ** 2, axis=0)
+    ks = shift[:,0,np.argmin(d2_matrix, axis=1)]
+    rmsd = la.norm(c @ (pB + ks - pA)) / np.sqrt(pA.shape[1])
+    return rmsd, ks
+
+def minimize_rmsd(
+    crystA: Cryst, crystB: Cryst, slm: Union[SLM, NDArray[np.int32]], n_grid: int = 5
+) -> tuple[float, NDArray[np.int32], NDArray[np.int32], NDArray[np.float64]]:
+    """Minimize the RMSD with fixed SLM, variable permutation, overall and lattice-vector translations.
 
     Parameters
     ----------
@@ -213,7 +225,7 @@ def minimize_rmsd_translation(
         The initial crystal structure, usually obtained by `load_poscar`.
     crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
-    slm : (3, 3, 3) array_like of ints
+    slm : slm
         Triplets of integer matrices like `(hA, hB, q)`, representing a SLM.
     n_grid : int, optional
         The number of grid points for translation. Default is 5.
@@ -223,15 +235,19 @@ def minimize_rmsd_translation(
     rmsd : float
         The minimum atomic displacement (RMSD) between (S^T S)^(1/4) `crystA_sup` and (S^T S)^(-1/4) `crystB_sup`.
     p : (Z, ) array of ints
-        The p of the atoms in `pB_sup` that minimizes the RMSD.
+        The permutation of the atoms in `pB_sup` that minimizes the RMSD.
     ks : (3, Z) array of ints
-        The ks of the atoms in `pB_sup[:,p]` that minimizes the RMSD.
+        The lattice-vector translations (fractional coordinates) of the atoms in `pB_sup[:,p]` that minimizes the RMSD.
+    t0 : (3, ) array of floats
+        The overall translation on `pB` that minimizes the RMSD.
     """
-    crystA_sup, crystB_sup, c_sup_half, c_translate = create_common_supercell(crystA, crystB, slm)
+    crystA_sup, crystB_sup, c_sup_half, f_translate = create_common_supercell(crystA, crystB, slm)
     species = crystA_sup[1]
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
-    t0 = brute(lambda z: minimize_rmsd_fixed(c_sup_half, species, pA_sup, pB_sup + c_translate @ z.reshape(3,1))[0],
+    t0 = brute(lambda z: minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ z.reshape(3,1))[0],
             ((0,1),(0,1),(0,1)), Ns=n_grid, finish=None)
-    rmsd, p, ks = minimize_rmsd_fixed(c_sup_half, species, pA_sup, pB_sup + c_translate @ t0.reshape(3,1))
-    return rmsd, p, ks
+    _, p, ks = minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ t0.reshape(3,1))
+    t0 = (pA_sup - pB_sup[:,p] - ks).mean(axis=1, keepdims=True)
+    rmsd = la.norm(c_sup_half @ (pA_sup - pB_sup[:,p] - ks - t0)) / np.sqrt(pA_sup.shape[1])
+    return rmsd, p, ks, t0

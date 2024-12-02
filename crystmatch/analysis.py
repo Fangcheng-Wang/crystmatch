@@ -2,13 +2,11 @@
 Analyze and visualize CSMs.
 """
 
-from .utils import *
+from .utilities import *
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.rcParams.update({
-    "pgf.texsystem": "xelatex",
     'font.family': 'serif',
-    'text.usetex': True,
     'pgf.rcfonts': False,
     'figure.dpi': 150,
 })
@@ -169,7 +167,8 @@ def scatter_colored(
     rmsslist: ArrayLike,
     rmsdlist: ArrayLike,
     colorlist: ArrayLike,
-    cbarlabel: str,
+    cmap : matplotlib.colors.Colormap = plt.cm.get_cmap('viridis'),
+    cbarlabel: str = None
 ) -> None:
     """Scatter plot of the CSMs with colorbar.
 
@@ -177,14 +176,16 @@ def scatter_colored(
     ----------
     filename : str
         The filename of the saved plot.
-    kappalist : (N,) array_like
+    rmsslist : (N,) array_like
         The root-mean-square strain of each CSM.
     rmsdlist : (N,) array_like
         The root-mean-square distance of each CSM.
     colorlist : (N,) array_like
         Some quantity of each CSM, which is to be colored.
-    cbarlabel : str
-        The label of the colorbar.
+    cmap : `matplotlib.colors.Colormap`, optional
+        The colormap to use. Default is `plt.cm.get_cmap('viridis')`.
+    cbarlabel : str, optional
+        The label of the colorbar. Default is None, in which case the filename is used.
     """
     rmsslist = np.array(rmsslist)
     rmsdlist = np.array(rmsdlist)
@@ -192,7 +193,7 @@ def scatter_colored(
     plt.figure()
     ax = plt.subplot()
     ind = np.argsort(colorlist)[::-1]
-    sc = plt.scatter(rmsslist[ind], rmsdlist[ind], marker='d', c=colorlist[ind], cmap=plt.cm.get_cmap('rainbow'), s=20)
+    sc = plt.scatter(rmsslist[ind], rmsdlist[ind], marker='d', c=colorlist[ind], cmap=cmap, s=20)
     ind0 = colorlist==0
     n0 = np.sum(ind0)
     if n0 >= 1:
@@ -202,9 +203,11 @@ def scatter_colored(
     plt.ylabel("RMSD / Å", fontsize=15)
     plt.xlim(0, np.amax(rmsslist) * 1.05)
     plt.ylim(min(0, np.amin(rmsdlist) - 0.1), np.amax(rmsdlist) * 1.05)
-    if colorlist.dtype == int: cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
-    else: cbar = plt.colorbar(sc, aspect=40)
-    cbar.set_label(cbarlabel, fontsize=13)
+    if colorlist.dtype == int:
+        cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
+    else:
+        cbar = plt.colorbar(sc, aspect=40)
+    cbar.set_label(cbarlabel if cbarlabel != None else filename.split('.')[0], fontsize=13)
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.tick_params(axis='both', which='minor', labelsize=8)
     plt.savefig(f"{filename}")
