@@ -1,0 +1,626 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="Fang-Cheng Wang">
+      
+      
+      
+      
+        <link rel="next" href="api/">
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.46">
+    
+    
+      
+        <title>Crystmatch Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.6f8fc17f.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="css/style-crystmatch.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tutorial" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Crystmatch Documentation" class="md-header__button md-logo" aria-label="Crystmatch Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Crystmatch Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tutorial
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Fangcheng-Wang/crystmatch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    crystmatch
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Crystmatch Documentation" class="md-nav__button md-logo" aria-label="Crystmatch Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Crystmatch Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Fangcheng-Wang/crystmatch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    crystmatch
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enumerating-csms" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enumerating CSMs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-csms-from-an-npz-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exporting CSMs from an NPZ file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orientation-relationship-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Orientation relationship analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enumerating-csms" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enumerating CSMs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-csms-from-an-npz-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exporting CSMs from an NPZ file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orientation-relationship-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Orientation relationship analysis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="tutorial">Tutorial</h1>
+<p>If you use this code in your research, please cite the following paper:</p>
+<p>[1] <a href="https://arxiv.org/abs/2305.05278">F.-C. Wang et al., <em>Physical Review Letters</em> <strong>132</strong>, 086101 (2024)</a></p>
+<p>You are also welcome to contact me at <code>wfc@pku.edu.cn</code> for any questions or comments.</p>
+<h2 id="introduction">Introduction</h2>
+<p>A solid-solid phase transition establishes an <em>atom-to-atom correspondence</em> between crystal structures <span class="arithmatex">\(\mathcal A\)</span> and <span class="arithmatex">\(\mathcal B\)</span>. Such correspondence is called a <em>crystal-structure match</em> (CSM) <a href="https://arxiv.org/abs/2305.05278">[1]</a>. A CSM can be described by a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, which specifies how the lattice deforms from <span class="arithmatex">\(\mathcal A\)</span> to <span class="arithmatex">\(\mathcal B\)</span> and the correspondence between atoms in a supercell of <span class="arithmatex">\(\mathcal A\)</span> and those in <span class="arithmatex">\(\mathcal B\)</span>.</p>
+<p>The main functions of <code>crystmatch</code> are as follows:</p>
+<ul>
+<li>
+<p><strong>Enumeration</strong>:</p>
+<ul>
+<li>Provide a complete list of <em>representative</em> <a href="https://arxiv.org/abs/2305.05278">[1]</a> CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity <a href="https://arxiv.org/abs/2305.05278">[1]</a> and root-mean-square strain (RMSS).</li>
+<li>(In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and root-mean-square displacement (RMSD).</li>
+</ul>
+</li>
+<li>
+<p><strong>Analysis</strong>:</p>
+<ul>
+<li>Read a CSM from a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, and save CSMs in the same format.</li>
+<li>Score CSMs by RMSS and RMSD.</li>
+<li>Benchmark a CSM by its deviation angle from an orientation relationship (OR).</li>
+</ul>
+</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p>Make sure you have <strong>Python 3.9 or later</strong> installed. You can check it by running:</p>
+<div class="codehilite"><pre><span></span><code>$ python3 --version
+</code></pre></div>
+
+<p>Clone this repository and navigate to the directory where <code>setup.py</code> is located, run:</p>
+<div class="codehilite"><pre><span></span><code>$ pip3 install .
+</code></pre></div>
+
+<p>Check whether <code>crystmatch</code> is successfully installed:</p>
+<div class="codehilite"><pre><span></span><code>$ crystmatch --version
+</code></pre></div>
+
+<h2 id="usage">Usage</h2>
+<p>To run <code>crystmatch</code>, one of the following modes must be selected:</p>
+<ol>
+<li><strong>Enumeration mode</strong>: Use <code>-E</code> or <code>--enumerate</code> to generate a list of CSMs, then perform preliminary analysis.</li>
+<li><strong>Analysis mode</strong>: Use <code>-A</code> or <code>--analyze</code> to read CSM(s) from <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files (or <code>CSM_LIST.npz</code> if provided), then perform detailed analysis. If <code>CSM_LIST.npz</code> is provided, you can export specific CSMs using <code>--export index1 [index2 ...]</code>.</li>
+</ol>
+<p>The initial and final crystal structures should be specified in the form of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, unless in the analysis mode and <code>CSM_LIST.npz</code> is provided.</p>
+<p>If you don't specify any mode or crystal structures, <code>crystmatch</code> will ask for input.</p>
+<p>To see all available options, run:</p>
+<div class="codehilite"><pre><span></span><code>$ crystmatch --help
+</code></pre></div>
+
+<h2 id="examples">Examples</h2>
+<h3 id="enumerating-csms">Enumerating CSMs</h3>
+<p>To generate a list of representative <a href="https://arxiv.org/abs/2305.05278">[1]</a> CSMs between two crystal structures stored in <code>./fcc</code> and <code>./bcc</code>, with a maximum multiplicity of <code>4</code> and a maximum RMSS of <code>0.2</code>:</p>
+<div class="codehilite"><pre><span></span><code>$ crystmatch --initial fcc --final bcc --enumeration 4 -0.2
+</code></pre></div>
+
+<blockquote>
+<p>We <strong>strongly recommend</strong> you to try small multiplicity (<code>2</code> or <code>4</code>) and RMSS between <code>0.2</code> and <code>0.5</code> first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
+</blockquote>
+<p>The following files will be created in the <code>fcc-bcc-m4s0.20</code> directory:</p>
+<div class="codehilite"><pre><span></span><code>fcc-bcc-m4s0.20/
+├── CSM_LIST(fcc-bcc-m4s0.20).npz       # stores the enumerated CSMs and metadata.
+├── rmsd-rmss-mu(fcc-bcc-m4s0.20).pdf   # shows the RMSD-RMSS distribution of the CSMs.
+└── TABLE(fcc-bcc-m4s0.20).csv          # organizes the multiplicity, RMSS, and RMSD of each CSM.
+</code></pre></div>
+
+<h3 id="exporting-csms-from-an-npz-file">Exporting CSMs from an NPZ file</h3>
+<p>To export the CSMs with indices <code>7</code> and <code>10</code> in <code>TABLE(foo).csv</code> from <code>CSM_LIST(foo).npz</code>:</p>
+<div class="codehilite"><pre><span></span><code>$ crystmatch --analysis CSM_LIST(foo).npz --export 7 10
+</code></pre></div>
+
+<p>Two folders will be created in the <code>foo</code> directory, each containing a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files representing the CSM as:</p>
+<div class="codehilite"><pre><span></span><code>foo/
+├── CSM_7(m3s0.15d0.83)/
+│   ├── POSCAR_I
+│   └── POSCAR_F
+└── CSM_10(m4s0.11d0.90)/
+    ├── POSCAR_I
+    └── POSCAR_F
+</code></pre></div>
+
+<p>The values in the brackets represent the basic attributes of CSMs. For example, <code>m3s0.15d0.83</code> indicates a multiplicity of <code>3</code>, RMSS of <code>0.15</code>, and RMSD of <code>0.83</code>.</p>
+<h3 id="orientation-relationship-analysis">Orientation relationship analysis</h3>
+<p>To benchmark CSMs in <code>CSM_LIST(foo).npz</code> by their deviation angles from the OR <span class="arithmatex">\((111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B\)</span>:</p>
+<div class="codehilite"><pre><span></span><code>$ crystmatch --analysis CSM_LIST(foo).npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
+</code></pre></div>
+
+<p>The arguments after <code>--orientation</code> must be <strong>cartesian coordinates</strong>.</p>
+<p>The ORs are determined via the rotation-free manner by default, and you can also use <code>--fixusp</code> to determine ORs via the USF-fixed manner; see Ref. <a href="https://arxiv.org/abs/2305.05278">[1]</a> for their definitions.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+        <script src="javascripts/katex.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>
