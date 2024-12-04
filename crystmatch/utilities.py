@@ -2,6 +2,8 @@
 Load/save crystal structures and CSMs from/to files.
 """
 
+from os import makedirs
+from os.path import sep, exists, splitext
 import numpy as np
 import numpy.linalg as la
 from copy import deepcopy
@@ -72,6 +74,30 @@ def load_poscar(filename: str, to_primitive: bool = True, symprec: float = 1e-5)
     else: print(f"\tUsing cell in POSCAR file (Z = {len(numbers):d}).")
     cryst = (lattice, species, positions)
     return cryst
+
+def unique_filename(message: Union[str, None], filename: str) -> str:
+    """Get a unique filename by appending a number to the end of the given filename.
+
+    Parameters
+    ----------
+    filename : str
+        The filename to be modified.
+    message : str, optional
+        A message to print before the filename.
+
+    Returns
+    -------
+    new_filename : str
+        The modified filename with a unique number appended.
+    """
+    base, ext = splitext(filename)
+    counter = 1
+    new_filename = filename
+    while exists(new_filename):
+        new_filename = f"{base}-{counter}{ext}"
+        counter += 1
+    if message != None: print(f"{message} '{new_filename}' ...")
+    return new_filename
 
 def save_poscar(filename: str, cryst: Cryst, crystname: Union[str, None] = None) -> None:
     """

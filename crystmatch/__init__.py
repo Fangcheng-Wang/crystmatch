@@ -1,8 +1,6 @@
 from .utilities import *
 from .enumeration import *
 from .analysis import *
-from os import makedirs
-from os.path import sep, exists
 import argparse
 
 __name__ = "crystmatch"
@@ -13,7 +11,7 @@ __description__ = 'Enumerating and analyzing crystal-structure matches for solid
 __url__ = 'https://github.com/Fangcheng-Wang/crystmatch'
 __epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To get the latest version, please see: \
 \n\n\t' + __url__ + '\n\nIf you use crystmatch in your research, please cite the following paper: \n\n\t\
-[1] F.-C. Wang et al., Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
+[1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
 You are also welcome to contact me at ' + __email__ + ' for any questions or comments.'
 
 def main():
@@ -85,7 +83,7 @@ def main():
         crystB = load_poscar(args.final, symprec=args.symprec)
         check_chem_comp(crystA[1], crystB[1])
         zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
-        job = f"{args.initial[:4]}-{args.final[:4]}-m{mu_max:d}s{rmss_max:.2f}"
+        job = f"{splitext(args.initial)[0]}-{splitext(args.final)[0]}-m{mu_max:d}s{rmss_max:.2f}"
         
         # enumerating SLMs
         print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f} ...")
@@ -137,8 +135,8 @@ def main():
         if not (crystA_sup[1] == crystB_sup[1]).all():
             print("\nError: Atom species in two crysts do not match!")
             return
-        job = f"{args.initial[:4]}-{args.final[:4]}-single"
-        if args.orientation != None: job += "-orient"
+        job = f"{splitext(args.initial)[0]}-{splitext(args.final)[0]}"
+        if args.orientation != None: job += "-o"
         
         # computing mu
         _, numbers = np.unique(crystA_sup[1], return_inverse=True)
@@ -180,9 +178,9 @@ def main():
         table = data['table']
         job, crystA, crystB, mu_max, rmss_max, symprec = data['metadata']
         print(f"CSM_LIST metadata:\n\tmultipliticy <= {mu_max}\n\trms strain <= {rmss_max}\n\tsymmetry tolerance: {symprec}")
-        if args.export != None: job += "-export"
+        if args.export != None: job += "-e"
         if args.orientation != None:
-            job += "-orient"
+            job += "-o"
             vix, viy, viz, vfx, vfy, vfz, wix, wiy, wiz, wfx, wfy, wfz = args.orientation
             print(f"\nComparing each CSM with the given OR:\n\t[{vix},{viy},{viz}]||[{vfx},{vfy},{vfz}]"
                     + f"\n\t[{wix},{wiy},{wiz}]||[{wfx},{wfy},{wfz}]")
@@ -191,57 +189,49 @@ def main():
     
     # save and plot results
     
-    outdir = job
-    if exists(f"{job}"):
-        r = 1
-        while exists(f"{job}-{r}"): r += 1
-        outdir = f"{job}-{r}"
-    makedirs(outdir)
-    
     if args.enumeration != None:
         # saving enumeration results in NPZ format
-        print(f"\nSaving results to {outdir}{sep}CSM_LIST({job}).npz ...")
         metadata = np.array([job, crystA, crystB, mu_max, rmss_max, args.symprec], dtype=object)
-        np.savez(f"{outdir}{sep}CSM_LIST({job}).npz", *mu_bins, metadata=metadata, slmlist=slmlist, table=table)
+        np.savez(unique_filename("Saving CSMs to", f"CSM_LIST-{job}.npz"), *mu_bins, metadata=metadata, slmlist=slmlist, table=table)
     elif args.analysis == -1:
         # saving final POSCAR (rotation-free and RMSD-minimized)
-        print(f"\nSaving final crystal structure (rotation-free, RMSD-minimized) to {outdir}{sep}POSCAR_F ...")
-        save_poscar(f"{outdir}{sep}POSCAR_I", crystA_sup, crystname = args.initial.split('.')[0])
-        save_poscar(f"{outdir}{sep}POSCAR_F", (cB_sup_final.T, crystB_sup[1], pB_sup_final.T),
-                    crystname = args.final.split('.')[0] + "(rotation-free, RMSD-minimized)")
+        save_poscar(unique_filename("Saving final crystal structure (rotation-free, RMSD-minimized) to", 
+                    f"{splitext(args.final)[0]}-optimized{splitext(args.final)[1]}"),
+                    (cB_sup_final.T, crystB_sup[1], pB_sup_final.T), crystname = splitext(args.final)[0] + "(optimized)")
     
     if args.export != None:
         if args.enumeration != None or args.analysis == -1:
             print("\nWarning: Cannot export CSMs without specifying the CSM_LIST file.")
         else:
-            print(f"\nSaving CSMs with indices {', '.join(map(str, args.export))} in {args.analysis} to {outdir}{sep} ...")
+            print(f"\nExporting CSMs with indices {', '.join(map(str, args.export))} in {args.analysis} ...")
             for i in args.export:
+                if i >= table.shape[0]:
+                    print(f"\nWarning: Index {i} is out of range (total {table.shape[0]} CSMs).")
+                    continue
                 slm = data['slmlist'][table[i,1].round().astype(int)]
                 mu = table[i,2].round().astype(int)
                 ind = np.sum(table[:i,2].round().astype(int) == mu)
                 p = data[f'arr_{mu:d}'][ind,:,0]
                 ks = data[f'arr_{mu:d}'][ind,:,1:].T
                 crystA_sup, crystB_sup = int_arrays_to_pair(crystA, crystB, slm, p, ks)
-                makedirs(f"{outdir}{sep}CSM_{i:d}(m{mu:d}s{table[i,3]:.2f}d{table[i,4]:.2f})")
-                save_poscar(f"{outdir}{sep}CSM_{i:d}{sep}POSCAR_I", crystA_sup, crystname = job.split('-')[0])
-                save_poscar(f"{outdir}{sep}CSM_{i:d}{sep}POSCAR_F", crystB_sup, crystname = job.split('-')[1])
+                dirname = unique_filename(f"Saving the CSM with index {i:d} to", f"CSM_{i:d}")
+                makedirs(dirname)
+                save_poscar(f"{dirname}{sep}POSCAR_I", crystA_sup, crystname = job.split('-')[0])
+                save_poscar(f"{dirname}{sep}POSCAR_F", crystB_sup, crystname = job.split('-')[1])
     
     if args.csv or args.enumeration != None or args.orientation != None:
-        print(f"\nSaving results to {outdir}{sep}TABLE({job}).csv ...")
         if args.orientation == None:
-            np.savetxt(f"{outdir}{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
+            np.savetxt(unique_filename("Saving results to", f"TABLE-{job}.csv"), table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å')
         else:
-            np.savetxt(f"{outdir}{sep}TABLE({job}).csv", table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.4f',
+            np.savetxt(unique_filename("Saving results to", f"TABLE-{job}.csv"), table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.4f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å, theta/°')
     
     if args.plot or args.enumeration != None:
-        print(f"\nCreating plots in {outdir}{sep}rmsd-rmss-mu({job}).pdf ...")
-        scatter_colored(f"{outdir}{sep}rmsd-rmss-mu({job}).pdf", table[:,3], table[:,4], table[:,2], cbarlabel="Multiplicity")
+        scatter_colored(unique_filename("Creating scatter plot in", f"PLOT-{job}.pdf"), table[:,3], table[:,4], table[:,2], cbarlabel="Multiplicity")
 
     if args.orientation != None:
-        print(f"\nPlotting orientation deviation in {outdir}{sep}orientation({job}).pdf ...")
-        scatter_colored(f"{outdir}{sep}orientation({job}).pdf", table[:,3], table[:,4], table[:,5], 
+        scatter_colored(unique_filename("Creating scatter plot in", f"OR-{job}.pdf"), table[:,3], table[:,4], table[:,5], 
                         cbarlabel="Deviation / °", cmap=plt.cm.get_cmap('jet'))
     
     print(f"\nTotal time spent: {time()-time0:.2f} seconds")

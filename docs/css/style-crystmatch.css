@@ -1,3 +1,11 @@
+table {
+    width: 100%;
+}
+
+table th, table td {
+    word-wrap: break-word;
+}
+
 .md-header { background-color: #003399; }
 
 .md-typeset a { color: #0044dd; }

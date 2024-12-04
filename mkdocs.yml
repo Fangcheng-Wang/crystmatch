@@ -17,7 +17,9 @@ extra_css:
 
 nav:
   - Tutorial: index.md
+  - Command-line Interface: cli.md
   - Python API: api.md
+  - About: about.md
 
 markdown_extensions:
   - pymdownx.arithmatex:
