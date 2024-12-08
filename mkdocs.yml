@@ -6,6 +6,8 @@ repo_name: crystmatch
 theme:
   name: 'material'
 
+copyright: Copyright &copy; 2023–2024 Xin-Zheng Li Group. All rights reserved.
+
 extra_javascript:
   - javascripts/katex.js
   - https://unpkg.com/katex@0/dist/katex.min.js
@@ -17,14 +19,21 @@ extra_css:
 
 nav:
   - Tutorial: index.md
-  - Command-line Interface: cli.md
+  - Command-line interface: cli.md
   - Python API: api.md
   - About: about.md
 
 markdown_extensions:
+  - admonition
+  - tables
+  - footnotes
   - pymdownx.arithmatex:
       generic: true
-  - admonition
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - codehilite:
       guess_lang: false
 

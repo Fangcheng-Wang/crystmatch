@@ -61,7 +61,7 @@ def enumerate_slm(
         A positive threshold value of `kappa` to determine the range of singular values to generate.
     kappa : callable, optional
         A function that quantifies the strain of a matrix according to its singular values. \
-            By default, kappa([x1, x2, x3]) = sqrt(((x1-1)^2 + (x2-1)^2 + (x3-1)^2) / 3).
+            Default is `rmss`, which computes the root-mean-square strain.
     likelihood_ratio : float, optional
         The expected likelihood ratio of the enumeration being complete and incomplete. Default is 1e2.
     print_detail : int, optional
@@ -233,7 +233,7 @@ def minimize_rmsd(
     Returns
     -------
     rmsd : float
-        The minimum atomic displacement (RMSD) between (S^T S)^(1/4) `crystA_sup` and (S^T S)^(-1/4) `crystB_sup`.
+        The minimum atomic displacement (RMSD) between $(S^{\\text{T}} S)^{1/4}\mathcal{A}$ and $(S^{\\text{T}} S)^{-1/4}\mathcal{B}$.
     p : (Z, ) array of ints
         The permutation of the atoms in `pB_sup` that minimizes the RMSD.
     ks : (3, Z) array of ints
