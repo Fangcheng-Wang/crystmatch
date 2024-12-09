@@ -13,7 +13,7 @@ A solid-solid phase transition establishes an *atom-to-atom correspondence* betw
 The main goals of `crystmatch` are as follows:
 
 - **Enumeration**:
-    - Provide a complete list of *representative* [[1]](https://arxiv.org/abs/2305.05278) CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
+    - Provide a complete list of *representative* [[1]](https://arxiv.org/abs/2305.05278) CSMs between two given crystal structures, with user-specified upper bounds on the *multiplicity* [[1]](https://arxiv.org/abs/2305.05278) and root-mean-square strain (RMSS).
     - (In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and root-mean-square displacement (RMSD).
 
 - **Analysis**:
@@ -49,7 +49,7 @@ To run `crystmatch`, one of the following modes must be selected:
 
 1. **Enumeration mode**: Use `-E` or `--enumeration` to generate a list of CSMs, save them to a `CSM_LIST.npz` file, and perform preliminary analysis. The initial and final crystal structures must be specified in the form of POSCAR files.
 2. **Read mode**: Use `-R` or `--read` to read CSMs from a `CSM_LIST.npz` file. You can export specific CSMs to POSCARs using `--export index1 [index2 ...]`, perform OR analysis using `--orientation` (see example below), generate CSV tables using `--csv`, and/or visualize the RMSD-RMSS-multiplicity distribution using `--plot`.
-3. **Single-CSM mode**: Use `-S` or `--single` to determine a single CSM directly by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis. A minimal enumeration containing this CSM will be performed if `--list` is used.
+3. **Single-CSM mode**: Use `-S` or `--single` to determine a single CSM directly by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.
 
 If you are confused about the usage, simply run:
 
@@ -125,8 +125,6 @@ To analyze a single CSM defined by two POSCAR files, run:
 ```
 $ crystmatch --initial POSCAR1 --final POSCAR2 --single
 ```
-
-If you want to generate a list of CSMs (like in the enumeration mode) containing this CSM, simply add `--list` to the above command.
 
 ## Python API
 

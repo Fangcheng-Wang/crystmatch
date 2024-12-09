@@ -15,7 +15,7 @@ np.set_printoptions(suppress=True)
 Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
 SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
-def load_poscar(filename: str, to_primitive: bool = True, symprec: float = 1e-5) -> Cryst:
+def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-5, verbose: bool = True) -> Cryst:
     """Load the crystal structure from a POSCAR file.
 
     Parameters
@@ -24,20 +24,17 @@ def load_poscar(filename: str, to_primitive: bool = True, symprec: float = 1e-5)
         The name of the POSCAR file to be read.
     to_primitive : bool, optional
         Using the primitive cell instead of the cell given by the POSCAR file. Default is True.
+    tol : str
+        The tolerance for `spglib` symmetry detection.
 
     Returns
     -------
     cryst : cryst
         The loaded crystal structure, consisting of the lattice vectors, species, and positions.
-    lattice : (3, 3) array
-        In accord with the POSCAR format and the scaling factor is multiplied.
-    species : (N,) array of strs
-        Respective species of the ions.
-    positions : (N, 3) array
-        In accord with the POSCAR format ('Direct' mode).
     """
     f = open(filename, mode='r')
-    print(f"Loading crystal structure '{f.readline()[:-1]}' from file '{filename}'...")
+    if verbose: print(f"Loading crystal structure '{f.readline()[:-1]}' from file '{filename}'...")
+    else: f.readline()
     a = np.array(f.readline()[:-1], dtype=float)
     lattice = np.zeros((3,3), dtype=float)
     for i in range(3):
@@ -63,15 +60,15 @@ def load_poscar(filename: str, to_primitive: bool = True, symprec: float = 1e-5)
             positions[i,:] = np.dot(la.inv(lattice.transpose()), np.array(f.readline().split()[:3], dtype=float))
     f.close()
     _, numbers = np.unique(species, return_inverse=True)
-    print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=symprec)}")
+    if verbose: print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=tol)}")
     if to_primitive:
-        lattice, positions, numbers = find_primitive((lattice, positions, numbers))
+        lattice, positions, numbers = find_primitive((lattice, positions, numbers), symprec=tol)
         if len(numbers) != len(species):
-            print(f"\tCell in POSCAR file is not primitive! Using primitive cell (Z = {len(numbers):d}) now.")
+            if verbose: print(f"\tCell in POSCAR file is not primitive! Using primitive cell (Z = {len(numbers):d}) now.")
         else:
-            print(f"\tCell in POSCAR file is already primitive (Z = {len(numbers):d}).")
+            if verbose: print(f"\tCell in POSCAR file is already primitive (Z = {len(numbers):d}).")
         species = np.array(species_name)[numbers]
-    else: print(f"\tUsing cell in POSCAR file (Z = {len(numbers):d}).")
+    elif verbose: print(f"\tUsing cell in POSCAR file (Z = {len(numbers):d}).")
     cryst = (lattice, species, positions)
     return cryst
 
@@ -114,7 +111,7 @@ def save_poscar(filename: Union[str, None], cryst: Cryst, crystname: Union[str, 
     """
     species_unique, species_counts = np.unique(cryst[1], return_counts=True)
     if crystname is not None: content = crystname
-    elif filename is not None: content = filename.split(sep='.')[0]
+    elif filename is not None: content = splitext(filename)[0]
     else: content = "anonymous crystal structure saved by 'crystmatch'"
     content += "\n1.0\n"
     content += "\n".join(f"{v[0]:.12f}\t{v[1]:.12f}\t{v[2]:.12f}" for v in cryst[0].tolist())
@@ -185,7 +182,7 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     pB_sup = la.inv(mB) @ (pB.reshape(3,1,-1) + int_vec_inside(mB).reshape(3,-1,1)).reshape(3,-1)
     argsortA = np.argsort(speciesA_sup)
     argsortB = np.argsort(speciesB_sup)
-    assert (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all(), "Error: Please report this bug to wfc@pku.edu.cn if you see this message."
+    assert (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all(), "Please report this bug to wfc@pku.edu.cn if you see this message."
     species_sup = speciesA_sup[argsortA]
     pA_sup = pA_sup[:,argsortA]
     pB_sup = pB_sup[:,argsortB]
@@ -243,7 +240,7 @@ def rmss(x: NDArray[np.float64]) -> NDArray[np.float64]:
     """
     return np.sqrt(np.mean((x - 1) ** 2, axis=-1))
 
-def get_pure_rotation(cryst: Cryst, symprec: float = 1e-5) -> NDArray[np.int32]:
+def get_pure_rotation(cryst: Cryst, tol: float = 1e-5) -> NDArray[np.int32]:
     """Find all pure rotations appeared in the space group of `cryst`.
 
     Parameters
@@ -267,7 +264,7 @@ def get_pure_rotation(cryst: Cryst, symprec: float = 1e-5) -> NDArray[np.int32]:
             temp_n = temp_n + 1
             temp_s = species[i]
         numbers[i] = temp_n
-    g = get_symmetry((cryst[0],cryst[2],numbers), symprec=symprec)['rotations']
+    g = get_symmetry((cryst[0],cryst[2],numbers), symprec=tol)['rotations']
     g = g[la.det(g).round(decimals=4)==1,:,:]
     g = np.unique(g, axis=0)
     return g
@@ -430,7 +427,7 @@ def hnf_rational(m: ArrayLike, max_divisor = 10000) -> NDArray[np.float64]:
     """
     for divisor in range(1, max_divisor+1):
         if (np.absolute(np.rint(m * divisor) - m * divisor) <= 1 / max(10000,max_divisor)).all(): break
-        elif divisor == max_divisor: print('Warning: input matrix should be rational!')
+        elif divisor == max_divisor: raise ValueError("Input matrix must be rational.")
     h = (m * divisor).round().astype(int)
     M, N = h.shape
     assert M <= N and la.matrix_rank(h, tol=1/max(10000,max_divisor)) == M

@@ -14,6 +14,48 @@ __epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To ge
 [1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
 You are also welcome to contact me at ' + __email__ + ' for any questions or comments.'
 
+def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float):
+    
+    # enumerating SLMs
+    print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f} ...")
+    slmlist = []
+    for mu in range(1,mu_max+1): slmlist = slmlist + enumerate_slm(crystA, crystB, mu, rmss_max, tol=tol)
+    print(f"\nA total of {len(slmlist):d} incongruent SLMs are enumerated.")
+    if len(slmlist) == 0: raise Warning("No SLM is found. Try larger arguments for '--enumeration' or check if the input POSCARs are correct.")
+    
+    slmlist = np.array(slmlist)
+    _, ind = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0, return_index=True)
+    slmlist = slmlist[ind]
+    mulist = multiplicity(crystA, crystB, slmlist)
+    rmsslist = rmss(sing_val(crystA, crystB, slmlist))
+    ind = np.lexsort((rmsslist.round(decimals=4), mulist))
+    slmlist = slmlist[ind]
+    mulist = mulist[ind]
+    rmsslist = rmsslist[ind]
+    print(f"They have {len(slmlist):d} distinct deformation gradients, and thus {len(slmlist):d} representative CSMs.")
+
+    # computing representative CSMs
+    csm_bins = [np.array("arr_mu.npy saves the shuffles of those CSMs with multiplicity mu", dtype=str)]
+    rmsdlist = []
+    print(f"\nOptimizing RMSDs for {slmlist.shape[0]} shuffles ...")
+    time0 = time()
+    zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
+    for mu in range(1,mu_max+1):
+        n_csm = np.sum(mulist == mu)
+        if n_csm == 0:
+            csm_bins.append(np.array(f"No CSM with multiplicity {mu}", dtype=str))
+            continue
+        shufflelist = np.zeros((n_csm, mu * zlcm, 4), dtype=int)
+        for i in range(n_csm):
+            d, p, ks, _ = minimize_rmsd(crystA, crystB, slmlist[mulist == mu][i])
+            rmsdlist.append(d)
+            shufflelist[i,:,0] = p
+            shufflelist[i,:,1:] = ks.T
+        csm_bins.append(shufflelist)
+    print(f"\tObtained representative CSMs and their RMSDs (in {time()-time0:.2f} seconds).")
+    
+    return csm_bins, slmlist, mulist, rmsslist, rmsdlist
+
 def main():
     time0 = time()
     parser = argparse.ArgumentParser(
@@ -32,97 +74,60 @@ def main():
                         help="POSCAR file of the initial crystal structure")
     parser.add_argument("-F", "--final", type=str, metavar='POSCAR_F',
                         help="POSCAR file of the final crystal structure")
-    parser.add_argument("-t", "--tolerance", type=float, default=1e-5, metavar='TOL',
-                        help="tolerance for determining crystal symmetry; default is 1e-5")
+    parser.add_argument("-t", "--tolerance", type=float, default=1e-3, metavar='TOL',
+                        help="tolerance for determining crystal symmetry; default is 1e-3")
     parser.add_argument("-e", "--export", nargs='+', type=int, metavar=('index1', 'index2'),
                         help="export CSMs from CSM_LIST with the given indices")
-    parser.add_argument("-l", "--list", action='store_true', help="generate a list of CSMs in 'single-CSM' mode")
     parser.add_argument("-o", "--orientation", nargs=12, type=float, metavar=('vix','viy','viz','vfx','vfy','vfz','wix','wiy','wiz','wfx','wfy','wfz'),
                         help="benchmark CSMs by the orientation relationship: vi||vf, wi||wf")
-    parser.add_argument("-c", "--csv", action='store_true', help="create CSV file")
-    parser.add_argument("-p", "--plot", action='store_true', help="create scatter plot")
+    parser.add_argument("-c", "--csv", action='store_true', help="whether to create CSV file")
+    parser.add_argument("-p", "--plot", action='store_true', help="whether to create scatter plot")
     parser.add_argument("-u", "--uspfix", action='store_true', help="use USP-fixed manner [1] in '--orientation'")
     parser.add_argument("-A", nargs='*', type=str, metavar='', help="deprecated")
     parser.add_argument("-B", nargs='*', type=str, metavar='', help="deprecated")
     args = parser.parse_args()
 
-    if args.A != None or args.B != None:
-        print("\nError: '-A -B' is deprecated since version 1.1.0, use '-I -F' instead. See 'crystmatch -h' for usage.")
-        return
+    if args.A is not None or args.B is not None:
+        raise DeprecationWarning("'-A -B' is deprecated since version 1.1.0, use '-I -F' instead. See 'crystmatch -h' for usage.")
         
     if sum(1 for x in [args.enumeration, args.read, args.single] if x is not None) >= 2:
-        # mode conflicts
-        print("\nError: Cannot choose more than one mode.")
-        return
+        raise ValueError("Cannot choose more than one mode.")
 
     if sum(1 for x in [args.enumeration, args.read, args.single] if x is not None) == 0:
         # mode unspecified
         mode = input("\nPlease enter a mode ('enumeration' / 'read' / 'single'): ")
-        if mode == 'enumeration':
+        if mode in ["'enumeration'", 'enumeration', 'e', 'E']:
             mu_max = int(input("Enter the maximum multiplicity: "))
             rmss_max = float(input("Enter the maximum root-mean-square-strain: "))
             args.enumeration = (mu_max, rmss_max)
-        elif mode =='read':
+        elif mode in ["'read'", 'read', 'r', 'R']:
             args.read = input("Enter the path of the CSM_LIST file: ")
-        elif mode =='single':
+        elif mode in ["'single'", 'single', 'single-CSM', 's', 'S']:
             args.single = True
         else:
-            print("\nError: Invalid mode.")
-            return
+            raise ValueError(f"Invalid mode '{mode}'.")
     
-    # obtaining CSMs
+    if args.enumeration is not None or (args.read is not None and args.orientation is not None):
+        # in which case CSV and PLOT will always be generated
+        args.csv = True
+        args.plot = True
+    
+    # determining CSMs
 
     if args.enumeration is not None:
-        
         print("\nMode: 'enumeration'")
         mu_max, rmss_max = args.enumeration
         mu_max = np.rint(mu_max).astype(int)
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
-        crystA = load_poscar(args.initial, symprec=args.tolerance)
+        crystA = load_poscar(args.initial, tol=args.tolerance)
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
-        crystB = load_poscar(args.final, symprec=args.tolerance)
+        crystB = load_poscar(args.final, tol=args.tolerance)
         check_chem_comp(crystA[1], crystB[1])
-        zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
         job = f"{splitext(args.initial)[0]}-{splitext(args.final)[0]}-m{mu_max:d}s{rmss_max:.2f}"
-        
-        # enumerating SLMs
-        print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f} ...")
-        slmlist = []
-        for mu in range(1,mu_max+1): slmlist = slmlist + enumerate_slm(crystA, crystB, mu, rmss_max)
-        print(f"\nA total of {len(slmlist):d} incongruent SLMs are enumerated.")
-        slmlist = np.array(slmlist)
-        _, ind = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0, return_index=True)
-        slmlist = slmlist[ind]
-        mulist = multiplicity(crystA, crystB, slmlist)
-        rmsslist = rmss(sing_val(crystA, crystB, slmlist))
-        ind = np.lexsort((rmsslist.round(decimals=4), mulist))
-        slmlist = slmlist[ind]
-        mulist = mulist[ind]
-        rmsslist = rmsslist[ind]
-        print(f"They have {len(slmlist):d} distinct deformation gradients, and thus {len(slmlist):d} representative CSMs.")
-
-        # computing representative CSMs
-        mu_bins = [np.array("arr_mu.npy saves the shuffles of those CSMs with multiplicity mu", dtype=str)]
-        rmsdlist = []
-        print(f"\nOptimizing RMSDs for {slmlist.shape[0]} shuffles ...")
-        time1 = time()
-        for mu in range(1,mu_max+1):
-            n_csm = np.sum(mulist == mu)
-            if n_csm == 0:
-                mu_bins.append(np.array(f"No CSM with multiplicity {mu}", dtype=str))
-                continue
-            shufflelist = np.zeros((n_csm, mu * zlcm, 4), dtype=int)
-            for i in range(n_csm):
-                d, p, ks, _ = minimize_rmsd(crystA, crystB, slmlist[mulist == mu][i])
-                rmsdlist.append(d)
-                shufflelist[i,:,0] = p
-                shufflelist[i,:,1:] = ks.T
-            mu_bins.append(shufflelist)
-        print(f"\tObtained representative CSMs and their RMSDs (in {time()-time1:.2f} seconds).")
+        csm_bins, slmlist, mulist, rmsslist, rmsdlist = enum_rep(crystA, crystB, mu_max, rmss_max, args.tolerance)
         table = np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist], dtype=float).T
 
     elif args.read is not None:
-
         print(f"\nMode: 'read'")
         data = np.load(args.read, allow_pickle=True)
         table = data['table']
@@ -137,36 +142,42 @@ def main():
             vix, viy, viz, vfx, vfy, vfz, wix, wiy, wiz, wfx, wfy, wfz = args.orientation
             print(f"\nComparing each CSM with the given OR:\n\t[{vix},{viy},{viz}]||[{vfx},{vfy},{vfz}]"
                     + f"\n\t[{wix},{wiy},{wiz}]||[{wfx},{wfy},{wfz}]")
-            r = orientation_relation([vix,viy,viz], [vfx,vfy,vfz], [wix,wiy,wiz], [wfx,wfy,wfz])
-            table = np.hstack((table, compare_orientation(crystA, crystB, data['slmlist'], r, fix_usp=args.uspfix).reshape(-1,1)))
+            r = orient_matrix([vix,viy,viz], [vfx,vfy,vfz], [wix,wiy,wiz], [wfx,wfy,wfz])
+            table = np.hstack((table, deviation_angle(crystA, crystB, data['slmlist'], r, uspfix=args.uspfix).reshape(-1,1)))
 
     elif args.single is not None:
-        
         print("\nMode: 'single-CSM'")
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
-        crystA_sup = load_poscar(args.initial, symprec=args.tolerance, to_primitive=False)
+        crystA_sup = load_poscar(args.initial, tol=args.tolerance, to_primitive=False, verbose=False)
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
-        crystB_sup = load_poscar(args.final, symprec=args.tolerance, to_primitive=False)
-        if not crystA_sup[1].shape[0] == crystB_sup[1].shape[0]:
-            print("\nError: Numbers of atoms in two crysts are not equal!")
-            return
-        if not (crystA_sup[1] == crystB_sup[1]).all():
-            print("\nError: Atom species in two crysts do not match!")
-            return
+        crystB_sup = load_poscar(args.final, tol=args.tolerance, to_primitive=False, verbose=False)
+        if not crystA_sup[1].shape[0] == crystB_sup[1].shape[0]: raise ValueError("\nNumbers of atoms in two crysts are not equal!")
+        if not (crystA_sup[1] == crystB_sup[1]).all(): raise ValueError("\nAtom species in two crysts do not match!")
         job = f"{splitext(args.initial)[0]}-{splitext(args.final)[0]}"
         if args.orientation != None: job += "-o"
         
-        # computing mu
-        _, numbers = np.unique(crystA_sup[1], return_inverse=True)
-        _, _, numbersA = find_primitive((crystA_sup[0], crystA_sup[2], numbers))
-        _, _, numbersB = find_primitive((crystB_sup[0], crystB_sup[2], numbers))
-        mulist = [len(numbers) // np.lcm(len(numbersA), len(numbersB))]
-        # computing strains
+        print("CSM successfully loaded. Now analyzing the two crystal structures.")
+        crystA = load_poscar(args.initial, tol=args.tolerance, to_primitive=True)
+        crystB = load_poscar(args.final, tol=args.tolerance, to_primitive=True)
+        
+        # single-CSM analysis
+        print(f"\nGeometric properties of the CSM:")
+        cA = crystA[0].T
+        cB = crystB[0].T
         cA_sup = crystA_sup[0].T
         cB_sup = crystB_sup[0].T
+        # computing SLM
+        mA = (la.inv(cA) @ cA_sup).round().astype(int)
+        mB = (la.inv(cB) @ cB_sup).round().astype(int)
+        hA, qA = hnf_int(mA)
+        hB, qB = hnf_int(mB)
+        slmlist = [cong_slm((hA, hB, qB @ la.inv(qA).round().astype(int)),
+                            get_pure_rotation(crystA, tol=args.tolerance), get_pure_rotation(crystB, tol=args.tolerance))[0]]
+        mulist = multiplicity(crystA, crystB, slmlist)
+        # computing principal strains
         _, sigma, vT = la.svd(cB_sup @ la.inv(cA_sup))
         rmsslist = [rmss(sigma)]
-        # computing rmsd
+        # computing rmsd and optimized final structure
         cB_sup_final = vT.T @ np.diag(sigma) @ vT @ cA_sup
         c_sup_half = vT.T @ np.diag(sigma ** 0.5) @ vT @ cA_sup
         pA_sup = crystA_sup[2].T
@@ -174,42 +185,47 @@ def main():
         t0 = brute(lambda z: minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + z.reshape(3,1))[0],
             ((0,1),(0,1),(0,1)), Ns=10, finish=None)
         _, ks = minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + t0.reshape(3,1))
-        t0 = (pA_sup - pB_sup - ks).mean(axis=1)
+        t0 = (pA_sup - pB_sup - ks).mean(axis=1, keepdims=True)
         pB_sup_final = pB_sup + ks + t0
         rmsdlist = [la.norm(c_sup_half @ (pA_sup - pB_sup_final)) / np.sqrt(pA_sup.shape[1])]
-        print(f"\nSuccessfully loaded a CSM from the initial and final POSCAR files:\n\tmultiplicity = {mulist[0]}\n\tprincipal strains = " + 
+        print(f"\tmultiplicity ∈ {{{','.join(str(mu) for mu in range(1,mulist[0]+1) if mulist[0] % mu == 0)}}}\n\tprincipal strains: " + 
                 ", ".join([f"{100*(s-1):.2f}%" for s in sigma]) + f"\n\trmss = {rmsslist[0]:.4f}\n\trmsd = {rmsdlist[0]:.4f} Å.")
-        pass
-        print("\nSorry: The multiplicity might be incorrect. We will fix it later.")
+        print(f"\nTo produce a list of CSMs that may contain this CSM, you can run:\n\n\t$ crystmatch --enumeration {mulist[0]} {rmsslist[0]+0.005:.3f}\n")
+        
+        # generate a minimal list containing this CSM
         if args.orientation == None:
             table = np.array([[0], [0], mulist, rmsslist, rmsdlist], dtype=float).T
         else:
-            theta = 0
-            pass    # compute OR
+            r = orient_matrix([vix,viy,viz], [vfx,vfy,vfz], [wix,wiy,wiz], [wfx,wfy,wfz])
+            theta = deviation_angle(crystA, crystB, slmlist, r, uspfix=args.uspfix)
             print(f"\n\tdeviation from the given OR: {theta * 180/np.pi:.4f}°")
             table = np.array([[0], [0], mulist, rmsslist, rmsdlist, [theta]], dtype=float).T
-            print("\nSorry: This feature is not implemented yet.")
     
-    # save and plot results
+    # saving NPZ, POSCAR, CSV, and PLOT files
     
     if args.enumeration is not None:
         # saving enumeration results in NPZ format
         metadata = np.array([job, crystA, crystB, mu_max, rmss_max, args.tolerance], dtype=object)
-        np.savez(unique_filename("Saving CSMs to", f"CSM_LIST-{job}.npz"), *mu_bins, metadata=metadata, slmlist=slmlist, table=table)
+        np.savez(unique_filename("Saving CSMs to", f"CSM_LIST-{job}.npz"), *csm_bins, metadata=metadata, slmlist=slmlist, table=table)
     elif args.single is not None:
+        # saving primitive cells
+        dirname = unique_filename(f"Saving primitive-cell POSCARs to", "PRIM")
+        makedirs(dirname)
+        save_poscar(f"{dirname}{sep}{args.initial}", crystA)
+        save_poscar(f"{dirname}{sep}{args.final}", crystB)
         # saving final POSCAR (rotation-free and RMSD-minimized)
-        save_poscar(unique_filename("Saving optimized (rotation-free, RMSD-minimized) final crystal structure to", 
-                    f"{splitext(args.final)[0]}-optimized{splitext(args.final)[1]}"),
+        save_poscar(unique_filename("Saving optimized (rotation-free, translated to minimize RMSD) final crystal structure to", 
+                    f"{splitext(args.final)[0]}-optim{splitext(args.final)[1]}"),
                     (cB_sup_final.T, crystB_sup[1], pB_sup_final.T), crystname = splitext(args.final)[0] + "(optimized)")
     
     if args.export is not None:
         if args.read is None:
-            print("\nWarning: '--export' option is only available in 'read' mode.")
+            print("\nValueWarning: '--export' option is only available in 'read' mode.")
         else:
             print(f"\nExporting CSMs with indices {', '.join(map(str, args.export))} in {args.read} ...")
             for i in args.export:
                 if i >= table.shape[0]:
-                    print(f"\nWarning: Index {i} is out of range (total {table.shape[0]} CSMs).")
+                    print(f"\nIndexWarning: Index {i} is out of range (there are only {table.shape[0]} CSMs).")
                     continue
                 slm = data['slmlist'][table[i,1].round().astype(int)]
                 mu = table[i,2].round().astype(int)
@@ -222,7 +238,7 @@ def main():
                 save_poscar(f"{dirname}{sep}POSCAR_I", crystA_sup, crystname = job.split('-')[0])
                 save_poscar(f"{dirname}{sep}POSCAR_F", crystB_sup, crystname = job.split('-')[1])
     
-    if args.csv or args.enumeration != None or args.orientation != None:
+    if args.csv:
         if args.orientation == None:
             np.savetxt(unique_filename("Saving results to", f"TABLE-{job}.csv"), table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å')
@@ -230,7 +246,7 @@ def main():
             np.savetxt(unique_filename("Saving results to", f"TABLE-{job}.csv"), table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.4f',
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å, theta/°')
     
-    if args.plot or args.enumeration != None:
+    if args.plot:
         scatter_colored(unique_filename("Creating scatter plot in", f"PLOT-{job}.pdf"), table[:,3], table[:,4], table[:,2], cbarlabel="Multiplicity")
 
     if args.orientation != None:

@@ -12,8 +12,8 @@ np.set_printoptions(suppress=True)
 Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
 SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
-def equiv_class_representative(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
-    """The representative of the equivalence class of `s`.
+def cong_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
+    """The representative SLM of the congruence class of `slm`.
 
     Parameters
     ----------
@@ -29,9 +29,9 @@ def equiv_class_representative(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[n
     Returns
     -------
     ss : slm
-        The representative of the equivalence class of `s`.
+        The representative of the congruence class of `slm`.
     len_cl : int
-        The size of the equivalence class of `s`.
+        The size of the congruence class of `slm`.
     """
     hA, hB, q = slm
     cl = np.transpose(np.dot((gB @ hB) @ q, la.inv(gA @ hA)), axes=[2,0,1,3]).reshape(-1,9)
@@ -43,7 +43,7 @@ def equiv_class_representative(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[n
     return ss, len(cl)
 
 def enumerate_slm(
-    crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float,
+    crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float, tol: float = 1e-5,
     kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss,
     likelihood_ratio: float = 1e2, print_detail: int = 0
 ) -> List[SLM]:
@@ -59,18 +59,20 @@ def enumerate_slm(
         The multiplicity of SLMs to enumerate.
     kappa_max : float
         A positive threshold value of `kappa` to determine the range of singular values to generate.
+    tol : float, optional
+        The tolerance for determining the pure rotation group of the crystal structures. Default is 1e-5.
     kappa : callable, optional
         A function that quantifies the strain of a matrix according to its singular values. \
             Default is `rmss`, which computes the root-mean-square strain.
     likelihood_ratio : float, optional
         The expected likelihood ratio of the enumeration being complete and incomplete. Default is 1e2.
     print_detail : int, optional
-        The level of detail of printing. 0 means no print.
+        The level of detail of printing. `0` means no print.
 
     Returns
     -------
     slmlist : list of slm
-        Contains triplets of integer matrices like `(hA, hB, q)`, representing inequivalent SLMs.
+        Contains triplets of integer matrices like `(hA, hB, q)`, representing incongruent SLMs.
     """
     assert mu >= 1
     cA = crystA[0].T
@@ -81,8 +83,8 @@ def enumerate_slm(
     hB = hnf_list(np.lcm(zA,zB) // zB * mu)
     hA_inv = la.inv(hA)
     hB_inv = la.inv(hB)
-    gA = get_pure_rotation(crystA)
-    gB = get_pure_rotation(crystB)
+    gA = get_pure_rotation(crystA, tol=tol)
+    gB = get_pure_rotation(crystB, tol=tol)
     max_prob_ratio = 20
     # Compute the sampling domain of `s0`s.
     det_s = zA / zB * la.det(cB) / la.det(cA)
@@ -117,22 +119,22 @@ def enumerate_slm(
         # Check determinants of `q`s.
         index1 = np.nonzero(index1)[0]
         index1 = np.unravel_index(index1, (s0.shape[0], hA.shape[0], hB.shape[0]))
-        # Check strains of `s`s.
+        # Check strains of `slm`s.
         index2 = np.nonzero(kappa(la.svd(cB @ hB[index1[2]] @ q[index1] @ hA_inv[index1[1]] @ la.inv(cA),
                                         compute_uv=False)) < kappa_max)[0]                                          
         for i in index2:
-            s = (hA[index1[1][i]], hB[index1[2][i]], q[index1[0][i], index1[1][i], index1[2][i]])
-            s, _ = equiv_class_representative(s, gA, gB)
+            slm = (hA[index1[1][i]], hB[index1[2][i]], q[index1[0][i], index1[1][i], index1[2][i]])
+            slm, _ = cong_slm(slm, gA, gB)
             repeated = False
             for j in range(len(slmlist)):
-                if (s[0] == slmlist[j][0]).all() and (s[1] == slmlist[j][1]).all() and (s[2] == slmlist[j][2]).all():
-                    # `s` is repeated.
+                if (slm[0] == slmlist[j][0]).all() and (slm[1] == slmlist[j][1]).all() and (slm[2] == slmlist[j][2]).all():
+                    # `slm` is repeated.
                     m = m + 1
                     repeated = True
                     break
             if not repeated:
-                # `s` is new.
-                slmlist.append(s)
+                # `slm` is new.
+                slmlist.append(slm)
                 m = 0
         num_s0 += s0.shape[0]
         if print_detail >= 2:

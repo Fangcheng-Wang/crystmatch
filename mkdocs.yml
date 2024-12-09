@@ -5,6 +5,8 @@ repo_name: crystmatch
 
 theme:
   name: 'material'
+  icon:
+    logo: material/octahedron
 
 copyright: Copyright &copy; 2023–2024 Xin-Zheng Li Group. All rights reserved.
 

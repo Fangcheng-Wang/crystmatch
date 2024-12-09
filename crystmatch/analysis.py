@@ -32,6 +32,7 @@ def multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], ND
     mu : int or (...,) array of ints
         Multiplicities of each SLM in `slmlist`.
     """
+    slmlist = np.array(slmlist)
     zA = crystA[2].shape[0]
     zB = crystB[2].shape[0]
     dA = np.lcm(zA,zB) // zA
@@ -93,7 +94,7 @@ def deform_distance(slmlist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cr
     dlist = np.amin(la.norm(ss.reshape(-1,1,9), cl0.reshape(1,-1,9), axis=2),axis=1)
     return dlist
 
-def orientation_relation(vi: ArrayLike, vf: ArrayLike, wi: ArrayLike, wf: ArrayLike) -> NDArray[np.float64]:
+def orient_matrix(vi: ArrayLike, vf: ArrayLike, wi: ArrayLike, wf: ArrayLike) -> NDArray[np.float64]:
     """Rotation matrix `r` such that `r @ vi` || `vf` and `r @ wi` || `wf`.
 
     Parameters
@@ -115,12 +116,12 @@ def orientation_relation(vi: ArrayLike, vf: ArrayLike, wi: ArrayLike, wf: ArrayL
     r = c @ b.T
     return r
 
-def compare_orientation(
+def deviation_angle(
     crystA: Cryst,
     crystB: Cryst,
     slmlist: Union[List[SLM], NDArray[np.int32]],
     r: NDArray[np.float64],
-    fix_usp: bool = False
+    uspfix: bool = False
 ) -> NDArray[np.float64]:
     """Calculate how much each SLM in `slmlist` differ from a given orientation relationship.
 
@@ -134,7 +135,7 @@ def compare_orientation(
         A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
     r : (3, 3) array
         A rotation matrix representing the given orientation relationship.
-    fix_usp : bool, optional
+    uspfix : bool, optional
         Whether to fix the uniformed scaled plane. Default is False.
 
     Returns
@@ -152,7 +153,7 @@ def compare_orientation(
     s = cB @ np.array(hB) @ np.array(q) @ la.inv(cA @ np.array(hA))
     u, sigma, vT = la.svd(s)
     rS = u @ vT
-    if fix_usp:
+    if uspfix:
         eps = np.array([[[0,0,0],[0,0,-1],[0,1,0]],[[0,0,1],[0,0,0],[-1,0,0]],[[0,-1,0],[1,0,0],[0,0,0]]])
         v_cross = np.tensordot(vT[:,1,:], eps, axes=(1,0))
         s1 = sigma[:,0]
