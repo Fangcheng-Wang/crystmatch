@@ -11,18 +11,22 @@
       
       
       
+        <link rel="prev" href="..">
       
       
-      <link rel="icon" href="/assets/images/favicon.png">
+        <link rel="next" href="../api/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.46">
     
     
       
-        <title>Crystmatch Documentation</title>
+        <title>Command-line interface - Crystmatch Documentation</title>
       
     
     
-      <link rel="stylesheet" href="/assets/stylesheets/main.6f8fc17f.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.6f8fc17f.min.css">
       
       
 
@@ -41,13 +45,13 @@
       
     
     
-      <link rel="stylesheet" href="/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
       <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
     
-      <link rel="stylesheet" href="/css/style-crystmatch.css">
+      <link rel="stylesheet" href="../css/style-crystmatch.css">
     
-    <script>__md_scope=new URL("/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -65,6 +69,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#command-line-interface" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -77,7 +86,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/." title="Crystmatch Documentation" class="md-header__button md-logo" aria-label="Crystmatch Documentation" data-md-component="logo">
+    <a href=".." title="Crystmatch Documentation" class="md-header__button md-logo" aria-label="Crystmatch Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.7 11.29h.01l-9-9C12.5 2.1 12.26 2 12 2s-.5.1-.71.29l-9 9h.01c-.39.39-.39 1.03 0 1.42h-.01l9 9c.21.19.45.29.71.29s.5-.1.71-.29l9-9h-.01c.39-.39.39-1.03 0-1.42M13 8.28V5.41l4.3 4.3zm-2 0L6.7 9.71l4.3-4.3zm1 1.77L17.84 12 12 13.95 6.16 12zm-1 5.67v2.87l-4.3-4.3zm2 0 4.3-1.43-4.3 4.3z"/></svg>
@@ -97,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Command-line interface
             
           </span>
         </div>
@@ -184,7 +193,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/." title="Crystmatch Documentation" class="md-nav__button md-logo" aria-label="Crystmatch Documentation" data-md-component="logo">
+    <a href=".." title="Crystmatch Documentation" class="md-nav__button md-logo" aria-label="Crystmatch Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.7 11.29h.01l-9-9C12.5 2.1 12.26 2 12 2s-.5.1-.71.29l-9 9h.01c-.39.39-.39 1.03 0 1.42h-.01l9 9c.21.19.45.29.71.29s.5-.1.71-.29l9-9h-.01c.39-.39.39-1.03 0-1.42M13 8.28V5.41l4.3 4.3zm-2 0L6.7 9.71l4.3-4.3zm1 1.77L17.84 12 12 13.95 6.16 12zm-1 5.67v2.87l-4.3-4.3zm2 0 4.3-1.43-4.3 4.3z"/></svg>
@@ -214,7 +223,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -231,10 +240,30 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/cli/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Command-line interface
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -243,6 +272,44 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of options
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flowchart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flowchart
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -254,7 +321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/api/" class="md-nav__link">
+      <a href="../api/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -274,7 +341,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/about/" class="md-nav__link">
+      <a href="../about/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -304,6 +371,34 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Table of options
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flowchart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flowchart
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -315,8 +410,124 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+  
+  
+
+
+<h1 id="command-line-interface">Command-line interface</h1>
+<p>The <code>crystmatch</code> command-line interface is already introduced in <a href="https://fangcheng-wang.github.io/crystmatch/">Tutorial</a>. Here, we provide a table of all available options, and a flowchart to show how they interact with each other.</p>
+<h2 id="table-of-options">Table of options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-h</code>, <code>--help</code></td>
+<td>Show help message and exit.</td>
+<td><em>none</em></td>
+</tr>
+<tr>
+<td><code>-v</code>, <code>--version</code></td>
+<td>Show program's version number and exit.</td>
+<td><em>none</em></td>
+</tr>
+<tr>
+<td><code>-E MAX_MU MAX_RMSS</code><br><code>--enumeration MAX_MU MAX_RMSS</code></td>
+<td>Use 'enumeration' mode, with <code>MAX_MU</code> and <code>MAX_RMSS</code> as the multiplicity and RMSS upper bounds.</td>
+<td>'enumeration'</td>
+</tr>
+<tr>
+<td><code>-R CSM_LIST</code><br><code>--read CSM_LIST</code></td>
+<td>Use 'read' mode and read CSMs from NPZ file.</td>
+<td>'read'</td>
+</tr>
+<tr>
+<td><code>-S</code><br><code>--single</code></td>
+<td>Use 'single-CSM' mode and analyze a single CSM defined by the POSCARs specified by <code>-I</code> and <code>-F</code>.</td>
+<td>'single-CSM'</td>
+</tr>
+<tr>
+<td><code>-I POSCAR_I</code><br><code>--initial POSCAR_I</code></td>
+<td>POSCAR file of the initial crystal structure.</td>
+<td>'enumeration', 'single-CSM'</td>
+</tr>
+<tr>
+<td><code>-F POSCAR_F</code><br><code>--final POSCAR_F</code></td>
+<td>POSCAR file of the final crystal structure.</td>
+<td>'enumeration', 'single-CSM'</td>
+</tr>
+<tr>
+<td><code>-t TOL</code><br><code>--tolerance TOL</code></td>
+<td>Tolerance for determining crystal symmetry; default is 1e-5.</td>
+<td>'enumeration', 'single-CSM'</td>
+</tr>
+<tr>
+<td><code>-e index1 [index2 ...]</code><br><code>--export index1 [index2 ...]</code></td>
+<td>Export CSMs from NPZ file with the given indices.</td>
+<td>'read'</td>
+</tr>
+<tr>
+<td><code>-o vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz</code><br><code>--orientation vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz</code></td>
+<td>Benchmark CSMs by their deviation angles from the orientation relationship: "<span class="arithmatex">\(\mathbf{v}_\text{i}\parallel\mathbf{v}_\text{f}\)</span> and <span class="arithmatex">\(\mathbf{w}_\text{i}\parallel\mathbf{w}_\text{f}\)</span>".<br>Note: arguments must be given in <strong>Cartesian</strong> coordinates.</td>
+<td><em>all</em></td>
+</tr>
+<tr>
+<td><code>-c</code>, <code>--csv</code></td>
+<td>Create CSV file.</td>
+<td><em>all</em></td>
+</tr>
+<tr>
+<td><code>-p</code>, <code>--plot</code></td>
+<td>Create scatter plot.</td>
+<td><em>all</em></td>
+</tr>
+<tr>
+<td><code>-u</code>, <code>--uspfix</code></td>
+<td>Use USP-fixed manner in <code>--orientation</code>.</td>
+<td><em>all</em></td>
+</tr>
+</tbody>
+</table>
+<h2 id="flowchart">Flowchart</h2>
+<pre class="mermaid"><code>%%{
+  init: {
+    'theme': 'base',
+    'themeVariables': {
+      'fontSize': '13px',
+      'fontFamily': 'Inter'
+    }
+  }
+}%%
+flowchart TD
+  A{mode?} --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--enumeration&lt;/code&gt;"| B([enumerate a list of&lt;br&gt;representative CSMs]);
+  B --&gt; E([save CSMs to NPZ file]);
+  E --&gt; F;
+  A --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--read&lt;/code&gt;"| C(["read CSMs from NPZ file&lt;br&gt;generated by &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--enumeration&lt;/code&gt;"]);
+  C --&gt; G(["export CSM to POSCAR&lt;br&gt;files if &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--export&lt;/code&gt;"]);
+  G --&gt; F;
+  A --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--single&lt;/code&gt;"| D(["read a single CSM from&lt;br&gt;&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;-I&lt;/code&gt; and &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;-F&lt;/code&gt; POSCAR files and&lt;br&gt;analyze multiplicity, etc."]);
+  D --&gt; F(["analyze orientation&lt;br&gt;if &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--orientation&lt;/code&gt;"]);
+  F --&gt; I(["generate reports according&lt;br&gt;to &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--csv&lt;/code&gt; and &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--plot&lt;/code&gt;"]);</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -354,12 +565,12 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "/", "features": [], "search": "/assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="/assets/javascripts/bundle.83f73b43.min.js"></script>
+      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
       
-        <script src="/javascripts/katex.js"></script>
+        <script src="../javascripts/katex.js"></script>
       
         <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
       

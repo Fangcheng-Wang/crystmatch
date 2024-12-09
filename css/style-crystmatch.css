@@ -1,3 +1,15 @@
+.md-content p, .md-content li { text-align: justify; }
+
+.md-copyright { 
+    width: 100%;
+    text-align: justify;
+}
+
+.md-copyright__highlight {
+    display: inline-block;
+    width: calc(100% - 183px);
+}
+
 .md-header { background-color: #003399; }
 
 .md-typeset a { color: #0044dd; }
@@ -17,3 +29,14 @@ h2.doc-heading code { color: #0044dd; font-weight: bold; }
 h3.doc-heading code span { color: #dd0099; }
 
 h3.doc-heading code span.n:first-of-type { color: #0044dd; font-weight: bold; }
+
+h3.doc-heading code span.mf, h3.doc-heading code span.mi, h3.doc-heading code span.kc { color: #888888; font-style: italic; }
+
+.mermaid {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    text-align: center;
+}

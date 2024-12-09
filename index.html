@@ -12,7 +12,7 @@
       
       
       
-        <link rel="next" href="api/">
+        <link rel="next" href="cli/">
       
       
       <link rel="icon" href="assets/images/favicon.png">
@@ -87,7 +87,7 @@
     <a href="." title="Crystmatch Documentation" class="md-header__button md-logo" aria-label="Crystmatch Documentation" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.7 11.29h.01l-9-9C12.5 2.1 12.26 2 12 2s-.5.1-.71.29l-9 9h.01c-.39.39-.39 1.03 0 1.42h-.01l9 9c.21.19.45.29.71.29s.5-.1.71-.29l9-9h-.01c.39-.39.39-1.03 0-1.42M13 8.28V5.41l4.3 4.3zm-2 0L6.7 9.71l4.3-4.3zm1 1.77L17.84 12 12 13.95 6.16 12zm-1 5.67v2.87l-4.3-4.3zm2 0 4.3-1.43-4.3 4.3z"/></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -194,7 +194,7 @@
     <a href="." title="Crystmatch Documentation" class="md-nav__button md-logo" aria-label="Crystmatch Documentation" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.7 11.29h.01l-9-9C12.5 2.1 12.26 2 12 2s-.5.1-.71.29l-9 9h.01c-.39.39-.39 1.03 0 1.42h-.01l9 9c.21.19.45.29.71.29s.5-.1.71-.29l9-9h-.01c.39-.39.39-1.03 0-1.42M13 8.28V5.41l4.3 4.3zm-2 0L6.7 9.71l4.3-4.3zm1 1.77L17.84 12 12 13.95 6.16 12zm-1 5.67v2.87l-4.3-4.3zm2 0 4.3-1.43-4.3 4.3z"/></svg>
 
     </a>
     Crystmatch Documentation
@@ -267,15 +267,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Introduction
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       Installation
@@ -330,6 +321,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#single-csm-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single-CSM analysis
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -350,11 +350,51 @@
   
   
     <li class="md-nav__item">
+      <a href="cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Command-line interface
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="api/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Python API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="about/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About
   </span>
   
 
@@ -390,15 +430,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Introduction
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       Installation
@@ -453,6 +484,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#single-csm-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Single-CSM analysis
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -477,93 +517,98 @@
 
 
 <h1 id="tutorial">Tutorial</h1>
-<p>If you use this code in your research, please cite the following paper:</p>
-<p>[1] <a href="https://arxiv.org/abs/2305.05278">F.-C. Wang et al., <em>Physical Review Letters</em> <strong>132</strong>, 086101 (2024)</a></p>
-<p>You are also welcome to contact me at <code>wfc@pku.edu.cn</code> for any questions or comments.</p>
-<h2 id="introduction">Introduction</h2>
-<p>A solid-solid phase transition establishes an <em>atom-to-atom correspondence</em> between crystal structures <span class="arithmatex">\(\mathcal A\)</span> and <span class="arithmatex">\(\mathcal B\)</span>. Such correspondence is called a <em>crystal-structure match</em> (CSM) <a href="https://arxiv.org/abs/2305.05278">[1]</a>. A CSM can be described by a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, which specifies how the lattice deforms from <span class="arithmatex">\(\mathcal A\)</span> to <span class="arithmatex">\(\mathcal B\)</span> and the correspondence between atoms in a supercell of <span class="arithmatex">\(\mathcal A\)</span> and those in <span class="arithmatex">\(\mathcal B\)</span>.</p>
+<div class="admonition abstract">
+<p class="admonition-title">Abstract</p>
+<p>A solid-solid phase transition establishes an <em>atom-to-atom correspondence</em> between crystal structures <span class="arithmatex">\(\mathcal A\)</span> and <span class="arithmatex">\(\mathcal B\)</span>. Such correspondence is called a <em>crystal-structure match</em> (CSM)<sup id="fnref3:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. A CSM can be described by a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, which specifies how the lattice deforms from <span class="arithmatex">\(\mathcal A\)</span> to <span class="arithmatex">\(\mathcal B\)</span> and the correspondence between atoms in a supercell of <span class="arithmatex">\(\mathcal A\)</span> and those in <span class="arithmatex">\(\mathcal B\)</span>.</p>
 <p>The main functions of <code>crystmatch</code> are as follows:</p>
 <ul>
 <li>
 <p><strong>Enumeration</strong>:</p>
 <ul>
-<li>Provide a complete list of <em>representative</em> <a href="https://arxiv.org/abs/2305.05278">[1]</a> CSMs between two given crystal structures, with user-specified upper bounds on the multiplicity <a href="https://arxiv.org/abs/2305.05278">[1]</a> and root-mean-square strain (RMSS).</li>
+<li>Provide a complete list of <em>representative</em><sup id="fnref4:1"><a class="footnote-ref" href="#fn:1">1</a></sup> CSMs between two given crystal structures, with user-specified upper bounds on the <em>multiplicity</em><sup id="fnref5:1"><a class="footnote-ref" href="#fn:1">1</a></sup> and root-mean-square strain (RMSS).</li>
 <li>(In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and root-mean-square displacement (RMSD).</li>
 </ul>
 </li>
 <li>
 <p><strong>Analysis</strong>:</p>
 <ul>
-<li>Read a CSM from a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, and save CSMs in the same format.</li>
+<li>Read a CSM from a pair of POSCAR files, and save CSMs in the same format.</li>
 <li>Score CSMs by RMSS and RMSD.</li>
 <li>Benchmark a CSM by its deviation angle from an orientation relationship (OR).</li>
 </ul>
 </li>
 </ul>
+<p>Congruent CSMs (those differ only by a space-group transformation) are identified and excluded from the enumeration using the <code>spglib</code> library by <a href="https://www.tandfonline.com/doi/full/10.1080/27660400.2024.2384822">Atsushi Togo <em>et al.</em></a></p>
+</div>
 <h2 id="installation">Installation</h2>
 <p>Make sure you have <strong>Python 3.9 or later</strong> installed. You can check it by running:</p>
-<div class="codehilite"><pre><span></span><code>$ python3 --version
+<div class="highlight"><pre><span></span><code>$ python3 --version
 </code></pre></div>
-
-<p>Clone this repository and navigate to the directory where <code>setup.py</code> is located, run:</p>
-<div class="codehilite"><pre><span></span><code>$ pip3 install .
+<p>Clone <a href="https://github.com/fangcheng-wang/crystmatch"><strong>this repository</strong></a> and navigate to the directory where <code>setup.py</code> is located, run:</p>
+<div class="highlight"><pre><span></span><code>$ pip3 install .
 </code></pre></div>
-
 <p>Check whether <code>crystmatch</code> is successfully installed:</p>
-<div class="codehilite"><pre><span></span><code>$ crystmatch --version
+<div class="highlight"><pre><span></span><code>$ crystmatch --version
 </code></pre></div>
-
 <h2 id="usage">Usage</h2>
 <p>To run <code>crystmatch</code>, one of the following modes must be selected:</p>
 <ol>
-<li><strong>Enumeration mode</strong>: Use <code>-E</code> or <code>--enumerate</code> to generate a list of CSMs, then perform preliminary analysis.</li>
-<li><strong>Analysis mode</strong>: Use <code>-A</code> or <code>--analyze</code> to read CSM(s) from <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files (or <code>CSM_LIST.npz</code> if provided), then perform detailed analysis. If <code>CSM_LIST.npz</code> is provided, you can export specific CSMs using <code>--export index1 [index2 ...]</code>.</li>
+<li><strong>Enumeration mode</strong>: Use <code>-E</code> or <code>--enumeration</code> to generate a list of CSMs, save them to a <code>CSM_LIST.npz</code> file, and perform preliminary analysis. The initial and final crystal structures must be specified in the form of POSCAR files.</li>
+<li><strong>Read mode</strong>: Use <code>-R</code> or <code>--read</code> to read CSMs from a <code>CSM_LIST.npz</code> file. You can export specific CSMs to POSCARs using <code>--export index1 [index2 ...]</code>, perform OR analysis using <code>--orientation</code> (see example below), generate CSV tables using <code>--csv</code>, and/or visualize the RMSD-RMSS-multiplicity distribution using <code>--plot</code>.</li>
+<li><strong>Single-CSM mode</strong>: Use <code>-S</code> or <code>--single</code> to determine a single CSM directly by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.</li>
 </ol>
-<p>The initial and final crystal structures should be specified in the form of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, unless in the analysis mode and <code>CSM_LIST.npz</code> is provided.</p>
-<p>If you don't specify any mode or crystal structures, <code>crystmatch</code> will ask for input.</p>
-<p>To see all available options, run:</p>
-<div class="codehilite"><pre><span></span><code>$ crystmatch --help
+<p>If you are confused about the usage, simply run:</p>
+<div class="highlight"><pre><span></span><code>$ crystmatch
 </code></pre></div>
-
+<p>and it will ask for input. To see all available options, run:</p>
+<div class="highlight"><pre><span></span><code>$ crystmatch --help
+</code></pre></div>
 <h2 id="examples">Examples</h2>
 <h3 id="enumerating-csms">Enumerating CSMs</h3>
-<p>To generate a list of representative <a href="https://arxiv.org/abs/2305.05278">[1]</a> CSMs between two crystal structures stored in <code>./fcc</code> and <code>./bcc</code>, with a maximum multiplicity of <code>4</code> and a maximum RMSS of <code>0.2</code>:</p>
-<div class="codehilite"><pre><span></span><code>$ crystmatch --initial fcc --final bcc --enumeration 4 -0.2
+<p>To generate a list of representative CSMs between two crystal structures stored in <code>./fcc</code> and <code>./bcc</code>, with a maximum multiplicity of <code>4</code> and a maximum RMSS of <code>0.2</code>:</p>
+<div class="highlight"><pre><span></span><code>$ crystmatch --initial fcc --final bcc --enumeration 4 0.2
 </code></pre></div>
-
-<blockquote>
-<p>We <strong>strongly recommend</strong> you to try small multiplicity (<code>2</code> or <code>4</code>) and RMSS between <code>0.2</code> and <code>0.5</code> first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
-</blockquote>
-<p>The following files will be created in the <code>fcc-bcc-m4s0.20</code> directory:</p>
-<div class="codehilite"><pre><span></span><code>fcc-bcc-m4s0.20/
-├── CSM_LIST(fcc-bcc-m4s0.20).npz       # stores the enumerated CSMs and metadata.
-├── rmsd-rmss-mu(fcc-bcc-m4s0.20).pdf   # shows the RMSD-RMSS distribution of the CSMs.
-└── TABLE(fcc-bcc-m4s0.20).csv          # organizes the multiplicity, RMSS, and RMSD of each CSM.
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We strongly recommend you to try small multiplicity (<code>2</code> or <code>4</code>) and RMSS between <code>0.2</code> and <code>0.5</code> first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
+</div>
+<p>The following files will be created in the current directory:</p>
+<div class="highlight"><pre><span></span><code>./
+├── CSM_LIST-fcc-bcc-m4s0.20.npz       # stores the enumerated CSMs and metadata.
+├── PLOT-fcc-bcc-m4s0.20.pdf           # shows the RMSD-RMSS distribution of the CSMs.
+└── TABLE-fcc-bcc-m4s0.20.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
 </code></pre></div>
-
 <h3 id="exporting-csms-from-an-npz-file">Exporting CSMs from an NPZ file</h3>
-<p>To export the CSMs with indices <code>7</code> and <code>10</code> in <code>TABLE(foo).csv</code> from <code>CSM_LIST(foo).npz</code>:</p>
-<div class="codehilite"><pre><span></span><code>$ crystmatch --analysis CSM_LIST(foo).npz --export 7 10
+<p>After enumeration, you can see the properties of CSMs in the CSV file, which also contains their indices in the NPZ file. If you want to export the CSMs with indices <code>7</code> and <code>10</code> in <code>CSM_LIST-foo.npz</code>, run:</p>
+<div class="highlight"><pre><span></span><code>$ crystmatch --read CSM_LIST-foo.npz --export 7 10
 </code></pre></div>
-
-<p>Two folders will be created in the <code>foo</code> directory, each containing a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files representing the CSM as:</p>
-<div class="codehilite"><pre><span></span><code>foo/
-├── CSM_7(m3s0.15d0.83)/
+<p>Two folders will be created in the current directory, each containing a pair of POSCAR files representing the CSM. The current directory will look like this:</p>
+<div class="highlight"><pre><span></span><code>./
+├── CSM_7/
 │   ├── POSCAR_I
 │   └── POSCAR_F
-└── CSM_10(m4s0.11d0.90)/
+└── CSM_10/
     ├── POSCAR_I
     └── POSCAR_F
 </code></pre></div>
-
-<p>The values in the brackets represent the basic attributes of CSMs. For example, <code>m3s0.15d0.83</code> indicates a multiplicity of <code>3</code>, RMSS of <code>0.15</code>, and RMSD of <code>0.83</code>.</p>
 <h3 id="orientation-relationship-analysis">Orientation relationship analysis</h3>
-<p>To benchmark CSMs in <code>CSM_LIST(foo).npz</code> by their deviation angles from the OR <span class="arithmatex">\((111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B\)</span>:</p>
-<div class="codehilite"><pre><span></span><code>$ crystmatch --analysis CSM_LIST(foo).npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
+<p>To benchmark CSMs in <code>CSM_LIST-foo.npz</code> by their deviation angles from the OR <span class="arithmatex">\((111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B\)</span>, run:</p>
+<div class="highlight"><pre><span></span><code>$ crystmatch --read CSM_LIST-foo.npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
 </code></pre></div>
-
-<p>The arguments after <code>--orientation</code> must be <strong>cartesian coordinates</strong>.</p>
-<p>The ORs are determined via the rotation-free manner by default, and you can also use <code>--fixusp</code> to determine ORs via the USF-fixed manner; see Ref. <a href="https://arxiv.org/abs/2305.05278">[1]</a> for their definitions.</p>
+<p>Note that the arguments after <code>--orientation</code> must be <strong>cartesian coordinates</strong>.</p>
+<p>The ORs are determined via the <em>rotation-free</em><sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup> manner by default, and you can also use <code>--uspfix</code> to determine ORs via the <em>USF-fixed</em><sup id="fnref2:1"><a class="footnote-ref" href="#fn:1">1</a></sup> manner.</p>
+<h3 id="single-csm-analysis">Single-CSM analysis</h3>
+<p>To analyze a single CSM defined by two POSCAR files, run:</p>
+<p><code>`
+$ crystmatch --initial POSCAR1 --final POSCAR2 --single</code></p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p><a href="https://arxiv.org/abs/2305.05278">FC Wang, QJ Ye, YC Zhu, and XZ Li, <em>Physical Review Letters</em> <strong>132</strong>, 086101 (2024)</a>&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref4:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref5:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
 
 
 
@@ -591,6 +636,10 @@
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2023–2024 Xin-Zheng Li Group. All rights reserved.
+    </div>
   
   
     Made with
