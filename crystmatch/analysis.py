@@ -3,12 +3,12 @@ Analyze and visualize CSMs.
 """
 
 from .utilities import *
-import matplotlib
+from matplotlib import rcParams, colors
 import matplotlib.pyplot as plt
-matplotlib.rcParams.update({
+rcParams.update({
     'font.family': 'serif',
     'pgf.rcfonts': False,
-    'figure.dpi': 150,
+    'figure.dpi': 150
 })
 
 np.set_printoptions(suppress=True)
@@ -172,7 +172,7 @@ def scatter_colored(
     rmsslist: ArrayLike,
     rmsdlist: ArrayLike,
     colorlist: ArrayLike,
-    cmap : matplotlib.colors.Colormap = plt.cm.get_cmap('viridis'),
+    cmap : colors.Colormap = plt.cm.get_cmap('viridis'),
     cbarlabel: str = None
 ) -> None:
     """Scatter plot of the CSMs with colorbar.
@@ -207,7 +207,7 @@ def scatter_colored(
     plt.xlabel("Root-mean-square strain (RMSS)", fontsize=15)
     plt.ylabel("RMSD / Å", fontsize=15)
     plt.xlim(0, np.amax(rmsslist) * 1.05)
-    plt.ylim(min(0, np.amin(rmsdlist) - 0.1), np.amax(rmsdlist) * 1.05)
+    plt.ylim(min(0, np.amin(rmsdlist) - 0.1), np.amax(rmsdlist) + 0.1)
     if colorlist.dtype == int:
         cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
     else:
@@ -215,5 +215,5 @@ def scatter_colored(
     cbar.set_label(cbarlabel if cbarlabel != None else filename.split('.')[0], fontsize=13)
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.tick_params(axis='both', which='minor', labelsize=8)
-    plt.savefig(f"{filename}")
+    plt.savefig(f"{filename}", bbox_inches='tight')
     return

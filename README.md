@@ -47,11 +47,11 @@ $ crystmatch --version
 
 To run `crystmatch`, one of the following modes must be selected:
 
-1. **Enumeration mode**: Use `-E` or `--enumeration` to generate a list of CSMs, save them to a `CSM_LIST.npz` file, and perform preliminary analysis. The initial and final crystal structures must be specified in the form of POSCAR files.
-2. **Read mode**: Use `-R` or `--read` to read CSMs from a `CSM_LIST.npz` file. You can export specific CSMs to POSCARs using `--export index1 [index2 ...]`, perform OR analysis using `--orientation` (see example below), generate CSV tables using `--csv`, and/or visualize the RMSD-RMSS-multiplicity distribution using `--plot`.
-3. **Single-CSM mode**: Use `-S` or `--single` to determine a single CSM directly by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.
+1. **Enumeration mode**: Generate a list of CSMs, save them to a `CSM_LIST.npz` file, and perform preliminary analysis. The initial and final crystal structures must be specified in the form of POSCAR files.
+2. **Read mode**: Read CSMs from a `CSM_LIST.npz` file. You can export specific CSMs to POSCARs using `--export index1 [index2 ...]`, perform OR analysis using `--orientation` (see example below), generate CSV tables using `--csv`, and/or visualize the RMSD-RMSS-multiplicity distribution using `--plot`.
+3. **Single-CSM mode**: Directly determine a single CSM by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.
 
-If you are confused about the usage, simply run:
+We suggest you to start with the [examples](#examples) below, or simply run:
 
 ```
 $ crystmatch
