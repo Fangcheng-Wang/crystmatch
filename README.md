@@ -108,13 +108,13 @@ Two folders will be created in the current directory, each containing a pair of 
 
 ### Orientation relationship analysis
 
-To benchmark CSMs in `CSM_LIST-foo.npz` by their deviation angles from the OR $(111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B$, run:
+To benchmark CSMs in `CSM_LIST-foo.npz` by their deviation angles from the OR $(111)_A\parallel(110)_B$, $[1\overline{1}0]_A\parallel[001]_B$, run:
 
 ```
 $ crystmatch --read CSM_LIST-foo.npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
 ```
 
-Note that the arguments after `--orientation` must be **cartesian coordinates**.
+Note that the arguments after `--orientation` must be **Cartesian coordinates**.
 
 The ORs are determined via the rotation-free manner by default, and you can also use `--uspfix` to determine ORs via the USF-fixed manner; see Ref. [[1]](https://arxiv.org/abs/2305.05278) for their definitions.
 
@@ -124,6 +124,16 @@ To analyze a single CSM defined by two POSCAR files, run:
 
 ```
 $ crystmatch --initial POSCAR1 --final POSCAR2 --single
+```
+
+`crystmatch` will determine unit structures (primitive cells) of `./POSCAR1` and `./POSCAR2`, as well as the rigid-transformation optimized (with rotation-free orientation and RMSD-minimized overall position) structure of `./POSCAR2`. These structures will be saved in the current directory like this:
+
+```
+./
+├── PRIM/
+│   ├── POSCAR1
+│   └── POSCAR2
+└── POSCAR2-optim
 ```
 
 ## Python API

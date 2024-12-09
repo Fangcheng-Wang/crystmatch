@@ -94,7 +94,6 @@ def main():
         raise ValueError("Cannot choose more than one mode.")
 
     if sum(1 for x in [args.enumeration, args.read, args.single] if x is not None) == 0:
-        # mode unspecified
         mode = input("\nPlease enter a mode ('enumeration' / 'read' / 'single'): ")
         if mode in ["'enumeration'", 'enumeration', 'e', 'E']:
             mu_max = int(input("Enter the maximum multiplicity: "))
@@ -131,19 +130,12 @@ def main():
         print(f"\nMode: 'read'")
         data = np.load(args.read, allow_pickle=True)
         table = data['table']
+        slmlist = data['slmlist']
         job, crystA, crystB, mu_max, rmss_max, symprec = data['metadata']
-        print(f"Metadata from '{args.read}':\n\tinitial cryst: '{job.split('-')[0]}'\n\tfinal cryst: '{job.split('-')[1]}'\
-            \n\tmultipliticy <= {mu_max}\n\trms strain <= {rmss_max}\n\tsymmetry tolerance: {symprec}")
+        print(f"Metadata from '{args.read}':\n\tjob: {job}'\n\tmultipliticy <= {mu_max}\n\trms strain <= {rmss_max}\n\tsymmetry tolerance: {symprec}")
         print(save_poscar(None, crystA, crystname="\nInitial crystal structure (in POSCAR format):"))
         print(save_poscar(None, crystB, crystname="\nFinal crystal structure (in POSCAR format):"))
         if args.export != None: job += "-e"
-        if args.orientation != None:
-            job += "-o"
-            vix, viy, viz, vfx, vfy, vfz, wix, wiy, wiz, wfx, wfy, wfz = args.orientation
-            print(f"\nComparing each CSM with the given OR:\n\t[{vix},{viy},{viz}]||[{vfx},{vfy},{vfz}]"
-                    + f"\n\t[{wix},{wiy},{wiz}]||[{wfx},{wfy},{wfz}]")
-            r = orient_matrix([vix,viy,viz], [vfx,vfy,vfz], [wix,wiy,wiz], [wfx,wfy,wfz])
-            table = np.hstack((table, deviation_angle(crystA, crystB, data['slmlist'], r, uspfix=args.uspfix).reshape(-1,1)))
 
     elif args.single is not None:
         print("\nMode: 'single-CSM'")
@@ -153,12 +145,10 @@ def main():
         crystB_sup = load_poscar(args.final, tol=args.tolerance, to_primitive=False, verbose=False)
         if not crystA_sup[1].shape[0] == crystB_sup[1].shape[0]: raise ValueError("\nNumbers of atoms in two crysts are not equal!")
         if not (crystA_sup[1] == crystB_sup[1]).all(): raise ValueError("\nAtom species in two crysts do not match!")
-        job = f"{splitext(args.initial)[0]}-{splitext(args.final)[0]}"
-        if args.orientation != None: job += "-o"
-        
         print("CSM successfully loaded. Now analyzing the two crystal structures.")
         crystA = load_poscar(args.initial, tol=args.tolerance, to_primitive=True)
         crystB = load_poscar(args.final, tol=args.tolerance, to_primitive=True)
+        job = f"{splitext(args.initial)[0]}-{splitext(args.final)[0]}-sing"
         
         # single-CSM analysis
         print(f"\nGeometric properties of the CSM:")
@@ -188,26 +178,33 @@ def main():
         t0 = (pA_sup - pB_sup - ks).mean(axis=1, keepdims=True)
         pB_sup_final = pB_sup + ks + t0
         rmsdlist = [la.norm(c_sup_half @ (pA_sup - pB_sup_final)) / np.sqrt(pA_sup.shape[1])]
+        table = np.array([[0], [0], mulist, rmsslist, rmsdlist], dtype=float).T
         print(f"\tmultiplicity ∈ {{{','.join(str(mu) for mu in range(1,mulist[0]+1) if mulist[0] % mu == 0)}}}\n\tprincipal strains: " + 
                 ", ".join([f"{100*(s-1):.2f}%" for s in sigma]) + f"\n\trmss = {rmsslist[0]:.4f}\n\trmsd = {rmsdlist[0]:.4f} Å.")
-        print(f"\nTo produce a list of CSMs that may contain this CSM, you can run:\n\n\t$ crystmatch --enumeration {mulist[0]} {rmsslist[0]+0.005:.3f}\n")
-        
-        # generate a minimal list containing this CSM
-        if args.orientation == None:
-            table = np.array([[0], [0], mulist, rmsslist, rmsdlist], dtype=float).T
-        else:
-            r = orient_matrix([vix,viy,viz], [vfx,vfy,vfz], [wix,wiy,wiz], [wfx,wfy,wfz])
-            theta = deviation_angle(crystA, crystB, slmlist, r, uspfix=args.uspfix)
-            print(f"\n\tdeviation from the given OR: {theta * 180/np.pi:.4f}°")
-            table = np.array([[0], [0], mulist, rmsslist, rmsdlist, [theta]], dtype=float).T
+        print(f"\nTo produce a list of CSMs that may contain this CSM, you can run:\n\n\t$ crystmatch --enumeration {mulist[0]} {rmsslist[0]+0.005:.3f}")
+
+    print("")
+
+    # orientation analysis
     
-    # saving NPZ, POSCAR, CSV, and PLOT files
+    if args.orientation != None:
+        job += "-o"
+        vix, viy, viz, vfx, vfy, vfz, wix, wiy, wiz, wfx, wfy, wfz = args.orientation
+        print(f"Comparing each CSM with the given OR:\n\t[{vix},{viy},{viz}] || [{vfx},{vfy},{vfz}]"
+                + f"\n\t[{wix},{wiy},{wiz}] || [{wfx},{wfy},{wfz}]")
+        r = orient_matrix([vix,viy,viz], [vfx,vfy,vfz], [wix,wiy,wiz], [wfx,wfy,wfz])
+        anglelist = deviation_angle(crystA, crystB, slmlist, r, uspfix=args.uspfix)
+        table = np.hstack((table, anglelist.reshape(-1,1)))
+        if args.single is not None: print(f"The deviation angle is {anglelist[0]:.6f} = {anglelist[0]*180/np.pi:.4f}°\n")
+
+    # saving NPZ and POSCAR files
     
     if args.enumeration is not None:
         # saving enumeration results in NPZ format
         metadata = np.array([job, crystA, crystB, mu_max, rmss_max, args.tolerance], dtype=object)
         np.savez(unique_filename("Saving CSMs to", f"CSM_LIST-{job}.npz"), *csm_bins, metadata=metadata, slmlist=slmlist, table=table)
-    elif args.single is not None:
+    
+    if args.single is not None:
         # saving primitive cells
         dirname = unique_filename(f"Saving primitive-cell POSCARs to", "PRIM")
         makedirs(dirname)
@@ -238,6 +235,8 @@ def main():
                 save_poscar(f"{dirname}{sep}POSCAR_I", crystA_sup, crystname = job.split('-')[0])
                 save_poscar(f"{dirname}{sep}POSCAR_F", crystB_sup, crystname = job.split('-')[1])
     
+    # saving CSV file and plotting
+
     if args.csv:
         if args.orientation == None:
             np.savetxt(unique_filename("Saving results to", f"TABLE-{job}.csv"), table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
@@ -248,10 +247,8 @@ def main():
     
     if args.plot:
         scatter_colored(unique_filename("Creating scatter plot in", f"PLOT-{job}.pdf"), table[:,3], table[:,4], table[:,2], cbarlabel="Multiplicity")
-
-    if args.orientation != None:
-        scatter_colored(unique_filename("Creating scatter plot in", f"OR-{job}.pdf"), table[:,3], table[:,4], table[:,5], 
-                        cbarlabel="Deviation / °", cmap=plt.cm.get_cmap('jet'))
+        if args.orientation is not None: scatter_colored(unique_filename("Creating scatter plot in", f"OR-{job}.pdf"),
+                                                        table[:,3], table[:,4], table[:,5], cbarlabel="Deviation / °", cmap=plt.cm.get_cmap('jet'))
     
     print(f"\nTotal time spent: {time()-time0:.2f} seconds")
 
