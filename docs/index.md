@@ -22,25 +22,25 @@
 Make sure you have **Python 3.9 or later** installed. You can check it by running:
 
 ```
-$ python3 --version
+python3 --version
 ```
 
 Clone [**this repository**](https://github.com/fangcheng-wang/crystmatch) by:
 
 ```
-$ git clone https://github.com/fangcheng-wang/crystmatch.git
+git clone https://github.com/fangcheng-wang/crystmatch.git
 ```
 
 Navigate to the directory where `setup.py` is located, run:
 
 ```
-$ pip3 install .
+pip3 install .
 ```
 
 Check whether `crystmatch` is successfully installed:
 
 ```
-$ crystmatch --version
+crystmatch --version
 ```
 
 ## Usage
@@ -54,13 +54,13 @@ To run `crystmatch`, one of the following modes must be selected:
 We suggest you to start with the [examples](#examples) below, or simply run:
 
 ```
-$ crystmatch
+crystmatch
 ```
 
 and it will ask for input. To [see all available options](https://fangcheng-wang.github.io/crystmatch/cli/), run:
 
 ```
-$ crystmatch --help
+crystmatch --help
 ```
 
 ## Examples
@@ -70,7 +70,7 @@ $ crystmatch --help
 To generate a list of representative CSMs between two crystal structures stored in `./fcc` and `./bcc`, with a maximum multiplicity of `4` and a maximum RMSS of `0.2`:
 
 ```
-$ crystmatch --initial fcc --final bcc --enumeration 4 0.2
+crystmatch --initial fcc --final bcc --enumeration 4 0.2
 ```
 
 !!! note
@@ -90,7 +90,7 @@ The following files will be created in the current directory:
 After enumeration, you can see the properties of CSMs in the CSV file, which also contains their indices in the NPZ file. If you want to export the CSMs with indices `7` and `10` in `CSM_LIST-foo.npz`, run:
 
 ```
-$ crystmatch --read CSM_LIST-foo.npz --export 7 10
+crystmatch --read CSM_LIST-foo.npz --export 7 10
 ```
 
 Two folders will be created in the current directory, each containing a pair of POSCAR files representing the CSM. The current directory will look like this:
@@ -110,7 +110,7 @@ Two folders will be created in the current directory, each containing a pair of 
 To benchmark CSMs in `CSM_LIST-foo.npz` by their deviation angles from the OR $(111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B$, run:
 
 ```
-$ crystmatch --read CSM_LIST-foo.npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
+crystmatch --read CSM_LIST-foo.npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
 ```
 
 Note that the arguments after `--orientation` must be **Cartesian coordinates**.
@@ -122,7 +122,7 @@ The ORs are determined via the *rotation-free*[^1] manner by default, and you ca
 To analyze a single CSM defined by two POSCAR files, run:
 
 ```
-$ crystmatch --initial POSCAR1 --final POSCAR2 --single
+crystmatch --initial POSCAR1 --final POSCAR2 --single
 ```
 
 `crystmatch` will determine unit structures (primitive cells) of `./POSCAR1` and `./POSCAR2`, as well as the rigid-transformation optimized (with rotation-free orientation and RMSD-minimized overall position) structure of `./POSCAR2`. These structures will be saved in the current directory like this:
