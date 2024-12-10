@@ -31,7 +31,13 @@ Make sure you have **Python 3.9 or later** installed. You can check it by runnin
 $ python3 --version
 ```
 
-Clone this repository and navigate to the directory where `setup.py` is located, run:
+Clone [**this repository**](https://github.com/fangcheng-wang/crystmatch) by:
+
+```
+$ git clone https://github.com/fangcheng-wang/crystmatch.git
+```
+
+Navigate to the directory where `setup.py` is located, run:
 
 ```
 $ pip3 install .
@@ -48,7 +54,7 @@ $ crystmatch --version
 To run `crystmatch`, one of the following modes must be selected:
 
 1. **Enumeration mode**: Generate a list of CSMs, save them to a `CSM_LIST.npz` file, and perform preliminary analysis. The initial and final crystal structures must be specified in the form of POSCAR files.
-2. **Read mode**: Read CSMs from a `CSM_LIST.npz` file. You can export specific CSMs to POSCARs using `--export index1 [index2 ...]`, perform OR analysis using `--orientation` (see example below), generate CSV tables using `--csv`, and/or visualize the RMSD-RMSS-multiplicity distribution using `--plot`.
+2. **Read mode**: Read CSMs from a `CSM_LIST.npz` file. You can export specific CSMs to POSCARs, perform OR analysis, generate CSV tables of CSM properties, and visualize the RMSD-RMSS-multiplicity distribution in a 2D scatter plot.
 3. **Single-CSM mode**: Directly determine a single CSM by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.
 
 We suggest you to start with the [examples](#examples) below, or simply run:
