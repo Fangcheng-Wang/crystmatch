@@ -167,7 +167,7 @@ def deviation_angle(
         anglelist = np.arccos(np.clip(0.5 * (-1 + np.amax(np.trace(np.dot(la.inv(r_equiv), rS), axis1=1, axis2=3), axis=0)), -1, 1))
     return anglelist.round(decimals=7)
 
-def scatter_colored(
+def save_scatter(
     filename : str,
     rmsslist: ArrayLike,
     rmsdlist: ArrayLike,

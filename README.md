@@ -8,7 +8,7 @@ You are also welcome to contact me at `wfc@pku.edu.cn` for any questions or comm
 
 ## Introduction
 
-A solid-solid phase transition establishes an *atom-to-atom correspondence* between crystal structures $\mathcal A$ and $\mathcal B$. Such correspondence is called a *crystal-structure match* (CSM) [[1]](https://arxiv.org/abs/2305.05278). A CSM can be described by a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, which specifies how the lattice deforms from $\mathcal A$ to $\mathcal B$ and the correspondence between atoms in a supercell of $\mathcal A$ and those in $\mathcal B$.
+A solid-solid phase transition establishes an *atom-to-atom correspondence* between the initial and final crystal structures $\mathcal A$ and $\mathcal B$. Such correspondence is called a *crystal-structure match* (CSM) [[1]](https://arxiv.org/abs/2305.05278). A CSM can be described by a pair of [POSCAR](https://www.vasp.at/wiki/index.php/POSCAR) files, which specifies how the lattice deforms from $\mathcal A$ to $\mathcal B$ and the correspondence between atoms in a supercell of $\mathcal A$ and those in $\mathcal B$.
 
 The main goals of `crystmatch` are as follows:
 
@@ -57,25 +57,17 @@ To run `crystmatch`, one of the following modes must be selected:
 2. **Read mode**: Read CSMs from a `CSM_LIST.npz` file. You can export specific CSMs to POSCARs, perform OR analysis, generate CSV tables of CSM properties, and visualize the RMSD-RMSS-multiplicity distribution in a 2D scatter plot.
 3. **Single-CSM mode**: Directly determine a single CSM by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.
 
-We suggest you to start with the [examples](#examples) below, or simply run:
-
-```
-crystmatch
-```
-
-and it will ask for input. To see all available options, run:
+**We strongly recommend starting with the [examples](#examples) provided below.** If you are still confused, run `crystmatch` directly in the command line without any arguments for an interactive calculation. To [see all available options](https://fangcheng-wang.github.io/crystmatch/cli/), run:
 
 ```
 crystmatch --help
 ```
 
-or refer to the [documentation](https://fangcheng-wang.github.io/crystmatch/cli/).
-
 ## Examples
 
 ### Enumerating CSMs
 
-To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with a maximum multiplicity of `4` and a maximum RMSS of `0.2`:
+To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with `MAX_MU = 4` and `MAX_RMSS = 0.2`:
 
 ```
 crystmatch --initial fcc --final bcc --enumeration 4 0.2
@@ -85,12 +77,12 @@ The following files will be created in the current directory:
 
 ```
 ./
-├── CSM_LIST-fcc-bcc-m4s0.20.npz       # stores the enumerated CSMs and metadata.
-├── PLOT-fcc-bcc-m4s0.20.pdf           # shows the RMSD-RMSS distribution of the CSMs.
-└── TABLE-fcc-bcc-m4s0.20.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
+├── CSM_LIST-m4s0.20.npz       # stores the enumerated CSMs and metadata.
+├── PLOT-m4s0.20.pdf           # shows the RMSD-RMSS distribution of the CSMs.
+└── TABLE-m4s0.20.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
 ```
 
-> We **strongly recommend** you to try small multiplicity (`2` or `4`) and RMSS between `0.2` and `0.5` first, and then gradually adjust these upper bounds to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
+> **We recommend you to try `MAX_MU <= 4` and `MAX_RMSS = 0.5` first, and then gradually adjust these upper bounds (usually by increasing `MAX_MU` and decreasing `MAX_RMSS`) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.**
 
 ### Exporting CSMs from an NPZ file
 

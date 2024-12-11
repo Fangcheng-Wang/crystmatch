@@ -10,11 +10,11 @@ The `crystmatch` command-line interface is already introduced in [Tutorial](http
 | `-h`, `--help` | Show help message and exit. | *none* |
 | `-v`, `--version` | Show program's version number and exit. | *none* |
 | `-E MAX_MU MAX_RMSS`<br>`--enumeration MAX_MU MAX_RMSS` | Use 'enumeration' mode, with `MAX_MU` and `MAX_RMSS` as the multiplicity and RMSS upper bounds. | 'enumeration' |
-| `-R CSM_LIST`<br>`--read CSM_LIST` | Use 'read' mode and read CSMs from NPZ file. | 'read' |
-| `-S`<br>`--single` | Use 'single-CSM' mode and analyze a single CSM defined by the POSCARs specified by `-I` and `-F`. | 'single-CSM' |
+| `-R CSM_LIST`<br>`--read CSM_LIST` | Use 'read' mode from an existing NPZ file `CSM_LIST`. | 'read' |
+| `-S`<br>`--single` | Use 'single-CSM' mode, with the CSM uniquely determined by `-I` and `-F`. | 'single-CSM' |
 | `-I POSCAR_I`<br>`--initial POSCAR_I` | POSCAR file of the initial crystal structure. | 'enumeration', 'single-CSM' |
 | `-F POSCAR_F`<br>`--final POSCAR_F` | POSCAR file of the final crystal structure. | 'enumeration', 'single-CSM' |
-| `-t TOL`<br>`--tolerance TOL` | Tolerance for determining crystal symmetry; default is 1e-5. | 'enumeration', 'single-CSM' |
+| `-t TOL`<br>`--tolerance TOL` | Tolerance for determining crystal symmetry; default is 1e-3. | 'enumeration', 'single-CSM' |
 | `-e index1 [index2 ...]`<br>`--export index1 [index2 ...]` | Export CSMs from NPZ file with the given indices. | 'read' |
 | `-o vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz`<br>`--orientation vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz` | Benchmark CSMs by their deviation angles from the orientation relationship: "\(\mathbf{v}_\text{i}\parallel\mathbf{v}_\text{f}\) and \(\mathbf{w}_\text{i}\parallel\mathbf{w}_\text{f}\)".<br>Note: arguments must be given in **Cartesian** coordinates. | *all* |
 | `-c`, `--csv` | Create CSV file. | *all* |

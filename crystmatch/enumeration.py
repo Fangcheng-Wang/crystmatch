@@ -43,7 +43,7 @@ def cong_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDAr
     return ss, len(cl)
 
 def enumerate_slm(
-    crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float, tol: float = 1e-5,
+    crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float, tol: float = 1e-3,
     kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss,
     likelihood_ratio: float = 1e2, print_detail: int = 0
 ) -> List[SLM]:
@@ -60,7 +60,7 @@ def enumerate_slm(
     kappa_max : float
         A positive threshold value of `kappa` to determine the range of singular values to generate.
     tol : float, optional
-        The tolerance for determining the pure rotation group of the crystal structures. Default is 1e-5.
+        The tolerance for determining the pure rotation group of the crystal structures. Default is 1e-3.
     kappa : callable, optional
         A function that quantifies the strain of a matrix according to its singular values. \
             Default is `rmss`, which computes the root-mean-square strain.
@@ -88,10 +88,14 @@ def enumerate_slm(
     max_prob_ratio = 20
     # Compute the sampling domain of `s0`s.
     det_s = zA / zB * la.det(cB) / la.det(cA)
-    diff_kappa = lambda x: kappa(np.array([x, (det_s / x) ** 0.5, (det_s / x) ** 0.5])) - kappa_max
-    a = brentq(diff_kappa, 0.1, det_s**(1/3))
-    b = brentq(diff_kappa, det_s**(1/3), 10)
-    max_strain = max(abs(a-1), abs(b-1))
+    if kappa.__name__ == 'rmss':
+        max_strain = kappa_max * 3**0.5
+    else:
+        print(f"\nWarning: kappa function {kappa.__name__} is not RMSS. I hope you know what you are doing.")
+        diff_kappa = lambda x: kappa(np.array([x, (det_s / x) ** 0.5, (det_s / x) ** 0.5])) - kappa_max
+        a = brentq(diff_kappa, 1e-2, det_s**(1/3))
+        b = brentq(diff_kappa, det_s**(1/3), 1e2)
+        max_strain = max(abs(a-1), abs(b-1))
     # Enumerate SLMs.
     print(f"Enumerating SLMs (mu = {mu:d}, {kappa.__name__} <= {kappa_max:.4f}) ...")
     if print_detail >= 1:

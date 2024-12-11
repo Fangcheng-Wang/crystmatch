@@ -15,7 +15,7 @@ np.set_printoptions(suppress=True)
 Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
 SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
-def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-5, verbose: bool = True) -> Cryst:
+def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, verbose: bool = True) -> Cryst:
     """Load the crystal structure from a POSCAR file.
 
     Parameters
@@ -25,7 +25,7 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-5, ver
     to_primitive : bool, optional
         Using the primitive cell instead of the cell given by the POSCAR file. Default is True.
     tol : str
-        The tolerance for `spglib` symmetry detection.
+        The tolerance for `spglib` symmetry detection; default is 1e-3.
 
     Returns
     -------
@@ -111,8 +111,7 @@ def save_poscar(filename: Union[str, None], cryst: Cryst, crystname: Union[str, 
     """
     species_unique, species_counts = np.unique(cryst[1], return_counts=True)
     if crystname is not None: content = crystname
-    elif filename is not None: content = splitext(filename)[0]
-    else: content = "anonymous crystal structure saved by 'crystmatch'"
+    else: content = ""
     content += "\n1.0\n"
     content += "\n".join(f"{v[0]:.12f}\t{v[1]:.12f}\t{v[2]:.12f}" for v in cryst[0].tolist())
     content += "\n" + " ".join(species_unique.tolist())
@@ -240,13 +239,15 @@ def rmss(x: NDArray[np.float64]) -> NDArray[np.float64]:
     """
     return np.sqrt(np.mean((x - 1) ** 2, axis=-1))
 
-def get_pure_rotation(cryst: Cryst, tol: float = 1e-5) -> NDArray[np.int32]:
+def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
     """Find all pure rotations appeared in the space group of `cryst`.
 
     Parameters
     ----------
     cryst : 3-tuple
         `(lattice, species, positions)`, representing the crystal structure, usually obtained by `load_poscar`.
+    tol : float, optional
+        The tolerance for `spglib` symmetry detection; default is 1e-3.
     
     Returns
     -------

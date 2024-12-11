@@ -1,24 +1,10 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Operating System :: OS Independent",
-]
-
-python_requires = ">=3.9"
-
-install_requires = [
+requires = [
+    "setuptools>=42",
+    "wheel",
     "numpy",
     "scipy",
     "matplotlib",
     "spglib"
 ]
-
-[tool.setuptools.entry_points]
-console_scripts = [
-    "crystmatch = crystmatch:main",
-]
+build-backend = "setuptools.build_meta"
