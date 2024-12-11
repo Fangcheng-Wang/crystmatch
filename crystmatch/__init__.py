@@ -124,7 +124,7 @@ def main():
         elif rmss_max <= 0: raise ValueError("Root-mean-square-strain should be a positive float.")
         if mu_max >= 8 or rmss_max > 0.5:
             print(f"WARNING: Current MAX_MU = {mu_max:d} and MAX_RMSS = {rmss_max:.2f} may result in a large number of CSMs, which may take "
-                    + "a long time to enumerate. If you are new to 'crystmatch', we recommend using MAX_MU <= 4 and MAX_RMSS = 0.5 first, "
+                    + "a long time to enumerate. If you are new to 'crystmatch', we recommend using MAX_MU <= 4 and MAX_RMSS = 0.4 first, "
                     + "and then increase MAX_MU and decrease MAX_RMSS gradually.")
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
         crystA = load_poscar(args.initial, tol=args.tolerance)

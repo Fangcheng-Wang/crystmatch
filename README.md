@@ -67,22 +67,22 @@ crystmatch --help
 
 ### Enumerating CSMs
 
-To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with `MAX_MU = 4` and `MAX_RMSS = 0.2`:
+To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with multiplicity upper bound `MAX_MU = 4` and RMSS upper bound `MAX_RMSS = 0.4`, run:
 
 ```
-crystmatch --initial fcc --final bcc --enumeration 4 0.2
+crystmatch --initial fcc --final bcc --enumeration 4 0.4
 ```
 
 The following files will be created in the current directory:
 
 ```
 ./
-├── CSM_LIST-m4s0.20.npz       # stores the enumerated CSMs and metadata.
-├── PLOT-m4s0.20.pdf           # shows the RMSD-RMSS distribution of the CSMs.
-└── TABLE-m4s0.20.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
+├── CSM_LIST-m4s0.40.npz       # stores the enumerated CSMs and metadata.
+├── PLOT-m4s0.40.pdf           # shows the RMSD-RMSS distribution of the CSMs.
+└── TABLE-m4s0.40.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
 ```
 
-> **We recommend you to try `MAX_MU <= 4` and `MAX_RMSS = 0.5` first, and then gradually adjust these upper bounds (usually by increasing `MAX_MU` and decreasing `MAX_RMSS`) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.**
+> **We recommend you to try `MAX_MU <= 4` and `MAX_RMSS = 0.4` first, and then gradually adjust these upper bounds (usually by increasing `MAX_MU` and decreasing `MAX_RMSS`) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.**
 
 ### Exporting CSMs from an NPZ file
 
