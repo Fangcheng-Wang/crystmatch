@@ -703,9 +703,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#crystmatch.analysis.scatter_colored" class="md-nav__link">
+  <a href="#crystmatch.analysis.save_scatter" class="md-nav__link">
     <span class="md-ellipsis">
-      scatter_colored
+      save_scatter
     </span>
   </a>
   
@@ -1351,9 +1351,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#crystmatch.analysis.scatter_colored" class="md-nav__link">
+  <a href="#crystmatch.analysis.save_scatter" class="md-nav__link">
     <span class="md-ellipsis">
-      scatter_colored
+      save_scatter
     </span>
   </a>
   
@@ -1875,7 +1875,7 @@
 
 
 <h3 id="crystmatch.enumeration.enumerate_slm" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">enumerate_slm</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">kappa_max</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="n">rmss</span><span class="p">,</span> <span class="n">likelihood_ratio</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">print_detail</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">enumerate_slm</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">kappa_max</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="n">rmss</span><span class="p">,</span> <span class="n">likelihood_ratio</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">print_detail</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 </h3>
 
@@ -1969,11 +1969,11 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The tolerance for determining the pure rotation group of the crystal structures. Default is 1e-5.</p>
+                <p>The tolerance for determining the pure rotation group of the crystal structures. Default is 1e-3.</p>
               </div>
             </td>
             <td>
-                  <code>1e-05</code>
+                  <code>0.001</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2058,7 +2058,7 @@
 
 
 <h3 id="crystmatch.enumeration.get_pure_rotation" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_pure_rotation</span><span class="p">(</span><span class="n">cryst</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_pure_rotation</span><span class="p">(</span><span class="n">cryst</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span></code>
 
 </h3>
 
@@ -2093,6 +2093,22 @@
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code>float</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The tolerance for <code>spglib</code> symmetry detection; default is 1e-3.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.001</code>
             </td>
           </tr>
       </tbody>
@@ -2671,7 +2687,7 @@
 
 
 <h3 id="crystmatch.enumeration.load_poscar" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">load_poscar</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">to_primitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">load_poscar</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">to_primitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h3>
 
@@ -2733,11 +2749,11 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The tolerance for <code>spglib</code> symmetry detection.</p>
+                <p>The tolerance for <code>spglib</code> symmetry detection; default is 1e-3.</p>
               </div>
             </td>
             <td>
-                  <code>1e-05</code>
+                  <code>0.001</code>
             </td>
           </tr>
       </tbody>
@@ -4197,7 +4213,7 @@
 
 
 <h3 id="crystmatch.analysis.get_pure_rotation" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_pure_rotation</span><span class="p">(</span><span class="n">cryst</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_pure_rotation</span><span class="p">(</span><span class="n">cryst</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span></code>
 
 </h3>
 
@@ -4232,6 +4248,22 @@
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code>float</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The tolerance for <code>spglib</code> symmetry detection; default is 1e-3.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.001</code>
             </td>
           </tr>
       </tbody>
@@ -4810,7 +4842,7 @@
 
 
 <h3 id="crystmatch.analysis.load_poscar" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">load_poscar</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">to_primitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">load_poscar</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">to_primitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h3>
 
@@ -4872,11 +4904,11 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The tolerance for <code>spglib</code> symmetry detection.</p>
+                <p>The tolerance for <code>spglib</code> symmetry detection; default is 1e-3.</p>
               </div>
             </td>
             <td>
-                  <code>1e-05</code>
+                  <code>0.001</code>
             </td>
           </tr>
       </tbody>
@@ -5556,8 +5588,8 @@
 <div class="doc doc-object doc-function">
 
 
-<h3 id="crystmatch.analysis.scatter_colored" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">scatter_colored</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">rmsslist</span><span class="p">,</span> <span class="n">rmsdlist</span><span class="p">,</span> <span class="n">colorlist</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;viridis&#39;</span><span class="p">),</span> <span class="n">cbarlabel</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<h3 id="crystmatch.analysis.save_scatter" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">save_scatter</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">rmsslist</span><span class="p">,</span> <span class="n">rmsdlist</span><span class="p">,</span> <span class="n">colorlist</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;viridis&#39;</span><span class="p">),</span> <span class="n">cbarlabel</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h3>
 
@@ -6134,7 +6166,7 @@
 
 
 <h3 id="crystmatch.utilities.get_pure_rotation" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_pure_rotation</span><span class="p">(</span><span class="n">cryst</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_pure_rotation</span><span class="p">(</span><span class="n">cryst</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span></code>
 
 </h3>
 
@@ -6169,6 +6201,22 @@
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code>float</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The tolerance for <code>spglib</code> symmetry detection; default is 1e-3.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.001</code>
             </td>
           </tr>
       </tbody>
@@ -6747,7 +6795,7 @@
 
 
 <h3 id="crystmatch.utilities.load_poscar" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">load_poscar</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">to_primitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">load_poscar</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">to_primitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h3>
 
@@ -6809,11 +6857,11 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The tolerance for <code>spglib</code> symmetry detection.</p>
+                <p>The tolerance for <code>spglib</code> symmetry detection; default is 1e-3.</p>
               </div>
             </td>
             <td>
-                  <code>1e-05</code>
+                  <code>0.001</code>
             </td>
           </tr>
       </tbody>
