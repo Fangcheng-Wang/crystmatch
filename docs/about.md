@@ -18,4 +18,4 @@ If you use `crystmatch` in your research, please cite the following paper:
 
 \[1\] [FC Wang, QJ Ye, YC Zhu, and XZ Li, *Physical Review Letters* **132**, 086101 (2024)](https://arxiv.org/abs/2305.05278)
 
-You are welcome to contact us at `wfc@pku.edu.cn` for any questions, feedback or comments regarding `crystmatch`.
+In addition to the research group, Fang-Cheng Wang would like to express his gratitude to Dr. Félix Therrien for his invaluable guidance, and to Zhi-Lin Chang for his contributions to the project. You are welcome to contact us at `wfc@pku.edu.cn` for any questions, feedback or comments regarding `crystmatch`.

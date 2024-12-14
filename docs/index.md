@@ -119,14 +119,13 @@ To analyze a single CSM defined by two POSCAR files, run:
 crystmatch --initial POSCAR1 --final POSCAR2 --single
 ```
 
-`crystmatch` will determine unit structures (primitive cells) of `./POSCAR1` and `./POSCAR2`, as well as the rigid-transformation optimized (with rotation-free orientation and RMSD-minimized overall position) structure of `./POSCAR2`. These structures will be saved in the current directory like this:
+`crystmatch` will also save the rigid-transformation optimized (with rotation-free orientation and RMSD-minimized overall position) CSM in the current directory like this:
 
 ```
 ./
-├── PRIM/
-│   ├── POSCAR1
-│   └── POSCAR2
-└── POSCAR2-optim
+└── CSM_single/
+    ├── POSCAR1
+    └── POSCAR2-optimized
 ```
 
 [^1]: [FC Wang, QJ Ye, YC Zhu, and XZ Li, *Physical Review Letters* **132**, 086101 (2024)](https://arxiv.org/abs/2305.05278)

@@ -36,7 +36,7 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
 
     # computing representative CSMs
     csm_bins = [np.array("arr_mu.npy saves the shuffles of those CSMs with multiplicity mu", dtype=str)]
-    rmsdlist = []
+    rmsdlist = np.inf * np.ones(len(slmlist))
     print(f"\nOptimizing RMSDs for {slmlist.shape[0]} shuffles ...")
     time0 = time()
     zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
@@ -48,9 +48,15 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
         shufflelist = np.zeros((n_csm, mu * zlcm, 4), dtype=int)
         for i in range(n_csm):
             d, p, ks, _ = minimize_rmsd(crystA, crystB, slmlist[mulist == mu][i])
-            rmsdlist.append(d)
+            rmsdlist[np.sum(mulist < mu) + i] = d
             shufflelist[i,:,0] = p
             shufflelist[i,:,1:] = ks.T
+        ind = np.lexsort((rmsdlist[mulist == mu].round(decimals=4), rmsslist[mulist == mu].round(decimals=4)))
+        slmlist[mulist == mu] = slmlist[mulist == mu][ind]
+        mulist[mulist == mu] = mulist[mulist == mu][ind]
+        rmsslist[mulist == mu] = rmsslist[mulist == mu][ind]
+        rmsdlist[mulist == mu] = rmsdlist[mulist == mu][ind]
+        shufflelist = shufflelist[ind]
         csm_bins.append(shufflelist)
     print(f"\tObtained representative CSMs and their RMSDs (in {time()-time0:.2f} seconds).")
     
@@ -106,6 +112,7 @@ def main():
             if args.export.shape[0] == 0: args.export = None
         elif mode in ["'single'", 'single', 'single-CSM', 's', 'S']:
             args.single = True
+            print("Warning: The CSM will be uniquely determined by the initial and final POSCARs. I hope you know what you are doing.")
         else:
             raise ValueError(f"Invalid mode '{mode}'.")
     
@@ -123,7 +130,7 @@ def main():
         if mu_max < 1: raise ValueError("Multiplicity should be a positive integer.")
         elif rmss_max <= 0: raise ValueError("Root-mean-square-strain should be a positive float.")
         if mu_max >= 8 or rmss_max > 0.5:
-            print(f"WARNING: Current MAX_MU = {mu_max:d} and MAX_RMSS = {rmss_max:.2f} may result in a large number of CSMs, which may take "
+            print(f"Warning: Current MAX_MU = {mu_max:d} and MAX_RMSS = {rmss_max:.2f} may result in a large number of CSMs, which may take "
                     + "a long time to enumerate. If you are new to 'crystmatch', we recommend using MAX_MU <= 4 and MAX_RMSS = 0.4 first, "
                     + "and then increase MAX_MU and decrease MAX_RMSS gradually.")
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
@@ -143,20 +150,21 @@ def main():
         job, crystA, crystB, mu_max, rmss_max, symprec = data['metadata']
         print(f"Metadata from '{args.read}':\n\ttotal number of CSMs: {table.shape[0]:d}\n\tmultipliticy <= {mu_max}"
                 + f"\n\trms strain <= {rmss_max}\n\tsymmetry tolerance: {symprec}")
-        print(save_poscar(None, crystA, crystname="\nRead initial crystal structure (in POSCAR format):"))
-        print(save_poscar(None, crystB, crystname="\nRead final crystal structure (in POSCAR format):"))
+        print(save_poscar(None, crystA, crystname="\nPrimitive cell of the initial structure (in POSCAR format):"))
+        print(save_poscar(None, crystB, crystname="\nPrimitive cell of the final structure (in POSCAR format):"))
 
     elif args.single is not None:
         print("\nMode: 'single-CSM'")
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
-        crystA_sup = load_poscar(args.initial, tol=args.tolerance, to_primitive=False, verbose=False)
+        crystA_sup = load_poscar(args.initial, tol=args.tolerance, to_primitive=False)
         if args.final == None: args.final = input("Enter the path of the final POSCAR file: ")
-        crystB_sup = load_poscar(args.final, tol=args.tolerance, to_primitive=False, verbose=False)
+        crystB_sup = load_poscar(args.final, tol=args.tolerance, to_primitive=False)
         if not crystA_sup[1].shape[0] == crystB_sup[1].shape[0]: raise ValueError("\nNumbers of atoms in two crysts are not equal!")
         if not (crystA_sup[1] == crystB_sup[1]).all(): raise ValueError("\nAtom species in two crysts do not match!")
-        print("CSM successfully loaded. Now analyzing the initial and final structures.")
-        crystA = load_poscar(args.initial, tol=args.tolerance, to_primitive=True)
-        crystB = load_poscar(args.final, tol=args.tolerance, to_primitive=True)
+        crystA = load_poscar(args.initial, tol=args.tolerance, to_primitive=True, verbose=False)
+        crystB = load_poscar(args.final, tol=args.tolerance, to_primitive=True, verbose=False)
+        print(save_poscar(None, crystA, crystname="\nPrimitive cell of the initial structure (in POSCAR format):"))
+        print(save_poscar(None, crystB, crystname="\nPrimitive cell of the final structure (in POSCAR format):"))
         job = "single"
         
         # single-CSM analysis
@@ -215,13 +223,10 @@ def main():
     
     if args.single is not None:
         # saving primitive cells
-        dirname = unique_filename(f"Saving primitive-cell POSCARs to", "PRIM")
+        dirname = unique_filename(f"Saving optimized final structure (rotation-free, translated to minimize RMSD) to", "CSM_single")
         makedirs(dirname)
-        save_poscar(f"{dirname}{sep}{args.initial.split(sep)[-1]}", crystA)
-        save_poscar(f"{dirname}{sep}{args.final.split(sep)[-1]}", crystB)
-        # saving final POSCAR (rotation-free and RMSD-minimized)
-        save_poscar(unique_filename("Saving optimized (rotation-free, translated to minimize RMSD) final crystal structure to", 
-                    f"{splitext(args.final)[0].split(sep)[-1]}-optim{splitext(args.final)[1]}"), (cB_sup_final.T, crystB_sup[1], pB_sup_final.T))
+        save_poscar(f"{dirname}{sep}{args.initial.split(sep)[-1]}", crystA_sup)
+        save_poscar(f"{dirname}{sep}{splitext(args.final)[0].split(sep)[-1]}-optimized{splitext(args.final)[1]}", (cB_sup_final.T, crystB_sup[1], pB_sup_final.T))
     
     if args.export is not None:
         if args.read is None:
