@@ -601,12 +601,11 @@
 <p>To analyze a single CSM defined by two POSCAR files, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --initial POSCAR1 --final POSCAR2 --single
 </code></pre></div>
-<p><code>crystmatch</code> will determine unit structures (primitive cells) of <code>./POSCAR1</code> and <code>./POSCAR2</code>, as well as the rigid-transformation optimized (with rotation-free orientation and RMSD-minimized overall position) structure of <code>./POSCAR2</code>. These structures will be saved in the current directory like this:</p>
+<p><code>crystmatch</code> will also save the rigid-transformation optimized (with rotation-free orientation and RMSD-minimized overall position) CSM in the current directory like this:</p>
 <div class="highlight"><pre><span></span><code>./
-├── PRIM/
-│   ├── POSCAR1
-│   └── POSCAR2
-└── POSCAR2-optim
+└── CSM_single/
+    ├── POSCAR1
+    └── POSCAR2-optimized
 </code></pre></div>
 <div class="footnote">
 <hr />
