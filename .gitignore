@@ -6,3 +6,4 @@ crystmatch/__pycache__
 crystmatch/.DS_Store
 test/__pycache__
 site/
+dist/

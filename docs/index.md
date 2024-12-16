@@ -25,17 +25,13 @@ Make sure you have **Python 3.9 or later** installed. You can check it by runnin
 python3 --version
 ```
 
-Clone [**this repository**](https://github.com/fangcheng-wang/crystmatch) by:
+To install the latest version of `crystmatch`, run:
 
 ```
-git clone https://github.com/fangcheng-wang/crystmatch.git
+pip3 install --upgrade crystmatch
 ```
 
-Navigate to the directory where `setup.py` is located, run:
-
-```
-pip3 install .
-```
+or use `conda install -c conda-forge crystmatch` to install and `conda update -c conda-forge crystmatch` to update, if you prefer using `conda`.
 
 Check whether `crystmatch` is successfully installed:
 
