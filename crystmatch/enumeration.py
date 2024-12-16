@@ -45,7 +45,7 @@ def cong_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDAr
 def enumerate_slm(
     crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float, tol: float = 1e-3,
     kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss,
-    likelihood_ratio: float = 1e2, print_detail: int = 0
+    likelihood_ratio: float = 1e2, verbose: int = 0
 ) -> List[SLM]:
     """Enumerating all SLMs of multiplicity `mu` with `kappa` smaller than `kappa_max`.
 
@@ -66,7 +66,7 @@ def enumerate_slm(
             Default is `rmss`, which computes the root-mean-square strain.
     likelihood_ratio : float, optional
         The expected likelihood ratio of the enumeration being complete and incomplete. Default is 1e2.
-    print_detail : int, optional
+    verbose : int, optional
         The level of detail of printing. `0` means no print.
 
     Returns
@@ -98,7 +98,7 @@ def enumerate_slm(
         max_strain = max(abs(a-1), abs(b-1))
     # Enumerate SLMs.
     print(f"Enumerating SLMs (mu = {mu:d}, {kappa.__name__} <= {kappa_max:.4f}) ...")
-    if print_detail >= 1:
+    if verbose >= 1:
         print(f"\tprototype sampling domain: SO(3) (±{max_strain:.2f} for each matrix element)")
         print(f"\tassumed maximum probability ratio among classes: {max_prob_ratio:.1f}")
         print(f"\texpected likelihood ratio: {likelihood_ratio:.1f}")
@@ -141,7 +141,7 @@ def enumerate_slm(
                 slmlist.append(slm)
                 m = 0
         num_s0 += s0.shape[0]
-        if print_detail >= 2:
+        if verbose >= 2:
             print(f"\t{num_s0}\t{m}\t{(1 + len(slmlist) * max_prob_ratio) * np.log(likelihood_ratio):d}\t{time()-t:.2f}")
         iter = iter + 1
         if iter > 50 and len(slmlist) == 0: break

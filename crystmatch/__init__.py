@@ -1,10 +1,14 @@
 from .utilities import *
 from .enumeration import *
 from .analysis import *
+import sys
 import argparse
 
+sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
+sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
+
 __name__ = "crystmatch"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
