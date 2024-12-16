@@ -8,15 +8,16 @@ sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', 
 sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
 
 __name__ = "crystmatch"
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
-__url__ = 'https://github.com/Fangcheng-Wang/crystmatch'
-__epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To get the latest version, please see: \
+__url__ = 'https://fangcheng-wang.github.io/crystmatch/'
+__epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To get the latest version, please run:\
+\n\n\t$ pip3 install --upgrade crystmatch\n\nWe also recommend you to see the documentation at:\
 \n\n\t' + __url__ + '\n\nIf you use crystmatch in your research, please cite the following paper: \n\n\t\
 [1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
-You are also welcome to contact me at ' + __email__ + ' for any questions or comments.'
+You are also welcome to contact me at ' + __email__ + ' for any questions, feedbacks or comments.'
 
 def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float):
     
@@ -98,7 +99,7 @@ def main():
     args = parser.parse_args()
 
     if args.A is not None or args.B is not None:
-        raise DeprecationWarning("'-A -B' is deprecated since version 1.1.0, use '-I -F' instead. See 'crystmatch -h' for usage.")
+        raise DeprecationWarning("'-A -B' is deprecated since version 1.1.0, use '-I -F' instead. Run:\n\n\t$ crystmatch --help\n\nfor usage.")
         
     if sum(1 for x in [args.enumeration, args.read, args.single] if x is not None) >= 2:
         raise ValueError("Cannot choose more than one mode.")
