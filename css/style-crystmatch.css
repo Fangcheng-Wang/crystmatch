@@ -40,3 +40,9 @@ h3.doc-heading code span.mf, h3.doc-heading code span.mi, h3.doc-heading code sp
     overflow-y: auto;
     text-align: center;
 }
+
+.nodeLabel>p {
+    display: block;
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
