@@ -1,7 +1,7 @@
 # Command-line interface
 
 ``` mermaid
-flowchart TD
+flowchart TB
   A{mode?} --> |"<code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'>--enumeration</code>"| B[enumerate a list of<br>representative CSMs];
   B --> E[save CSMs to NPZ file];
   E --> F;

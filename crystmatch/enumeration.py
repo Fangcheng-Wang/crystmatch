@@ -4,7 +4,7 @@ Enumerate SLMs and CSMs.
 
 from .utilities import *
 from time import time
-from scipy.optimize import brentq, linear_sum_assignment, brute
+from scipy.optimize import brentq, linear_sum_assignment, basinhopping
 from scipy.stats.qmc import Sobol
 from scipy.spatial.transform import Rotation
 
@@ -179,13 +179,12 @@ def minimize_rmsd_t(
     shift = np.mgrid[-1:2, -1:2, -1:2].reshape(3,1,1,-1)
     relative_position = np.tensordot(c, (pA.reshape(3,-1,1,1) - pB.reshape(3,1,-1,1) - shift), axes=[1,0])
     d2_tensor = np.sum(relative_position ** 2, axis=0)
-    d2_matrix = np.amin(d2_tensor, axis=2)
     index_shift = np.argmin(d2_tensor, axis=2)
     # Determine the best atomic correspondence.
     p = np.arange(pB.shape[1], dtype=int)
     for s in np.unique(species):
         is_s = species == s
-        p[is_s] = p[is_s][linear_sum_assignment(d2_matrix[is_s][:,is_s])[1]]
+        p[is_s] = p[is_s][linear_sum_assignment(np.take_along_axis(d2_tensor, index_shift[:,:,None], axis=2)[:,:,0][is_s][:,is_s])[1]]
     assert (np.sort(p) == np.arange(pB.shape[1])).all()
     ks = shift[:,0,0,index_shift[np.arange(pA.shape[1]),p]]
     rmsd = la.norm(c @ (pB[:,p] + ks - pA)) / np.sqrt(pA.shape[1])
@@ -221,7 +220,7 @@ def minimize_rmsd_tp(
     return rmsd, ks
 
 def minimize_rmsd(
-    crystA: Cryst, crystB: Cryst, slm: Union[SLM, NDArray[np.int32]], n_grid: int = 5
+    crystA: Cryst, crystB: Cryst, slm: Union[SLM, NDArray[np.int32]]
 ) -> tuple[float, NDArray[np.int32], NDArray[np.int32], NDArray[np.float64]]:
     """Minimize the RMSD with fixed SLM, variable permutation, overall and lattice-vector translations.
 
@@ -233,8 +232,6 @@ def minimize_rmsd(
         The final crystal structure, usually obtained by `load_poscar`.
     slm : slm
         Triplets of integer matrices like `(hA, hB, q)`, representing a SLM.
-    n_grid : int, optional
-        The number of grid points for translation. Default is 5.
 
     Returns
     -------
@@ -251,8 +248,8 @@ def minimize_rmsd(
     species = crystA_sup[1]
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
-    t0 = brute(lambda z: minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ z.reshape(3,1))[0],
-            ((0,1),(0,1),(0,1)), Ns=n_grid, finish=None)
+    t0 = basinhopping(lambda z: minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ z.reshape(3,1))[0],
+            [0.5, 0.5, 0.5], T=0.05, niter=50, niter_success=15, minimizer_kwargs={"method": "BFGS"}).x
     _, p, ks = minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ t0.reshape(3,1))
     t0 = (pA_sup - pB_sup[:,p] - ks).mean(axis=1, keepdims=True)
     rmsd = la.norm(c_sup_half @ (pA_sup - pB_sup[:,p] - ks - t0)) / np.sqrt(pA_sup.shape[1])

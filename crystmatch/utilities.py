@@ -177,8 +177,8 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     # Sorting supercell species and positions.
     speciesA_sup = np.tile(speciesA, la.det(mA).round().astype(int))
     speciesB_sup = np.tile(speciesB, la.det(mB).round().astype(int))
-    pA_sup = la.inv(mA) @ (pA.reshape(3,1,-1) + int_vec_inside(mA).reshape(3,-1,1)).reshape(3,-1)
-    pB_sup = la.inv(mB) @ (pB.reshape(3,1,-1) + int_vec_inside(mB).reshape(3,-1,1)).reshape(3,-1)
+    pA_sup = (la.inv(mA) @ (pA.reshape(3,1,-1) + int_vec_inside(mA).reshape(3,-1,1)).reshape(3,-1)) % 1.0
+    pB_sup = (la.inv(mB) @ (pB.reshape(3,1,-1) + int_vec_inside(mB).reshape(3,-1,1)).reshape(3,-1)) % 1.0
     argsortA = np.argsort(speciesA_sup)
     argsortB = np.argsort(speciesB_sup)
     assert (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all(), "Please report this bug to wfc@pku.edu.cn if you see this message."

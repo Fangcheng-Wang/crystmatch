@@ -4,11 +4,8 @@ from .analysis import *
 import sys
 import argparse
 
-sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
-sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
-
 __name__ = "crystmatch"
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
@@ -69,6 +66,9 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
 
 def main():
     time0 = time()
+    sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
+    sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
+
     parser = argparse.ArgumentParser(
         prog=__name__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -194,8 +194,8 @@ def main():
         c_sup_half = vT.T @ np.diag(sigma ** 0.5) @ vT @ cA_sup
         pA_sup = crystA_sup[2].T
         pB_sup = crystB_sup[2].T
-        t0 = brute(lambda z: minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + z.reshape(3,1))[0],
-            ((0,1),(0,1),(0,1)), Ns=10, finish=None)
+        t0 = basinhopping(lambda z: minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + z.reshape(3,1))[0],
+            [0.5, 0.5, 0.5], T=0.05, niter=50, niter_success=15, minimizer_kwargs={"method": "BFGS"}).x
         _, ks = minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + t0.reshape(3,1))
         t0 = (pA_sup - pB_sup - ks).mean(axis=1, keepdims=True)
         pB_sup_final = pB_sup + ks + t0
