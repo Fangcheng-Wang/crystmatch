@@ -22,7 +22,7 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
     print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f} ...")
     slmlist = []
     for mu in range(1,mu_max+1): slmlist = slmlist + enumerate_slm(crystA, crystB, mu, rmss_max, tol=tol)
-    print(f"\nA total of {len(slmlist):d} incongruent SLMs are enumerated.")
+    print(f"A total of {len(slmlist):d} incongruent SLMs are enumerated.")
     if len(slmlist) == 0: raise Warning("No SLM is found. Try larger arguments for '--enumeration' or check if the input POSCARs are correct.")
     
     slmlist = np.array(slmlist)
@@ -34,12 +34,14 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
     slmlist = slmlist[ind]
     mulist = mulist[ind]
     rmsslist = rmsslist[ind]
-    print(f"They have {len(slmlist):d} distinct deformation gradients, and thus {len(slmlist):d} representative CSMs.")
+    print(f"Among them, a total of {len(slmlist):d} SLMs has distinct deformation gradients:")
+    print(f"\tmu  {' '.join(f'{i:5d}' for i in range(1,mu_max+1))}")
+    print(f"\t#SLM{' '.join(f'{s:5d}' for s in np.bincount(mulist, minlength=mu_max+1)[1:])}")
 
     # computing representative CSMs
     csm_bins = [np.array("arr_mu.npy saves the shuffles of those CSMs with multiplicity mu", dtype=str)]
     rmsdlist = np.inf * np.ones(len(slmlist))
-    print(f"\nOptimizing RMSDs for {slmlist.shape[0]} shuffles ...")
+    print(f"Minimizing RMSDs to obtain the representative CSM for each of these SLMs...")
     time0 = time()
     zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
     for mu in range(1,mu_max+1):
@@ -53,6 +55,7 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
             rmsdlist[np.sum(mulist < mu) + i] = d
             shufflelist[i,:,0] = p
             shufflelist[i,:,1:] = ks.T
+            print(f"\r\tmu = {mu:2d}, obtained {i+1:d}/{n_csm:d} CSMs ...", end='')
         ind = np.lexsort((rmsdlist[mulist == mu].round(decimals=4), rmsslist[mulist == mu].round(decimals=4)))
         slmlist[mulist == mu] = slmlist[mulist == mu][ind]
         mulist[mulist == mu] = mulist[mulist == mu][ind]
@@ -60,7 +63,7 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
         rmsdlist[mulist == mu] = rmsdlist[mulist == mu][ind]
         shufflelist = shufflelist[ind]
         csm_bins.append(shufflelist)
-    print(f"\tObtained representative CSMs and their RMSDs (in {time()-time0:.2f} seconds).")
+        print(f"\r\tmu = {mu:2d}, optimized {n_csm:d} CSMs (in {time()-time0:.2f} s).")
     
     return csm_bins, slmlist, mulist, rmsslist, rmsdlist
 

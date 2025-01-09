@@ -45,7 +45,7 @@ def cong_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDAr
 def enumerate_slm(
     crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float, tol: float = 1e-3,
     kappa: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss,
-    likelihood_ratio: float = 1e2, verbose: int = 0
+    likelihood_ratio: float = 1e2, verbose: int = 1
 ) -> List[SLM]:
     """Enumerating all SLMs of multiplicity `mu` with `kappa` smaller than `kappa_max`.
 
@@ -67,7 +67,7 @@ def enumerate_slm(
     likelihood_ratio : float, optional
         The expected likelihood ratio of the enumeration being complete and incomplete. Default is 1e2.
     verbose : int, optional
-        The level of detail of printing. `0` means no print.
+        The level of verbosity. Default is 1.
 
     Returns
     -------
@@ -85,7 +85,6 @@ def enumerate_slm(
     hB_inv = la.inv(hB)
     gA = get_pure_rotation(crystA, tol=tol)
     gB = get_pure_rotation(crystB, tol=tol)
-    max_prob_ratio = 20
     # Compute the sampling domain of `s0`s.
     det_s = zA / zB * la.det(cB) / la.det(cA)
     if kappa.__name__ == 'rmss':
@@ -97,19 +96,15 @@ def enumerate_slm(
         b = brentq(diff_kappa, det_s**(1/3), 1e2)
         max_strain = max(abs(a-1), abs(b-1))
     # Enumerate SLMs.
-    print(f"Enumerating SLMs (mu = {mu:d}, {kappa.__name__} <= {kappa_max:.4f}) ...")
-    if verbose >= 1:
-        print(f"\tprototype sampling domain: SO(3) (±{max_strain:.2f} for each matrix element)")
-        print(f"\tassumed maximum probability ratio among classes: {max_prob_ratio:.1f}")
-        print(f"\texpected likelihood ratio: {likelihood_ratio:.1f}")
-        print("\tnum_s0\tm\tm*\telapsed_time(s)")
     slmlist = []
     iter = 0
     num_s0 = 0
     m = 0
     t = time()
     sobol_seq = Sobol(12)
-    while m <= (1 + len(slmlist) * max_prob_ratio) * np.log(likelihood_ratio):    # or True for Debug!
+    def m_th(num_cl, likelihood_ratio):
+        return (1 + num_cl * 20) * np.log(likelihood_ratio)
+    while m <= m_th(len(slmlist), likelihood_ratio):
         # Sampling `s0`s around SO(3).
         rand_num = sobol_seq.random(2)
         q0 = np.sqrt(1 - rand_num[:,0]) * np.sin(2 * np.pi * rand_num[:,1])
@@ -140,12 +135,12 @@ def enumerate_slm(
                 # `slm` is new.
                 slmlist.append(slm)
                 m = 0
+        if verbose >= 1:
+            print(f"\r\tmu = {mu:2d}, complete: {m/m_th(len(slmlist), likelihood_ratio)*100:3.0f}% ...", end='')
         num_s0 += s0.shape[0]
-        if verbose >= 2:
-            print(f"\t{num_s0}\t{m}\t{(1 + len(slmlist) * max_prob_ratio) * np.log(likelihood_ratio):d}\t{time()-t:.2f}")
         iter = iter + 1
         if iter > 50 and len(slmlist) == 0: break
-    print(f'\tFound {len(slmlist):d} incongruent SLMs (in {time()-t:.2f} seconds).')
+    print(f"\r\tmu = {mu:2d}, complete: 100%, found {len(slmlist):d} incongruent SLMs (in {time()-t:.2f} s).")
     return slmlist
 
 def minimize_rmsd_t(

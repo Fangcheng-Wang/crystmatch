@@ -58,7 +58,7 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
             elif unit in ['C','c','K','k']:
                 positions[i,:] = np.dot(la.inv(lattice.transpose()), np.array(f.readline().split()[:3], dtype=float))
     sp_name_sorted, numbers = np.unique(species, return_inverse=True)
-    if verbose: print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=tol)}")
+    if verbose: print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=tol)}.")
     if to_primitive:
         lattice, positions, numbers = find_primitive((lattice, positions, numbers), symprec=tol)
         if len(numbers) != len(species):
