@@ -24,8 +24,9 @@ The `crystmatch` command-line interface is already introduced in [Tutorial](http
 | `-S`<br>`--single` | Use 'single-CSM' mode, with the CSM uniquely determined by `-I` and `-F`. | 'single-CSM' |
 | `-I POSCAR_I`<br>`--initial POSCAR_I` | POSCAR file of the initial crystal structure. | 'enumeration', 'single-CSM' |
 | `-F POSCAR_F`<br>`--final POSCAR_F` | POSCAR file of the final crystal structure. | 'enumeration', 'single-CSM' |
-| `-t TOL`<br>`--tolerance TOL` | Tolerance for determining crystal symmetry; default is 1e-3. | 'enumeration', 'single-CSM' |
+| `-a`<br>`--accurate` | Use more accurate algorithm for RMSD minimization, taking about 4x longer time. | 'enumeration' |
 | `-e index1 [index2 ...]`<br>`--export index1 [index2 ...]` | Export CSMs from NPZ file with the given indices. | 'read' |
+| `-t TOL`<br>`--tolerance TOL` | Tolerance for determining crystal symmetry; default is 1e-3. | 'enumeration', 'single-CSM' |
 | `-o vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz`<br>`--orientation vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz` | Benchmark CSMs by their deviation angles from the orientation relationship: "\(\mathbf{v}_\text{i}\parallel\mathbf{v}_\text{f}\) and \(\mathbf{w}_\text{i}\parallel\mathbf{w}_\text{f}\)".<br>Note: arguments must be given in **Cartesian** coordinates. | *all* |
 | `-c`, `--csv` | Create CSV file. | *all* |
 | `-p`, `--plot` | Create scatter plot. | *all* |

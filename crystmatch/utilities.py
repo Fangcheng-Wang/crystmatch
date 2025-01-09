@@ -32,34 +32,32 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
     cryst : cryst
         The loaded crystal structure, consisting of the lattice vectors, species, and positions.
     """
-    f = open(filename, mode='r')
-    if verbose: print(f"Loading crystal structure '{f.readline()[:-1]}' from file '{filename}'...")
-    else: f.readline()
-    a = np.array(f.readline()[:-1], dtype=float)
-    lattice = np.zeros((3,3), dtype=float)
-    for i in range(3):
-        lattice[i,:] = np.array(f.readline().split(), dtype=float)
-    if la.det(lattice) < 0: lattice[2,:] = - lattice[2,:]
-    lattice = a * lattice
-    species_name = f.readline().split()
-    species_counts = np.array(f.readline().split(), dtype=int)
-    species = []
-    for i in range(len(species_counts)):
-        species = species + [species_name[i]] * species_counts[i]
-    species = np.array(species, dtype=str)
-    unit = ''
-    while not unit in ['D','d','C','c','K','k']:
-        unit = f.readline()[0]
-    N = species_counts.sum()
-    positions = np.zeros((N,3), dtype=float)
-    if unit in ['D','d']:
+    with open(filename, mode='r') as f:
+        if verbose: print(f"Loading crystal structure '{f.readline()[:-1]}' from file '{filename}'...")
+        else: f.readline()
+        a = np.array(f.readline()[:-1], dtype=float)
+        lattice = np.zeros((3,3), dtype=float)
+        for i in range(3):
+            lattice[i,:] = np.array(f.readline().split(), dtype=float)
+        if la.det(lattice) < 0: lattice[2,:] = - lattice[2,:]
+        lattice = a * lattice
+        sp_name = f.readline().split()
+        sp_counts = np.array(f.readline().split(), dtype=int)
+        species = []
+        for i in range(len(sp_name)):
+            species = species + [sp_name[i]] * sp_counts[i]
+        species = np.array(species, dtype=str)
+        unit = ''
+        while not unit in ['D','d','C','c','K','k']:
+            unit = f.readline()[0]
+        N = sp_counts.sum()
+        positions = np.zeros((N,3), dtype=float)
         for i in range(N):
-            positions[i,:] = np.array(f.readline().split()[:3], dtype=float)
-    elif unit in ['C','c','K','k']:
-        for i in range(N):
-            positions[i,:] = np.dot(la.inv(lattice.transpose()), np.array(f.readline().split()[:3], dtype=float))
-    f.close()
-    _, numbers = np.unique(species, return_inverse=True)
+            if unit in ['D','d']:
+                positions[i,:] = np.array(f.readline().split()[:3], dtype=float)
+            elif unit in ['C','c','K','k']:
+                positions[i,:] = np.dot(la.inv(lattice.transpose()), np.array(f.readline().split()[:3], dtype=float))
+    sp_name_sorted, numbers = np.unique(species, return_inverse=True)
     if verbose: print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=tol)}")
     if to_primitive:
         lattice, positions, numbers = find_primitive((lattice, positions, numbers), symprec=tol)
@@ -67,7 +65,7 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
             if verbose: print(f"\tCell in POSCAR file is not primitive! Using primitive cell (Z = {len(numbers):d}) now.")
         else:
             if verbose: print(f"\tCell in POSCAR file is already primitive (Z = {len(numbers):d}).")
-        species = np.array(species_name)[numbers]
+        species = sp_name_sorted[numbers]
     elif verbose: print(f"\tUsing cell in POSCAR file (Z = {len(numbers):d}).")
     cryst = (lattice, species, positions)
     return cryst
@@ -96,6 +94,27 @@ def unique_filename(message: Union[str, None], filename: str) -> str:
     if message != None: print(f"{message} '{new_filename}' ...")
     return new_filename
 
+def species_poscar_format(species: NDArray[np.str_]) -> Tuple[NDArray[np.str_], NDArray[np.int32]]:
+    """
+    Examine whether a species array is sorted. If so, convert it to the POSCAR format.
+    
+    Parameters
+    ----------
+    species : (N,) array of str
+        The species array.
+    
+    Returns
+    -------
+    species_unique : (M,) array of str
+        The unique species in the order of their first appearance in `species`.
+    species_counts : (M,) array of int
+        The number of occurrences of each unique species in `species`.
+    """
+    _, sp_idx, sp_inv, sp_counts = np.unique(species, return_index=True, return_inverse=True, return_counts=True)
+    if np.sum(np.diff(sp_inv) != 0) != sp_idx.shape[0] - 1:
+        raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
+    return species[np.sort(sp_idx)], sp_counts
+
 def save_poscar(filename: Union[str, None], cryst: Cryst, crystname: Union[str, None] = None) -> None:
     """
     Save the crystal structure to a POSCAR file.
@@ -109,12 +128,12 @@ def save_poscar(filename: Union[str, None], cryst: Cryst, crystname: Union[str, 
     crystname : str, optional
         A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
     """
-    species_unique, species_counts = np.unique(cryst[1], return_counts=True)
+    species_name, species_counts = species_poscar_format(cryst[1])
     if crystname is not None: content = crystname
     else: content = ""
     content += "\n1.0\n"
     content += "\n".join(f"{v[0]:.12f}\t{v[1]:.12f}\t{v[2]:.12f}" for v in cryst[0].tolist())
-    content += "\n" + " ".join(species_unique.tolist())
+    content += "\n" + " ".join(species_name.tolist())
     content += "\n" + " ".join(str(n) for n in species_counts.tolist())
     content += "\nDirect\n"
     content += "\n".join(f"{p[0]:.12f}\t{p[1]:.12f}\t{p[2]:.12f}" for p in cryst[2].tolist())
@@ -181,7 +200,8 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     pB_sup = (la.inv(mB) @ (pB.reshape(3,1,-1) + int_vec_inside(mB).reshape(3,-1,1)).reshape(3,-1)) % 1.0
     argsortA = np.argsort(speciesA_sup)
     argsortB = np.argsort(speciesB_sup)
-    assert (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all(), "Please report this bug to wfc@pku.edu.cn if you see this message."
+    if not (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all():
+        raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
     species_sup = speciesA_sup[argsortA]
     pA_sup = pA_sup[:,argsortA]
     pB_sup = pB_sup[:,argsortB]
@@ -218,6 +238,8 @@ def int_arrays_to_pair(crystA: Cryst, crystB: Cryst, slm: SLM,
         The final structure, whose lattice vectors and atoms are matched to `crystA_sup` according to the CSM, with rotation-free orientation.
     """
     crystA_sup, crystB_sup, _, _ = create_common_supercell(crystA, crystB, slm)
+    if not (crystA_sup[1] == crystB_sup[1][p]).all():
+        raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T[:,p] + ks
     if centered:

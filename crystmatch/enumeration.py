@@ -220,7 +220,7 @@ def minimize_rmsd_tp(
     return rmsd, ks
 
 def minimize_rmsd(
-    crystA: Cryst, crystB: Cryst, slm: Union[SLM, NDArray[np.int32]]
+    crystA: Cryst, crystB: Cryst, slm: Union[SLM, NDArray[np.int32]], accurate: bool = True
 ) -> tuple[float, NDArray[np.int32], NDArray[np.int32], NDArray[np.float64]]:
     """Minimize the RMSD with fixed SLM, variable permutation, overall and lattice-vector translations.
 
@@ -232,6 +232,8 @@ def minimize_rmsd(
         The final crystal structure, usually obtained by `load_poscar`.
     slm : slm
         Triplets of integer matrices like `(hA, hB, q)`, representing a SLM.
+    accurate: bool
+        Whether to use the accurate method to minimize the RMSD. If `False`, the result may be suboptimal. Default is `True`.
 
     Returns
     -------
@@ -249,7 +251,7 @@ def minimize_rmsd(
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
     t0 = basinhopping(lambda z: minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ z.reshape(3,1))[0],
-            [0.5, 0.5, 0.5], T=0.05, niter=50, niter_success=15, minimizer_kwargs={"method": "BFGS"}).x
+            [0.5, 0.5, 0.5], T=0.05, niter=75, niter_success = None if accurate else 15, minimizer_kwargs={"method": "BFGS"}).x
     _, p, ks = minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ t0.reshape(3,1))
     t0 = (pA_sup - pB_sup[:,p] - ks).mean(axis=1, keepdims=True)
     rmsd = la.norm(c_sup_half @ (pA_sup - pB_sup[:,p] - ks - t0)) / np.sqrt(pA_sup.shape[1])

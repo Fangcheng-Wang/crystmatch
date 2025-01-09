@@ -16,7 +16,7 @@ __epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To ge
 [1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
 You are also welcome to contact me at ' + __email__ + ' for any questions, feedbacks or comments.'
 
-def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float):
+def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float, accurate: bool):
     
     # enumerating SLMs
     print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f} ...")
@@ -49,7 +49,7 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
             continue
         shufflelist = np.zeros((n_csm, mu * zlcm, 4), dtype=int)
         for i in range(n_csm):
-            d, p, ks, _ = minimize_rmsd(crystA, crystB, slmlist[mulist == mu][i])
+            d, p, ks, _ = minimize_rmsd(crystA, crystB, slmlist[mulist == mu][i], accurate=accurate)
             rmsdlist[np.sum(mulist < mu) + i] = d
             shufflelist[i,:,0] = p
             shufflelist[i,:,1:] = ks.T
@@ -85,10 +85,11 @@ def main():
                         help="POSCAR file of the initial crystal structure")
     parser.add_argument("-F", "--final", type=str, metavar='POSCAR_F',
                         help="POSCAR file of the final crystal structure")
-    parser.add_argument("-t", "--tolerance", type=float, default=1e-3, metavar='TOL',
-                        help="tolerance for determining crystal symmetry; default is 1e-3")
+    parser.add_argument("-a", "--accurate", action='store_true', help="use more accurate algorithm to optimize RMSD in 'enumeration' mode")
     parser.add_argument("-e", "--export", nargs='+', type=int, metavar=('index1', 'index2'),
                         help="export CSMs from CSM_LIST with the given indices")
+    parser.add_argument("-t", "--tolerance", type=float, default=1e-3, metavar='TOL',
+                        help="tolerance for determining crystal symmetry; default is 1e-3")
     parser.add_argument("-o", "--orientation", nargs=12, type=float, metavar=('vix','viy','viz','vfx','vfy','vfz','wix','wiy','wiz','wfx','wfy','wfz'),
                         help="benchmark CSMs by the orientation relationship: vi||vf, wi||wf")
     parser.add_argument("-c", "--csv", action='store_true', help="whether to create CSV file")
@@ -144,7 +145,7 @@ def main():
         crystB = load_poscar(args.final, tol=args.tolerance)
         check_chem_comp(crystA[1], crystB[1])
         job = f"m{mu_max:d}s{rmss_max:.2f}"
-        csm_bins, slmlist, mulist, rmsslist, rmsdlist = enum_rep(crystA, crystB, mu_max, rmss_max, args.tolerance)
+        csm_bins, slmlist, mulist, rmsslist, rmsdlist = enum_rep(crystA, crystB, mu_max, rmss_max, args.tolerance, args.accurate)
         table = np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist], dtype=float).T
 
     elif args.read is not None:
@@ -195,7 +196,7 @@ def main():
         pA_sup = crystA_sup[2].T
         pB_sup = crystB_sup[2].T
         t0 = basinhopping(lambda z: minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + z.reshape(3,1))[0],
-            [0.5, 0.5, 0.5], T=0.05, niter=50, niter_success=15, minimizer_kwargs={"method": "BFGS"}).x
+            [0.5, 0.5, 0.5], T=0.05, niter=75, minimizer_kwargs={"method": "BFGS"}).x
         _, ks = minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + t0.reshape(3,1))
         t0 = (pA_sup - pB_sup - ks).mean(axis=1, keepdims=True)
         pB_sup_final = pB_sup + ks + t0
