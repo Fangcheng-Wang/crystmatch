@@ -508,6 +508,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#crystmatch.enumeration.species_poscar_format" class="md-nav__link">
+    <span class="md-ellipsis">
+      species_poscar_format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crystmatch.enumeration.unique_filename" class="md-nav__link">
     <span class="md-ellipsis">
       unique_filename
@@ -721,6 +730,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#crystmatch.analysis.species_poscar_format" class="md-nav__link">
+    <span class="md-ellipsis">
+      species_poscar_format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crystmatch.analysis.unique_filename" class="md-nav__link">
     <span class="md-ellipsis">
       unique_filename
@@ -874,6 +892,15 @@
   <a href="#crystmatch.utilities.save_poscar" class="md-nav__link">
     <span class="md-ellipsis">
       save_poscar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.utilities.species_poscar_format" class="md-nav__link">
+    <span class="md-ellipsis">
+      species_poscar_format
     </span>
   </a>
   
@@ -1156,6 +1183,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#crystmatch.enumeration.species_poscar_format" class="md-nav__link">
+    <span class="md-ellipsis">
+      species_poscar_format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crystmatch.enumeration.unique_filename" class="md-nav__link">
     <span class="md-ellipsis">
       unique_filename
@@ -1369,6 +1405,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#crystmatch.analysis.species_poscar_format" class="md-nav__link">
+    <span class="md-ellipsis">
+      species_poscar_format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crystmatch.analysis.unique_filename" class="md-nav__link">
     <span class="md-ellipsis">
       unique_filename
@@ -1522,6 +1567,15 @@
   <a href="#crystmatch.utilities.save_poscar" class="md-nav__link">
     <span class="md-ellipsis">
       save_poscar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.utilities.species_poscar_format" class="md-nav__link">
+    <span class="md-ellipsis">
+      species_poscar_format
     </span>
   </a>
   
@@ -1875,7 +1929,7 @@
 
 
 <h3 id="crystmatch.enumeration.enumerate_slm" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">enumerate_slm</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">kappa_max</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="n">rmss</span><span class="p">,</span> <span class="n">likelihood_ratio</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">enumerate_slm</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">kappa_max</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">kappa</span><span class="o">=</span><span class="n">rmss</span><span class="p">,</span> <span class="n">likelihood_ratio</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
 
 </h3>
 
@@ -2017,11 +2071,11 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The level of detail of printing. <code>0</code> means no print.</p>
+                <p>The level of verbosity. Default is 1.</p>
               </div>
             </td>
             <td>
-                  <code>0</code>
+                  <code>1</code>
             </td>
           </tr>
       </tbody>
@@ -2980,7 +3034,7 @@
 
 
 <h3 id="crystmatch.enumeration.minimize_rmsd" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">minimize_rmsd</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">slm</span><span class="p">,</span> <span class="n">n_grid</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">minimize_rmsd</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">slm</span><span class="p">,</span> <span class="n">accurate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h3>
 
@@ -3051,18 +3105,18 @@
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>n_grid</code>
+                <code>accurate</code>
             </td>
             <td>
-                  <code>int</code>
+                  <code>bool</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The number of grid points for translation. Default is 5.</p>
+                <p>Whether to use the accurate method to minimize the RMSD. If <code>False</code>, the result may be suboptimal. Default is <code>True</code>.</p>
               </div>
             </td>
             <td>
-                  <code>5</code>
+                  <code>True</code>
             </td>
           </tr>
       </tbody>
@@ -3600,6 +3654,87 @@
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.enumeration.species_poscar_format" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">species_poscar_format</span><span class="p">(</span><span class="n">species</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Examine whether a species array is sorted. If so, convert it to the POSCAR format.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>species</code>
+            </td>
+            <td>
+                  <code>(N,) array of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The species array.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>species_unique</code></td>            <td>
+                  <code>(M,) array of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The unique species in the order of their first appearance in <code>species</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>species_counts</code></td>            <td>
+                  <code>(M,) array of int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of occurrences of each unique species in <code>species</code>.</p>
+              </div>
             </td>
           </tr>
       </tbody>
@@ -5819,6 +5954,87 @@
 <div class="doc doc-object doc-function">
 
 
+<h3 id="crystmatch.analysis.species_poscar_format" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">species_poscar_format</span><span class="p">(</span><span class="n">species</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Examine whether a species array is sorted. If so, convert it to the POSCAR format.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>species</code>
+            </td>
+            <td>
+                  <code>(N,) array of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The species array.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>species_unique</code></td>            <td>
+                  <code>(M,) array of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The unique species in the order of their first appearance in <code>species</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>species_counts</code></td>            <td>
+                  <code>(M,) array of int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of occurrences of each unique species in <code>species</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="crystmatch.analysis.unique_filename" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">unique_filename</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span></code>
 
@@ -7307,6 +7523,87 @@
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.utilities.species_poscar_format" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">species_poscar_format</span><span class="p">(</span><span class="n">species</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Examine whether a species array is sorted. If so, convert it to the POSCAR format.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>species</code>
+            </td>
+            <td>
+                  <code>(N,) array of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The species array.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>species_unique</code></td>            <td>
+                  <code>(M,) array of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The unique species in the order of their first appearance in <code>species</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>species_counts</code></td>            <td>
+                  <code>(M,) array of int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of occurrences of each unique species in <code>species</code>.</p>
+              </div>
             </td>
           </tr>
       </tbody>

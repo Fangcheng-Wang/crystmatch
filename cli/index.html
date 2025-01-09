@@ -399,14 +399,19 @@
 <td>'enumeration', 'single-CSM'</td>
 </tr>
 <tr>
-<td><code>-t TOL</code><br><code>--tolerance TOL</code></td>
-<td>Tolerance for determining crystal symmetry; default is 1e-3.</td>
-<td>'enumeration', 'single-CSM'</td>
+<td><code>-a</code><br><code>--accurate</code></td>
+<td>Use more accurate algorithm for RMSD minimization, taking about 4x longer time.</td>
+<td>'enumeration'</td>
 </tr>
 <tr>
 <td><code>-e index1 [index2 ...]</code><br><code>--export index1 [index2 ...]</code></td>
 <td>Export CSMs from NPZ file with the given indices.</td>
 <td>'read'</td>
+</tr>
+<tr>
+<td><code>-t TOL</code><br><code>--tolerance TOL</code></td>
+<td>Tolerance for determining crystal symmetry; default is 1e-3.</td>
+<td>'enumeration', 'single-CSM'</td>
 </tr>
 <tr>
 <td><code>-o vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz</code><br><code>--orientation vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz</code></td>
