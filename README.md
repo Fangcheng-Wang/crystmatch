@@ -1,10 +1,11 @@
 # Crystmatch
 
-If you use this code in your research, please cite the following paper:
-
-\[1\] [FC Wang, QJ Ye, YC Zhu, and XZ Li, *Physical Review Letters* **132**, 086101 (2024)](https://arxiv.org/abs/2305.05278)
-
-You are also welcome to contact me at `wfc@pku.edu.cn` for any questions or comments.
+> [!NOTE]
+> If you use this code in your research, please cite the following paper:
+>
+> \[1\] [FC Wang, QJ Ye, YC Zhu, and XZ Li, *Physical Review Letters* **132**, 086101 (2024)](https://arxiv.org/abs/2305.05278)
+>
+> You are also welcome to contact me at `wfc@pku.edu.cn` for any questions or comments.
 
 ## Introduction
 
@@ -78,7 +79,8 @@ The following files will be created in the current directory:
 └── TABLE-m4s0.40.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
 ```
 
-> **We recommend you to try `MAX_MU <= 4` and `MAX_RMSS = 0.4` first, and then gradually adjust these upper bounds (usually by increasing `MAX_MU` and decreasing `MAX_RMSS`) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.**
+> [!IMPORTANT]
+> We recommend you to try `MAX_MU <= 4` and `MAX_RMSS = 0.4` first, and then gradually adjust these upper bounds (usually by increasing `MAX_MU` and decreasing `MAX_RMSS`) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
 
 ### Exporting CSMs from an NPZ file
 
@@ -108,7 +110,8 @@ To benchmark CSMs in `CSM_LIST-foo.npz` by their deviation angles from the OR $(
 crystmatch --read CSM_LIST-foo.npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
 ```
 
-Note that the arguments after `--orientation` must be **Cartesian coordinates**.
+> [!IMPORTANT]
+> The arguments after `--orientation` must be **Cartesian coordinates**.
 
 The ORs are determined via the rotation-free manner by default, and you can also use `--uspfix` to determine ORs via the USF-fixed manner; see Ref. [[1]](https://arxiv.org/abs/2305.05278) for their definitions.
 
