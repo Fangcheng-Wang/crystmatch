@@ -18,12 +18,12 @@ If you use `crystmatch` in your research, please cite the following paper:
 
 \[1\] [FC Wang, QJ Ye, YC Zhu, and XZ Li, *Physical Review Letters* **132**, 086101 (2024)](https://arxiv.org/abs/2305.05278)
 
-In addition to the research group, we would like to express our gratitude to:
+In addition to our research group, we would like to express our gratitude to:
 
 - Dr. Félix Therrien, for his pioneering work and guidance on orientation analysis;
 
 - Yi-Chi Zhang (张亦弛), for his crucial feedback on RMSD calculations;
 
-- Zhilin Chang (常稚林), for his contributions to parallelization.
+- Wuji Han (韩无极) and Zhilin Chang (常稚林), for their contributions to parallelization.
 
 You are welcome to contact us at `wfc@pku.edu.cn` for any questions, feedback or comments regarding `crystmatch`.

@@ -34,8 +34,8 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
         The loaded crystal structure, consisting of the lattice vectors, species, and positions.
     """
     with open(filename, mode='r') as f:
+        f.readline()
         if verbose: print(f"Loading crystal structure from file '{filename}':")
-        else: f.readline()
         a = np.array(f.readline()[:-1], dtype=float)
         lattice = np.zeros((3,3), dtype=float)
         for i in range(3):
