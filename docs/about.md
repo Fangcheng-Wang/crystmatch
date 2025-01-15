@@ -22,8 +22,8 @@ In addition to the research group, we would like to express our gratitude to:
 
 - Dr. Félix Therrien, for his pioneering work and guidance on orientation analysis;
 
-- Yichi Zhang (张亦弛), for his crucial feedback on RMSD calculations;
+- Yi-Chi Zhang (张亦弛), for his crucial feedback on RMSD calculations;
 
-- Zhi-Lin Chang (常稚林), for his contributions to the code.
+- Zhilin Chang (常稚林), for his contributions to parallelization.
 
 You are welcome to contact us at `wfc@pku.edu.cn` for any questions, feedback or comments regarding `crystmatch`.

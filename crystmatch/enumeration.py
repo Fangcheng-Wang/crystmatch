@@ -102,9 +102,14 @@ def enumerate_slm(
     m = 0
     t = time()
     sobol_seq = Sobol(12)
+
     def m_th(num_cl, likelihood_ratio):
-        return (1 + num_cl * 20) * np.log(likelihood_ratio)
-    while m <= m_th(len(slmlist), likelihood_ratio):
+        return ((1 + num_cl * 20) * np.log(likelihood_ratio)).round().astype(int)
+    if verbose >= 1:
+        progress_bar = tqdm(total=m_th(len(slmlist), likelihood_ratio), position=0, desc=f"\r\tmu={mu:d}", ncols=60,
+                            bar_format='{desc}: {percentage:3.0f}% |{bar}| [elapsed {elapsed:5s}, remaining {remaining:5s}]')
+    
+    while m < m_th(len(slmlist), likelihood_ratio):
         # Sampling `s0`s around SO(3).
         rand_num = sobol_seq.random(2)
         q0 = np.sqrt(1 - rand_num[:,0]) * np.sin(2 * np.pi * rand_num[:,1])
@@ -128,19 +133,20 @@ def enumerate_slm(
             for j in range(len(slmlist)):
                 if (slm[0] == slmlist[j][0]).all() and (slm[1] == slmlist[j][1]).all() and (slm[2] == slmlist[j][2]).all():
                     # `slm` is repeated.
-                    m = m + 1
                     repeated = True
+                    if verbose >= 1: progress_bar.update(1)
+                    m = m + 1
                     break
+            if m == m_th(len(slmlist), likelihood_ratio): break
             if not repeated:
                 # `slm` is new.
                 slmlist.append(slm)
                 m = 0
-        if verbose >= 1:
-            print(f"\r\tmu = {mu:2d}, complete: {m/m_th(len(slmlist), likelihood_ratio)*100:3.0f}% ...", end='')
+                if verbose >= 1: progress_bar.reset(total=m_th(len(slmlist), likelihood_ratio))
         num_s0 += s0.shape[0]
         iter = iter + 1
-        if iter > 50 and len(slmlist) == 0: break
-    print(f"\r\tmu = {mu:2d}, complete: 100%, found {len(slmlist):d} incongruent SLMs (in {time()-t:.2f} s).")
+        if iter > 100 and len(slmlist) == 0: break
+    if verbose >= 1: progress_bar.close()
     return slmlist
 
 def minimize_rmsd_t(
@@ -245,9 +251,10 @@ def minimize_rmsd(
     species = crystA_sup[1]
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
+    N = pA_sup.shape[1]
     t0 = basinhopping(lambda z: minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ z.reshape(3,1))[0],
-            [0.5, 0.5, 0.5], T=0.05, niter=75, niter_success = None if accurate else 15, minimizer_kwargs={"method": "BFGS"}).x
+            [0.5, 0.5, 0.5], T=0.05, niter=50+5*int(N**0.5), niter_success = None if accurate else 10+int(N**0.5), minimizer_kwargs={"method": "BFGS"}).x
     _, p, ks = minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ t0.reshape(3,1))
     t0 = (pA_sup - pB_sup[:,p] - ks).mean(axis=1, keepdims=True)
-    rmsd = la.norm(c_sup_half @ (pA_sup - pB_sup[:,p] - ks - t0)) / np.sqrt(pA_sup.shape[1])
+    rmsd = la.norm(c_sup_half @ (pA_sup - pB_sup[:,p] - ks - t0)) / N**0.5
     return rmsd, p, ks, t0

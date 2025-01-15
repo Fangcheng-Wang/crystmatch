@@ -33,7 +33,7 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    install_requires=["numpy", "scipy", "matplotlib", "spglib"],
+    install_requires=["numpy", "scipy", "matplotlib", "spglib", "tqdm"],
     packages=setuptools.find_packages(),
     python_requires=">=3.9",
     entry_points={
