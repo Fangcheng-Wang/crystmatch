@@ -2,12 +2,12 @@
 Load/save crystal structures and CSMs from/to files.
 """
 
-from os import makedirs
+from os import makedirs, environ
 from os.path import sep, exists, splitext
 import numpy as np
 import numpy.linalg as la
 from copy import deepcopy
-from spglib import get_spacegroup, find_primitive, get_symmetry
+from spglib import get_spacegroup, standardize_cell, get_symmetry
 from tqdm import tqdm
 from typing import Union, Tuple, List, Callable
 from numpy.typing import NDArray, ArrayLike
@@ -60,16 +60,17 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
                 positions[i,:] = np.dot(la.inv(lattice.transpose()), np.array(f.readline().split()[:3], dtype=float))
     sp_name_sorted, numbers = np.unique(species, return_inverse=True)
     if verbose: print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=tol)}.")
+    lattice, positions, numbers = standardize_cell((lattice, positions, numbers), to_primitive=to_primitive, symprec = tol)
+    idx = np.argsort(numbers)
+    positions = positions[idx,:]
+    species = sp_name_sorted[numbers[idx]]
     if to_primitive:
-        lattice, positions, numbers = find_primitive((lattice, positions, numbers), symprec=tol)
         if len(numbers) != len(species):
             if verbose: print(f"\tCell in POSCAR file is not primitive! Using primitive cell (Z = {len(numbers):d}) now.")
         else:
             if verbose: print(f"\tCell in POSCAR file is already primitive (Z = {len(numbers):d}).")
-        species = sp_name_sorted[numbers]
     elif verbose: print(f"\tUsing cell in POSCAR file (Z = {len(numbers):d}).")
-    cryst = (lattice, species, positions)
-    return cryst
+    return (lattice, species, positions)
 
 def unique_filename(message: Union[str, None], filename: str) -> str:
     """Get a unique filename by appending a number to the end of the given filename.
@@ -116,7 +117,11 @@ def species_poscar_format(species: NDArray[np.str_]) -> Tuple[NDArray[np.str_], 
         raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
     return species[np.sort(sp_idx)], sp_counts
 
-def save_poscar(filename: Union[str, None], cryst: Cryst, crystname: Union[str, None] = None) -> None:
+def save_poscar(
+    filename: Union[str, None],
+    cryst: Cryst,
+    crystname: Union[str, None] = None
+) -> None:
     """
     Save the crystal structure to a POSCAR file.
 

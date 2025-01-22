@@ -5,7 +5,7 @@ import sys
 import argparse
 
 __name__ = "crystmatch"
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
@@ -91,10 +91,12 @@ def main():
     parser.add_argument("-F", "--final", type=str, metavar='POSCAR_F',
                         help="POSCAR file of the final crystal structure")
     parser.add_argument("-a", "--accurate", action='store_true', help="use more accurate algorithm to optimize RMSD in 'enumeration' mode")
-    parser.add_argument("-e", "--export", nargs='+', type=int, metavar=('index1', 'index2'),
+    parser.add_argument("-e", "--export", nargs='+', type=int, metavar=('INDEX1', 'INDEX2'),
                         help="export CSMs from CSM_LIST with the given indices")
+    parser.add_argument("-i", "--interpolate", nargs='?', type=int, default=None, const=10, metavar='IMAGES',
+                        help="create XDATCAR files when '-e' or '--export' is used; IMAGES is the number of images to be added (default is 10)")
     parser.add_argument("-t", "--tolerance", type=float, default=1e-3, metavar='TOL',
-                        help="tolerance for determining crystal symmetry; default is 1e-3")
+                        help="tolerance for determining crystal symmetry (default is 1e-3)")
     parser.add_argument("-o", "--orientation", nargs=12, type=float, metavar=('vix','viy','viz','vfx','vfy','vfz','wix','wiy','wiz','wfx','wfy','wfz'),
                         help="benchmark CSMs by the orientation relationship: vi||vf, wi||wf")
     parser.add_argument("-c", "--csv", action='store_true', help="whether to create CSV file")
@@ -212,7 +214,7 @@ def main():
         print(f"\nTo produce a list of CSMs that may contain this CSM, you can run:\n"
                 + f"\n\t$ crystmatch -E {mulist[0]} {rmsslist[0]+0.005:.3f} -I '{args.initial}' -F '{args.final}'")
 
-    print("")
+    print("")   # simply a line break
 
     # orientation analysis
     
@@ -258,6 +260,9 @@ def main():
                 makedirs(dirname)
                 save_poscar(f"{dirname}{sep}POSCAR_I", crystA_sup, crystname=f"CSM_{i:d} initial")
                 save_poscar(f"{dirname}{sep}POSCAR_F", crystB_sup, crystname=f"CSM_{i:d} final")
+                if args.interpolate is not None:
+                    print(f"Creating XDATCAR file with {args.interpolate} additional images ...")
+                    save_interpolation(f"{dirname}{sep}XDATCAR", crystA_sup, crystB_sup, args.interpolate, crystname=f"CSM_{i:d}")
     
     # saving CSV file and plotting
 

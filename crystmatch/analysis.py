@@ -217,3 +217,66 @@ def save_scatter(
     ax.tick_params(axis='both', which='minor', labelsize=8)
     plt.savefig(f"{filename}", bbox_inches='tight')
     return
+
+def save_interpolation(
+    filename: str,
+    crystA_sup: Cryst,
+    crystB_sup: Cryst,
+    images: int = 10,
+    crystname: Union[str, None] = None
+) -> None:
+    """
+    Save the linear interpolation between `crystA` and `crystB` to a single XDATCAR file.
+    
+    Parameters
+    ----------
+        filename : str
+            The name of the file to save, must not already exist in current directory.
+        crystA_sup, crystB_sup : cryst
+            The initial and final crystal structures with specified atomic correspondence, usually obtained by `minimize_rmsd`.
+        images : int, optional
+            Number of images to generate. Default is 10.
+        crystname : str, optional
+            A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
+    
+    Examples
+    --------
+        >>> save_trajectory('mytrajectory.txt', mycrystA, mycrystB)
+    """
+    if not (crystA_sup[1] == crystB_sup[1]).all():
+        raise ValueError("Atomic species of crystA and crystB must be the same.")
+    if type(images) != int or images < 1:
+        raise ValueError("Number of images must be a positive integer.")
+    
+    cA = crystA_sup[0].T
+    cB = crystB_sup[0].T
+    pA = crystA_sup[2].T
+    pB = crystB_sup[2].T
+    s = cB @ la.inv(cA)
+    if not ((s.T - s).round(decimals=4) == 0).all():
+        print(f"Warning: Extra rotation detected when interpolating crystals, which is removed in {filename}.")
+    _, sigma, vT = la.svd(s)
+    crystlist = []
+    tlist = np.linspace(0, 1, images+2)
+    for t in tlist:
+        c = vT.T @ np.diag(sigma ** t) @ vT @ cA
+        p = pA * (1-t) + pB * t
+        crystlist.append((c.T, crystA_sup[1], p.T))
+    
+    content = crystname
+    for i in range(images+2):
+        if i > 0: content += '\n'
+        if crystname: content += crystname
+        else: content += filename.split(sep='.')[0]
+        content += '\n1.0\n'
+        content += '\n'.join(f'{v[0]:.12f}\t{v[1]:.12f}\t{v[2]:.12f}' for v in crystlist[i][0].tolist())
+        species_name, species_counts = species_poscar_format(crystA_sup[1])
+        content += '\n' + ' '.join(species_name.tolist())
+        content += '\n' + ' '.join(str(n) for n in species_counts.tolist())
+        content += f'\nDirect configuration= {i+1:.0f}\n'
+        content += '\n'.join(f'{p[0]:.12f}\t{p[1]:.12f}\t{p[2]:.12f}' for p in crystlist[i][2].tolist())
+        
+    f = open(filename, mode='x')
+    f.write(content)
+    f.close()
+    return
