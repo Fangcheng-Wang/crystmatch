@@ -100,14 +100,14 @@ def enumerate_slm(
     iter = 0
     num_s0 = 0
     m = 0
-    t = time()
     sobol_seq = Sobol(12)
 
     def m_th(num_cl, likelihood_ratio):
         return ((1 + num_cl * 20) * np.log(likelihood_ratio)).round().astype(int)
+
     if verbose >= 1:
-        progress_bar = tqdm(total=m_th(len(slmlist), likelihood_ratio), position=0, desc=f"\r\tmu={mu:d}", ncols=60,
-                            bar_format='{desc}: {percentage:3.0f}% |{bar}| [elapsed {elapsed:5s}, remaining {remaining:5s}]')
+        progress_bar = tqdm(total=m_th(len(slmlist), likelihood_ratio), position=0, desc=f"\r\tmu={mu:d}", ncols=60, mininterval=0.5,
+                            bar_format=f'{{desc}}: {{percentage:3.0f}}% |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
     
     while m < m_th(len(slmlist), likelihood_ratio):
         # Sampling `s0`s around SO(3).
@@ -142,11 +142,15 @@ def enumerate_slm(
                 # `slm` is new.
                 slmlist.append(slm)
                 m = 0
-                if verbose >= 1: progress_bar.reset(total=m_th(len(slmlist), likelihood_ratio))
+                if verbose >= 1:
+                    progress_bar.n = 0
+                    progress_bar.total = m_th(len(slmlist), likelihood_ratio)
+                    progress_bar.refresh()
         num_s0 += s0.shape[0]
         iter = iter + 1
         if iter > 100 and len(slmlist) == 0: break
-    if verbose >= 1: progress_bar.close()
+    if verbose >= 1:
+        progress_bar.close()
     return slmlist
 
 def minimize_rmsd_t(
@@ -221,7 +225,7 @@ def minimize_rmsd_tp(
     return rmsd, ks
 
 def minimize_rmsd(
-    crystA: Cryst, crystB: Cryst, slm: Union[SLM, NDArray[np.int32]], accurate: bool = True
+    crystA: Cryst, crystB: Cryst, slm: Union[SLM, NDArray[np.int32]]
 ) -> tuple[float, NDArray[np.int32], NDArray[np.int32], NDArray[np.float64]]:
     """Minimize the RMSD with fixed SLM, variable permutation, overall and lattice-vector translations.
 
@@ -233,8 +237,6 @@ def minimize_rmsd(
         The final crystal structure, usually obtained by `load_poscar`.
     slm : slm
         Triplets of integer matrices like `(hA, hB, q)`, representing a SLM.
-    accurate: bool
-        Whether to use the accurate method to minimize the RMSD. If `False`, the result may be suboptimal. Default is `True`.
 
     Returns
     -------
@@ -253,7 +255,7 @@ def minimize_rmsd(
     pB_sup = crystB_sup[2].T
     N = pA_sup.shape[1]
     t0 = basinhopping(lambda z: minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ z.reshape(3,1))[0],
-            [0.5, 0.5, 0.5], T=0.05, niter=50+5*int(N**0.5), niter_success = None if accurate else 10+int(N**0.5), minimizer_kwargs={"method": "BFGS"}).x
+            [0.5, 0.5, 0.5], T=0.05, niter=50+5*int(N**0.5), niter_success = None, minimizer_kwargs={"method": "BFGS"}).x
     _, p, ks = minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ t0.reshape(3,1))
     t0 = (pA_sup - pB_sup[:,p] - ks).mean(axis=1, keepdims=True)
     rmsd = la.norm(c_sup_half @ (pA_sup - pB_sup[:,p] - ks - t0)) / N**0.5

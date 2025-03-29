@@ -16,7 +16,7 @@ __epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To ge
 [1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
 You are also welcome to contact me at ' + __email__ + ' for any questions, feedbacks or comments.'
 
-def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float, accurate: bool):
+def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float):
     
     # enumerating SLMs
     print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f}:")
@@ -53,9 +53,9 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
             csm_bins.append(np.array(f"No CSM with multiplicity {mu}", dtype=str))
             continue
         shufflelist = np.zeros((n_csm, mu * zlcm, 4), dtype=int)
-        for i in tqdm(range(n_csm), desc=f"\r\tmu={mu:d}", ncols=57+2*n_digit,
+        for i in tqdm(range(n_csm), desc=f"\r\tmu={mu:d}", ncols=57+2*n_digit, mininterval=0.5,
                     bar_format=f'{{desc}}: {{n_fmt:>{n_digit}s}}/{{total_fmt:>{n_digit}s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]'):
-            d, p, ks, _ = minimize_rmsd(crystA, crystB, slmlist[mulist == mu][i], accurate=accurate)
+            d, p, ks, _ = minimize_rmsd(crystA, crystB, slmlist[mulist == mu][i])
             rmsdlist[np.sum(mulist < mu) + i] = d
             shufflelist[i,:,0] = p
             shufflelist[i,:,1:] = ks.T
@@ -90,7 +90,6 @@ def main():
                         help="POSCAR file of the initial crystal structure")
     parser.add_argument("-F", "--final", type=str, metavar='POSCAR_F',
                         help="POSCAR file of the final crystal structure")
-    parser.add_argument("-a", "--accurate", action='store_true', help="use more accurate algorithm to optimize RMSD in 'enumeration' mode")
     parser.add_argument("-e", "--export", nargs='+', type=int, metavar=('INDEX1', 'INDEX2'),
                         help="export CSMs from CSM_LIST with the given indices")
     parser.add_argument("-i", "--interpolate", nargs='?', type=int, default=None, const=10, metavar='IMAGES',
@@ -134,6 +133,18 @@ def main():
         args.csv = True
         args.plot = True
     
+    if args.read is None:
+        if args.export is not None:
+            print("\nWarning: '--export' is only available in 'read' mode.")
+            args.export = None
+        if args.interpolate is not None:
+            print("\nWarning: '--interpolate' is only available in 'read' mode.")
+            args.interpolate = None
+    
+    if args.export is None and args.interpolate is not None:
+        print("\nWarning: '--interpolate' is only available when '--export' is used.")
+        args.interpolate = None
+            
     # determining CSMs
 
     if args.enumeration is not None:
@@ -152,7 +163,7 @@ def main():
         crystB = load_poscar(args.final, tol=args.tolerance)
         check_chem_comp(crystA[1], crystB[1])
         job = f"m{mu_max:d}s{rmss_max:.2f}"
-        csm_bins, slmlist, mulist, rmsslist, rmsdlist = enum_rep(crystA, crystB, mu_max, rmss_max, args.tolerance, args.accurate)
+        csm_bins, slmlist, mulist, rmsslist, rmsdlist = enum_rep(crystA, crystB, mu_max, rmss_max, args.tolerance)
         table = np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist], dtype=float).T
 
     elif args.read is not None:
@@ -242,27 +253,24 @@ def main():
         save_poscar(f"{dirname}{sep}{splitext(args.final)[0].split(sep)[-1]}-optimized{splitext(args.final)[1]}", (cB_sup_final.T, crystB_sup[1], pB_sup_final.T))
     
     if args.export is not None:
-        if args.read is None:
-            print("\nValueWarning: '--export' option is only available in 'read' mode.")
-        else:
-            print(f"\nExporting CSMs with indices {', '.join(map(str, args.export))} in {args.read} ...")
-            for i in args.export:
-                if i >= table.shape[0]:
-                    print(f"\nIndexWarning: Index {i} is out of range (there are only {table.shape[0]} CSMs).")
-                    continue
-                slm = data['slmlist'][table[i,1].round().astype(int)]
-                mu = table[i,2].round().astype(int)
-                ind = np.sum(table[:i,2].round().astype(int) == mu)
-                p = data[f'arr_{mu:d}'][ind,:,0]
-                ks = data[f'arr_{mu:d}'][ind,:,1:].T
-                crystA_sup, crystB_sup = int_arrays_to_pair(crystA, crystB, slm, p, ks)
-                dirname = unique_filename(f"Saving the CSM with index {i:d} to", f"CSM_{i:d}")
-                makedirs(dirname)
-                save_poscar(f"{dirname}{sep}POSCAR_I", crystA_sup, crystname=f"CSM_{i:d} initial")
-                save_poscar(f"{dirname}{sep}POSCAR_F", crystB_sup, crystname=f"CSM_{i:d} final")
-                if args.interpolate is not None:
-                    print(f"Creating XDATCAR file with {args.interpolate} additional images ...")
-                    save_interpolation(f"{dirname}{sep}XDATCAR", crystA_sup, crystB_sup, args.interpolate, crystname=f"CSM_{i:d}")
+        print(f"\nExporting CSMs with indices {', '.join(map(str, args.export))} in {args.read} ...")
+        for i in args.export:
+            if i >= table.shape[0]:
+                print(f"\nIndexWarning: Index {i} is out of range (there are only {table.shape[0]} CSMs).")
+                continue
+            slm = data['slmlist'][table[i,1].round().astype(int)]
+            mu = table[i,2].round().astype(int)
+            ind = np.sum(table[:i,2].round().astype(int) == mu)
+            p = data[f'arr_{mu:d}'][ind,:,0]
+            ks = data[f'arr_{mu:d}'][ind,:,1:].T
+            crystA_sup, crystB_sup = int_arrays_to_pair(crystA, crystB, slm, p, ks)
+            dirname = unique_filename(f"Saving the CSM with index {i:d} to", f"CSM_{i:d}")
+            makedirs(dirname)
+            save_poscar(f"{dirname}{sep}POSCAR_I", crystA_sup, crystname=f"CSM_{i:d} initial")
+            save_poscar(f"{dirname}{sep}POSCAR_F", crystB_sup, crystname=f"CSM_{i:d} final")
+            if args.interpolate is not None:
+                print(f"Creating XDATCAR file with {args.interpolate} additional images ...")
+                save_interpolation(f"{dirname}{sep}XDATCAR", crystA_sup, crystB_sup, args.interpolate, crystname=f"CSM_{i:d}")
     
     # saving CSV file and plotting
 
@@ -275,9 +283,12 @@ def main():
                         header=' index,  slm_id,      mu,  rmss/%,  rmsd/Å, theta/°')
     
     if args.plot:
-        save_scatter(unique_filename("Creating scatter plot in", f"PLOT-{job}.pdf"), table[:,3], table[:,4], table[:,2].round().astype(int), cbarlabel="Multiplicity")
-        if args.orientation is not None: save_scatter(unique_filename("Creating scatter plot in", f"OR-{job}.pdf"),
-                                                        table[:,3], table[:,4], table[:,5], cbarlabel="Deviation / °", cmap=plt.cm.get_cmap('jet'))
+        zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
+        save_scatter(unique_filename("Creating scatter plot in", f"PLOT-{job}.pdf"), table[:,3], table[:,4], table[:,2].round().astype(int),
+                    cbarlabel=f"Multiplicity (× {zlcm:.0f} atom{'s' if zlcm>1 else ''})")
+        if args.orientation is not None:
+            save_scatter(unique_filename("Creating scatter plot in", f"OR-{job}.pdf"),
+                        table[:,3], table[:,4], table[:,5]*180/np.pi, cbarlabel="Deviation (°)", cmap=plt.cm.get_cmap('jet'))
     
     print(f"\nTotal time spent: {time()-time0:.2f} seconds")
 

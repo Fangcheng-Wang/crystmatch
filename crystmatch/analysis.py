@@ -204,8 +204,8 @@ def save_scatter(
     if n0 >= 1:
         print(f"\nThere are {n0:d} CSMs (indices: {', '.join(np.nonzero(ind0)[0].astype(str).tolist())}) with {cbarlabel}=0, emphasized by pink stars in the plot.")
         plt.scatter(rmsslist[ind0], rmsdlist[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
-    plt.xlabel("Root-mean-square strain (RMSS)", fontsize=15)
-    plt.ylabel("RMSD / Å", fontsize=15)
+    plt.xlabel("Root-mean-square strain", fontsize=15)
+    plt.ylabel("RMSD (Å)", fontsize=15)
     plt.xlim(0, np.amax(rmsslist) * 1.05)
     plt.ylim(min(0, np.amin(rmsdlist) - 0.1), np.amax(rmsdlist) + 0.1)
     if colorlist.dtype == int:

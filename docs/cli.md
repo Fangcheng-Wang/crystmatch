@@ -24,7 +24,6 @@ The `crystmatch` command-line interface is already introduced in [Tutorial](http
 | `-S`<br>`--single` | Use 'single-CSM' mode, with the CSM uniquely determined by `-I` and `-F`. | 'single-CSM' |
 | `-I POSCAR_I`<br>`--initial POSCAR_I` | POSCAR file of the initial crystal structure. | 'enumeration', 'single-CSM' |
 | `-F POSCAR_F`<br>`--final POSCAR_F` | POSCAR file of the final crystal structure. | 'enumeration', 'single-CSM' |
-| `-a`<br>`--accurate` | Use more accurate algorithm for RMSD minimization, taking about 4x longer time. | 'enumeration' |
 | `-e INDEX1 [INDEX2 ...]`<br>`--export INDEX1 [INDEX2 ...]` | Export CSMs from NPZ file with the given indices. | 'read' |
 | `-i [IMAGES]`<br>`--interpolate [IMAGES]` | Create XDATCAR files when `-e` or `--export` is used. `IMAGES` is the number of images to be added; default is 10. | 'read' |
 | `-t TOL`<br>`--tolerance TOL` | Tolerance for determining crystal symmetry; default is 1e-3. | 'enumeration', 'single-CSM' |
