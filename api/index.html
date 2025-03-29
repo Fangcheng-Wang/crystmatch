@@ -703,6 +703,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#crystmatch.analysis.save_interpolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_interpolation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crystmatch.analysis.save_poscar" class="md-nav__link">
     <span class="md-ellipsis">
       save_poscar
@@ -1372,6 +1381,15 @@
   <a href="#crystmatch.analysis.rmss" class="md-nav__link">
     <span class="md-ellipsis">
       rmss
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.analysis.save_interpolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_interpolation
     </span>
   </a>
   
@@ -3034,7 +3052,7 @@
 
 
 <h3 id="crystmatch.enumeration.minimize_rmsd" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">minimize_rmsd</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">slm</span><span class="p">,</span> <span class="n">accurate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">minimize_rmsd</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">slm</span><span class="p">)</span></code>
 
 </h3>
 
@@ -3101,22 +3119,6 @@
             </td>
             <td>
                 <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>accurate</code>
-            </td>
-            <td>
-                  <code>bool</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Whether to use the accurate method to minimize the RMSD. If <code>False</code>, the result may be suboptimal. Default is <code>True</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
             </td>
           </tr>
       </tbody>
@@ -5631,6 +5633,118 @@
               <div class="doc-md-description">
                 <p>Root-mean-square of <code>x - 1</code>.</p>
               </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.analysis.save_interpolation" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">save_interpolation</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">crystA_sup</span><span class="p">,</span> <span class="n">crystB_sup</span><span class="p">,</span> <span class="n">images</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">crystname</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Save the linear interpolation between <code>crystA</code> and <code>crystB</code> to a single XDATCAR file.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the file to save, must not already exist in current directory.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA_sup</code>
+            </td>
+            <td>
+                  <code>cryst</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures with specified atomic correspondence, usually obtained by <code>minimize_rmsd</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB_sup</code>
+            </td>
+            <td>
+                  <code>cryst</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures with specified atomic correspondence, usually obtained by <code>minimize_rmsd</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>images</code>
+            </td>
+            <td>
+                  <code>int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of images to generate. Default is 10.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystname</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A system description to write to the comment line of the POSCAR file. If <code>crystname = None</code>, <code>filename</code> will be used.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
