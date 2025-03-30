@@ -13,7 +13,7 @@ from typing import Union, Tuple, List, Callable
 from numpy.typing import NDArray, ArrayLike
 
 np.set_printoptions(suppress=True)
-Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
+Cryst = Tuple[NDArray[np.float64], NDArray[np.str], NDArray[np.float64]]
 SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
 def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, verbose: bool = True) -> Cryst:

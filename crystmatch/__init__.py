@@ -1,11 +1,12 @@
 from .utilities import *
 from .enumeration import *
 from .analysis import *
+from time import time
 import sys
 import argparse
 
 __name__ = "crystmatch"
-__version__ = "1.1.5"
+__version__ = "1.1.6"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'

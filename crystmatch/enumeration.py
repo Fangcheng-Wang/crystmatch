@@ -3,14 +3,11 @@ Enumerate SLMs and CSMs.
 """
 
 from .utilities import *
-from time import time
 from scipy.optimize import brentq, linear_sum_assignment, basinhopping
 from scipy.stats.qmc import Sobol
 from scipy.spatial.transform import Rotation
 
 np.set_printoptions(suppress=True)
-Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
-SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
 def cong_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
     """The representative SLM of the congruence class of `slm`.

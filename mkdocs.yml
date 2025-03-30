@@ -8,7 +8,7 @@ theme:
   icon:
     logo: material/octahedron
 
-copyright: Copyright &copy; 2023–2024 Xin-Zheng Li Group. All rights reserved.
+copyright: Copyright &copy; 2013–2025 Xin-Zheng Li Group. All rights reserved.
 
 extra_javascript:
   - javascripts/katex.js

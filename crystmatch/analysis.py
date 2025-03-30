@@ -12,8 +12,6 @@ rcParams.update({
 })
 
 np.set_printoptions(suppress=True)
-Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
-SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
 def multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], NDArray[np.int32]]) -> Union[int, NDArray[np.int32]]:
     """Return multiplicities of elements in `slmlist`.
@@ -230,18 +228,14 @@ def save_interpolation(
     
     Parameters
     ----------
-        filename : str
-            The name of the file to save, must not already exist in current directory.
-        crystA_sup, crystB_sup : cryst
-            The initial and final crystal structures with specified atomic correspondence, usually obtained by `minimize_rmsd`.
-        images : int, optional
-            Number of images to generate. Default is 10.
-        crystname : str, optional
-            A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
-    
-    Examples
-    --------
-        >>> save_trajectory('mytrajectory.txt', mycrystA, mycrystB)
+    filename : str
+        The name of the file to save, must not already exist in current directory.
+    crystA_sup, crystB_sup : cryst
+        The initial and final crystal structures with specified atomic correspondence, usually obtained by `minimize_rmsd`.
+    images : int, optional
+        Number of images to generate. Default is 10.
+    crystname : str, optional
+        A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
     """
     if not (crystA_sup[1] == crystB_sup[1]).all():
         raise ValueError("Atomic species of crystA and crystB must be the same.")
