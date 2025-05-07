@@ -563,18 +563,18 @@
 </code></pre></div>
 <h2 id="examples">Examples</h2>
 <h3 id="enumerating-csms">Enumerating CSMs</h3>
-<p>To generate a list of representative <a href="https://arxiv.org/abs/2305.05278">[1]</a> CSMs between two crystal structures stored in <code>./fcc</code> and <code>./bcc</code>, with multiplicity upper bound <code>MAX_MU = 4</code> and RMSS upper bound <code>MAX_RMSS = 0.4</code>, run:</p>
-<div class="highlight"><pre><span></span><code>crystmatch --initial fcc --final bcc --enumeration 4 0.4
+<p>To generate a list of representative <a href="https://arxiv.org/abs/2305.05278">[1]</a> CSMs between two crystal structures stored in <code>./fcc</code> and <code>./bcc</code>, with multiplicity upper bound <code>MAX_MU = 2</code> and RMSS upper bound <code>MAX_RMSS = 0.4</code>, run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --initial fcc --final bcc --enumeration 2 0.4
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>We recommend you to try <code>MAX_MU &lt;= 4</code> and <code>MAX_RMSS = 0.4</code> first, and then gradually adjust these upper bounds (usually by increasing <code>MAX_MU</code> and decreasing <code>MAX_RMSS</code>) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
+<p>We recommend you to try <code>MAX_MU &lt;= 2</code> and <code>MAX_RMSS = 0.4</code> first, and then gradually adjust these upper bounds (usually by increasing <code>MAX_MU</code> and decreasing <code>MAX_RMSS</code>) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
 </div>
 <p>The following files will be created in the current directory:</p>
 <div class="highlight"><pre><span></span><code>./
-├── CSM_LIST-m4s0.40.npz       # stores the enumerated CSMs and metadata.
-├── PLOT-m4s0.40.pdf           # shows the RMSD-RMSS distribution of the CSMs.
-└── TABLE-m4s0.40.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
+├── CSM_LIST-m2s0.40.npz       # stores the enumerated CSMs and metadata.
+├── PLOT-m2s0.40.pdf           # shows the RMSD-RMSS distribution of the CSMs.
+└── TABLE-m2s0.40.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
 </code></pre></div>
 <h3 id="exporting-csms-from-an-npz-file">Exporting CSMs from an NPZ file</h3>
 <p>After enumeration, you can see the properties of CSMs in the CSV file, which also contains their indices in the NPZ file. If you want to export the CSMs with indices <code>7</code> and <code>10</code> in <code>CSM_LIST-foo.npz</code>, run:</p>
