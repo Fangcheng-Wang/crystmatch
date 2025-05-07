@@ -57,7 +57,7 @@ crystmatch --help
 
 ### Enumerating CSMs
 
-To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with multiplicity upper bound `MAX_MU = 2` and RMSS upper bound `MAX_RMSS = 0.4`, run:
+To generate a list of representative[^1] CSMs between two crystal structures stored in `./fcc` and `./bcc`, with multiplicity upper bound `MAX_MU = 2` and RMSS upper bound `MAX_RMSS = 0.4`, run:
 
 ```
 crystmatch --initial fcc --final bcc --enumeration 2 0.4

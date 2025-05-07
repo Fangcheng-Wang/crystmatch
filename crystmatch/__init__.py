@@ -26,13 +26,13 @@ def enumerate_representative(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max
     print(f"A total of {len(slmlist):d} incongruent SLMs are enumerated:")
     if len(slmlist) == 0: raise Warning("No SLM is found. Try larger arguments for '--enumeration' or check if the input POSCARs are correct.")
     slmlist = np.array(slmlist)
-    mulist = multiplicity(crystA, crystB, slmlist)
+    mulist = imt_multiplicity(crystA, crystB, slmlist)
     print(f"\tmu  {' '.join(f'{i:5d}' for i in range(1,mu_max+1))}")
     print(f"\t#SLM{' '.join(f'{s:5d}' for s in np.bincount(mulist, minlength=mu_max+1)[1:])}")
     
     _, ind = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0, return_index=True)
     slmlist = slmlist[ind]
-    mulist = multiplicity(crystA, crystB, slmlist)
+    mulist = imt_multiplicity(crystA, crystB, slmlist)
     rmsslist = rmss(deformation_gradient(crystA, crystB, slmlist))
     ind = np.lexsort((rmsslist.round(decimals=4), mulist))
     slmlist = slmlist[ind]
@@ -114,23 +114,23 @@ def main():
 
     if sum(1 for x in [args.enumeration, args.read, args.single] if x is not None) == 0:
         print("No mode is specified (not recommended, see 'crystmatch -h' for common usage).")
-        mode = input("Please enter a mode ('enumeration' / 'read' / 'single'): ")
-        if mode in ["'enumeration'", 'enumeration', 'e', 'E']:
+        mode = input("Please enter a mode ('enumeration' / 'read' / 'single'): ").strip().lower()
+        if mode in ["'enumeration'", 'enumeration', 'e']:
             mu_max = int(input("Enter the maximum multiplicity: "))
             rmss_max = float(input("Enter the maximum root-mean-square-strain: "))
             args.enumeration = (mu_max, rmss_max)
-        elif mode in ["'read'", 'read', 'r', 'R']:
+        elif mode in ["'read'", 'read', 'r']:
             args.read = input("Enter the path of the CSM_LIST file: ")
             args.export = np.array(input("Enter the indices of CSMs to be exported (separated by space), or leave blank for no export: ").split(), dtype=int)
             if args.export.shape[0] == 0: args.export = None
-        elif mode in ["'single'", 'single', 'single-CSM', 's', 'S']:
+        elif mode in ["'single'", 'single', 'single-csm', 's']:
             args.single = True
             print("Warning: The CSM will be uniquely determined by the initial and final POSCARs. I hope you know what you are doing.")
         else:
             raise ValueError(f"Invalid mode '{mode}'.")
     
     if args.enumeration is not None or (args.read is not None and args.orientation is not None):
-        # in which case CSV and PLOT will always be generated
+        # CSV and PLOT will always be generated in enumeration mode and orientation analysis
         args.csv = True
         args.plot = True
     
@@ -145,7 +145,7 @@ def main():
     if args.export is None and args.interpolate is not None:
         print("\nWarning: '--interpolate' is only available when '--export' is used.")
         args.interpolate = None
-            
+    
     # determining CSMs
 
     if args.enumeration is not None:
@@ -203,9 +203,9 @@ def main():
         mB = (la.inv(cB) @ cB_sup).round().astype(int)
         hA, qA = hnf_int(mA)
         hB, qB = hnf_int(mB)
-        slmlist = [standardize_slm((hA, hB, qB @ la.inv(qA).round().astype(int)),
+        slmlist = [standardize_imt((hA, hB, qB @ la.inv(qA).round().astype(int)),
                             get_pure_rotation(crystA, tol=args.tolerance), get_pure_rotation(crystB, tol=args.tolerance))[0]]
-        mulist = multiplicity(crystA, crystB, slmlist)
+        mulist = imt_multiplicity(crystA, crystB, slmlist)
         # computing principal strains
         _, sigma, vT = la.svd(cB_sup @ la.inv(cA_sup))
         rmsslist = [np.sqrt(np.mean((sigma - 1)**2, axis=1))]

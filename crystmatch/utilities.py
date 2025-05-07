@@ -7,10 +7,12 @@ from os.path import sep, exists, splitext
 import numpy as np
 import numpy.linalg as la
 from copy import deepcopy
+from collections import namedtuple
 from spglib import get_spacegroup, find_primitive, get_symmetry
 from tqdm import tqdm
 from typing import Union, Tuple, List, Callable
 from numpy.typing import NDArray, ArrayLike
+from scipy.spatial.transform import Rotation
 
 np.set_printoptions(suppress=True)
 Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
@@ -35,7 +37,7 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
     """
     with open(filename, mode='r') as f:
         f.readline()
-        if verbose: print(f"Loading crystal structure from file '{filename}':")
+        if verbose: print(f"Loading crystal structure from file '{filename}' ...")
         a = np.array(f.readline()[:-1], dtype=float)
         lattice = np.zeros((3,3), dtype=float)
         for i in range(3):
@@ -71,6 +73,82 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
     elif verbose: print(f"\tUsing cell in POSCAR file (Z = {len(numbers):d}).")
     cryst = (lattice, species, positions)
     return cryst
+
+def load_csmcar(filename: str, verbose: bool = True):
+    """Load the CSMCAR file, which contains `crystmatch` parameters.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the POSCAR file to be read.
+
+    Returns
+    -------
+    voigtA, voigtB : (6, 6) array
+        The loaded elastic tensor for the initial and final structure, in Voigt notation (ordered as XX, YY, ZZ, YZ, ZX, XY).
+    distance_weight : dict
+        The loaded weight function for the shuffle distance.
+    orientation_relationship : (2, 2, 3) array
+        The two loaded parallelisms.
+    """
+    with open(filename, mode='r') as f:
+        if verbose: print(f"Loading crystmatch parameters from file '{filename}' ...")
+        voigtA = None
+        voigtB = None
+        weight_function = None
+        orientation_relationship = None
+        standard_axes = ['XX', 'YY', 'ZZ', 'YZ', 'ZX', 'XY']
+        nl = '\n'
+        tab = '\t'
+        info = f.readline()
+        while info:
+            info = info.strip()
+            if info.startswith(('I', 'i')):
+                if voigtA: print("Warning: Initial elastic tensor is defined multiple times! The last definition will be used.")
+                voigtA = np.zeros((6, 6))
+                axes = []
+                for i in range(6):
+                    l = f.readline().strip().split()
+                    axes.append(l[0])
+                    voigtA[i,:] = [float(x) for x in l[1:7]]
+                axis_yz = 'YZ' if 'YZ' in axes else 'ZY'
+                axis_zx = 'ZX' if 'ZX' in axes else 'XZ'
+                axis_xy = 'XY' if 'XY' in axes else 'YX'
+                ind = [axes.index('XX'), axes.index('YY'), axes.index('ZZ'), axes.index(axis_yz), axes.index(axis_zx), axes.index(axis_xy)]
+                voigtA = voigtA[np.ix_(ind, ind)]
+                if verbose: print(f"Initial elastic tensor:\t{tab.join(standard_axes)}\n{nl.join([tab + standard_axes[i] + tab + tab.join(row.astype(str)) for i, row in enumerate(voigtA)])}")
+            elif info.startswith(('F', 'f')):
+                if voigtB: print("Warning: Final elastic tensor is defined multiple times! The last definition will be used.")
+                voigtB = np.zeros((6, 6))
+                axes = []
+                for i in range(6):
+                    l = f.readline().strip().split()
+                    axes.append(l[0])
+                    voigtB[i,:] = [float(x) for x in l[1:7]]
+                axis_yz = 'YZ' if 'YZ' in axes else 'ZY'
+                axis_zx = 'ZX' if 'ZX' in axes else 'XZ'
+                axis_xy = 'XY' if 'XY' in axes else 'YX'
+                ind = [axes.index('XX'), axes.index('YY'), axes.index('ZZ'), axes.index(axis_yz), axes.index(axis_zx), axes.index(axis_xy)]
+                voigtB = voigtB[np.ix_(ind, ind)]
+                if verbose: print(f"Final elastic tensor:\t{tab.join(standard_axes)}\n{nl.join([tab + standard_axes[i] + tab + tab.join(row.astype(str)) for i, row in enumerate(voigtB)])}")
+            elif info.startswith(('D', 'd')):
+                species = f.readline().strip().split()
+                weights = np.array(f.readline().strip().split(), dtype=float)
+                weight_function = {s: w for s, w in zip(species, weights)}
+                if verbose: print(f"Distance weight function:\n{nl.join([tab + key + tab + str(value) for key, value in weight_function.items()])}")
+            elif info.startswith(('O', 'o')):
+                vs = f.readline().split("||")
+                vix, viy, viz = [float(x) for x in vs[0].strip().split()]
+                vfx, vfy, vfz = [float(x) for x in vs[1].strip().split()]
+                ws = f.readline().split("||")
+                wix, wiy, wiz = [float(x) for x in ws[0].strip().split()]
+                wfx, wfy, wfz = [float(x) for x in ws[1].strip().split()]
+                orientation_relationship = np.array([[[vix, viy, viz], [vfx, vfy, vfz]], [[wix, wiy, wiz], [wfx, wfy, wfz]]])
+                if verbose:
+                    print(f"Orientation relationship:\n\t({vix:.3f}, {viy:.3f}, {viz:.3f}) || ({vfx:.3f}, {vfy:.3f}, {vfz:.3f})")
+                    print(f"\t({wix:.3f}, {wiy:.3f}, {wiz:.3f}) || ({wfx:.3f}, {wfy:.3f}, {wfz:.3f})")
+            info = f.readline()
+    return voigtA, voigtB, weight_function, orientation_relationship
 
 def unique_filename(message: Union[str, None], filename: str) -> str:
     """Get a unique filename by appending a number to the end of the given filename.
@@ -252,6 +330,15 @@ def int_arrays_to_pair(crystA: Cryst, crystB: Cryst, slm: SLM,
         pB_sup = pB_sup - np.mean(pB_sup - pA_sup, axis=1, keepdims=True)
     return crystA_sup, (crystB_sup[0], crystB_sup[1][p], pB_sup.T)
 
+def cube_to_so3(vec):
+    """Map `vec` in [0,1)^3 to SO(3), preserving the uniformity of distribution.
+    """
+    q0 = np.sqrt(1 - vec[0]) * np.sin(2 * np.pi * vec[1])
+    q1 = np.sqrt(1 - vec[0]) * np.cos(2 * np.pi * vec[1])
+    q2 = np.sqrt(vec[0]) * np.sin(2 * np.pi * vec[2])
+    q3 = np.sqrt(vec[0]) * np.cos(2 * np.pi * vec[2])
+    return Rotation.from_quat([q0,q1,q2,q3]).as_matrix()
+
 def deformation_gradient(crystA: Cryst, crystB: Cryst, slmlist: List[SLM]) -> NDArray[np.float64]:
     """Compute the deformation gradient matrices of given IMTs.
     
@@ -289,6 +376,9 @@ def rmss(slist: NDArray[np.float64]) -> NDArray[np.float64]:
         Root-mean-square strains.
     """
     return np.sqrt(np.mean((la.svd(slist, compute_uv=False) - 1) ** 2, axis=-1))
+
+def zip_pct(p, ks):
+    return np.hstack((p.reshape(-1,1), ks.T))
 
 def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
     """Find all pure rotations appeared in the space group of `cryst`.
@@ -539,3 +629,45 @@ def cell_reduce(c: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np
     if la.det(cc) < 0: cc = -cc
     q = (la.inv(c) @ cc).round().astype(int)
     return cc, q
+
+def voigt_to_tensor(voigt_matrix, cryst=None, tol=1e-3, verbose=True):
+    """Convert a Voigt-notation tensor to a rank-4 tensor, and symmetrize it according to the symmetry of `cryst` (if provided).
+    
+    Parameters
+    ----------
+    voigt_matrix : (6, 6) array
+        The elastic tensor, in Voigt notation (ordered as XX, YY, ZZ, YZ, ZX, XY).
+    cryst : Cryst, optional
+        The crystal structure, whose symmetry is used to symmetrize the elastic tensor.
+    tol : float, optional
+        The tolerance for symmetry finding.
+    verbose : bool, optional
+        Whether to print information about the symmetrization.
+
+    Returns
+    -------
+    tensor : (3, 3, 3, 3) array
+        The rank-4 elastic tensor.
+    """
+    tensor = np.ones((9,9)) * np.inf       # XX,XY,XZ,YX,YY,YZ,ZX,ZY,ZZ
+    voigt_ind = [0,4,8,5,6,1]              # XX,YY,ZZ,YZ,ZX,XY
+    tensor[np.ix_(voigt_ind, voigt_ind)] = voigt_matrix
+    tensor = tensor.reshape((3,3,3,3))
+    tensor = np.min([tensor, tensor.transpose((1,0,2,3))], axis=0)
+    tensor = np.min([tensor, tensor.transpose((2,3,0,1))], axis=0)
+    tensor = np.min([tensor, tensor.transpose((0,1,3,2))], axis=0)
+    if cryst is not None:
+        spglib_cryst = (cryst[0],cryst[2],np.unique(cryst[1], return_inverse=True)[1])
+        g = get_symmetry(spglib_cryst, symprec=tol)['rotations']
+        r = cryst[0].T @ g @ la.inv(cryst[0].T)
+        tensor_sym = np.mean(np.einsum('ijkl,qim,qjn,qko,qlp->qmnop', tensor, r, r, r, r), axis=0)
+        spg = get_spacegroup(spglib_cryst, symprec=tol)
+        dev = np.max(np.abs(tensor_sym - tensor)) / np.max(np.abs(tensor))
+        if verbose:
+            print(f"Symmetrizing elastic tensor using space group {spg} ...")
+            print(f"\tmax |Y_ijkl| = {np.max(np.abs(tensor_sym)):.3f}")
+            print(f"\tmax |ΔY_ijkl| = {np.max(np.abs(tensor_sym - tensor)):.3f}")
+            print(f"\tdeviation = {100 * dev:.2f}%")
+        if dev > 0.2: print(f"\nWarning: Elastic tensor does not have the expected symmetry ({spg})! Check if the input POSCAR and elastic tensor are consistent.\n")
+        return tensor_sym
+    else: return tensor

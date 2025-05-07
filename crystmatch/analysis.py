@@ -13,7 +13,7 @@ rcParams.update({
 
 np.set_printoptions(suppress=True)
 
-def multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], NDArray[np.int32]]) -> Union[int, NDArray[np.int32]]:
+def imt_multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], NDArray[np.int32]]) -> Union[int, NDArray[np.int32]]:
     """Return multiplicities of elements in `slmlist`.
 
     Parameters
@@ -38,59 +38,6 @@ def multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], ND
         return la.det(slmlist[0]).round().astype(int) // dA
     else:
         return la.det(slmlist[:,0,:,:]).round().astype(int) // dA
-
-def sing_val(crystA: Cryst, crystB: Cryst, slmlist: Union[List[SLM], NDArray[np.int32]]) -> NDArray[np.float64]:
-    """Return singular values of elements in `slmlist`.
-
-    Parameters
-    ----------
-    crystA : cryst
-        The initial crystal structure, usually obtained by `load_poscar`.
-    crystB : cryst
-        The final crystal structure, usually obtained by `load_poscar`.
-    slmlist : list of slm
-        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
-
-    Returns
-    -------
-    sv : (..., 3) array
-        Contains singular values of each SLM in `slmlist`.
-    """
-    cA = crystA[0].T
-    cB = crystB[0].T
-    hA, hB, q = zip(*slmlist)
-    deform = cB @ np.array(hB) @ np.array(q) @ la.inv(cA @ np.array(hA))
-    sv = la.svd(deform, compute_uv=False)
-    return sv
-
-def deform_distance(slmlist: ArrayLike, s0: ArrayLike, crystA: Cryst, crystB: Cryst) -> NDArray[np.float64]:
-    """The Frobenius distance between deformation gradients.
-
-    Parameters
-    ----------
-    slmlist : list of slm
-        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
-    s0 : slm
-        `(hA, hB, q)`, representing a SLM.
-    crystA, crystB : cryst
-        `(lattice, species, positions)`, representing the crystal structure, usually obtained by `load_poscar`.
-    
-    Returns
-    -------
-    dlist : (...,) array
-        Contains Frobenius distances from `slmlist` to `s0`, where equivalent SLMs coincide.
-    """
-    cA = crystA[0].T
-    cB = crystB[0].T
-    gA = get_pure_rotation(crystA)
-    gB = get_pure_rotation(crystB)
-    hA0, hB0, q0 = s0
-    x0 = np.transpose(np.dot((gB @ hB0) @ q0, la.inv(gA @ hA0)), axes=[2,0,1,3]).reshape(-1,9)
-    _, i = np.unique(x0.round(decimals=4), axis=0, return_index=True)
-    cl0 = cB @ x0[i,:].reshape(-1,3,3) @ la.inv(cA)
-    ss = cB @ slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(cA @ slmlist[:,0,:,:])
-    dlist = np.amin(la.norm(ss.reshape(-1,1,9), cl0.reshape(1,-1,9), axis=2),axis=1)
-    return dlist
 
 def orient_matrix(vi: ArrayLike, vf: ArrayLike, wi: ArrayLike, wf: ArrayLike) -> NDArray[np.float64]:
     """Rotation matrix `r` such that `r @ vi` || `vf` and `r @ wi` || `wf`.
