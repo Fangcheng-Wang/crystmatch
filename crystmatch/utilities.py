@@ -13,7 +13,7 @@ from typing import Union, Tuple, List, Callable
 from numpy.typing import NDArray, ArrayLike
 
 np.set_printoptions(suppress=True)
-Cryst = Tuple[NDArray[np.float64], NDArray[np.str], NDArray[np.float64]]
+Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
 SLM = Tuple[NDArray[np.int32], NDArray[np.int32], NDArray[np.int32]]
 
 def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, verbose: bool = True) -> Cryst:
@@ -49,8 +49,9 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
             species = species + [sp_name[i]] * sp_counts[i]
         species = np.array(species, dtype=str)
         unit = ''
-        while not unit in ['D','d','C','c','K','k']:
-            unit = f.readline()[0]
+        while not unit.startswith(('D','d','C','c','K','k')):
+            unit = f.readline().strip()
+        unit = unit[0]
         N = sp_counts.sum()
         positions = np.zeros((N,3), dtype=float)
         for i in range(N):
@@ -192,7 +193,7 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     hA, hB, q = slm
     deform = cB @ hB @ q @ la.inv(cA @ hA)
     u, sigma, vT = la.svd(deform)
-    c_sup_half, q_sup = niggli_cell(vT.T @ np.diag(sigma ** 0.5) @ vT @ cA @ hA)         # The half-distorted supercell.
+    c_sup_half, q_sup = cell_reduce(vT.T @ np.diag(sigma ** 0.5) @ vT @ cA @ hA)         # The half-distorted supercell.
     mA = hA @ q_sup
     mB = hB @ q @ q_sup
     cA_sup = cA @ mA
@@ -214,7 +215,7 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     # Computing output.
     crystA_sup = (cA_sup.T, species_sup, pA_sup.T)
     crystB_sup_final = (cB_sup_final.T, species_sup, pB_sup.T)
-    f_translate = niggli_cell(matrix_gcd(la.inv(mA), la.inv(mB)))[0]
+    f_translate = cell_reduce(matrix_gcd(la.inv(mA), la.inv(mB)))[0]
     return crystA_sup, crystB_sup_final, c_sup_half, f_translate
 
 def int_arrays_to_pair(crystA: Cryst, crystB: Cryst, slm: SLM,
@@ -251,20 +252,43 @@ def int_arrays_to_pair(crystA: Cryst, crystB: Cryst, slm: SLM,
         pB_sup = pB_sup - np.mean(pB_sup - pA_sup, axis=1, keepdims=True)
     return crystA_sup, (crystB_sup[0], crystB_sup[1][p], pB_sup.T)
 
-def rmss(x: NDArray[np.float64]) -> NDArray[np.float64]:
-    """Root-mean-square strain of given singular values.
-
+def deformation_gradient(crystA: Cryst, crystB: Cryst, slmlist: List[SLM]) -> NDArray[np.float64]:
+    """Compute the deformation gradient matrices of given IMTs.
+    
     Parameters
     ----------
-    x : (..., 3) array
-        The singular values of 3*3 matrices.
+    crystA, crystB : cryst
+        The initial and final structures.
+    slmlist : list of slm
+        The IMTs.
     
     Returns
     -------
-    rms_strain : (...) array
-        Root-mean-square of `x - 1`.
+    slist : (..., 3, 3) array
+        A list of deformation gradient matrices.
     """
-    return np.sqrt(np.mean((x - 1) ** 2, axis=-1))
+    cA = crystA[0].T
+    cB = crystB[0].T
+    slms = np.array(slmlist)
+    hA = slms[...,0,:,:]
+    hB = slms[...,1,:,:]
+    q = slms[...,2,:,:]
+    return cB @ hB @ q @ la.inv(cA @ hA)
+
+def rmss(slist: NDArray[np.float64]) -> NDArray[np.float64]:
+    """Root-mean-square strains of given deformation gradient matrices.
+
+    Parameters
+    ----------
+    slist : (..., 3, 3) array
+        A list of deformation gradient matrices.
+    
+    Returns
+    -------
+    rmss : (...) array
+        Root-mean-square strains.
+    """
+    return np.sqrt(np.mean((la.svd(slist, compute_uv=False) - 1) ** 2, axis=-1))
 
 def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
     """Find all pure rotations appeared in the space group of `cryst`.
@@ -282,17 +306,7 @@ def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
         A point group of the first kind, containing all pure rotations appeared in the space group of `cryst`, \
             elements of which are integer matrices (under fractional coordinates).
     """
-    species = cryst[1]
-    n = len(species)
-    numbers = np.zeros(n, dtype=int)
-    temp_s = ''
-    temp_n = 0
-    for i in range(n):
-        if species[i] != temp_s:
-            temp_n = temp_n + 1
-            temp_s = species[i]
-        numbers[i] = temp_n
-    g = get_symmetry((cryst[0],cryst[2],numbers), symprec=tol)['rotations']
+    g = get_symmetry((cryst[0],cryst[2],np.unique(cryst[1], return_inverse=True)[1]), symprec=tol)['rotations']
     g = g[la.det(g).round(decimals=4)==1,:,:]
     g = np.unique(g, axis=0)
     return g
@@ -376,7 +390,7 @@ def int_fact(n: int) -> List[Tuple[int, int]]:
         if n % a == 0: l.append((a, n//a))
     return l
 
-def hnf_list(det: int) -> NDArray[np.int32]:
+def all_hnf(det: int) -> NDArray[np.int32]:
     """Enumerate all 3*3 column Hermite normal forms (HNFs) with given determinant.
 
     Parameters
@@ -408,13 +422,15 @@ def hnf_list(det: int) -> NDArray[np.int32]:
     l = np.array(l, dtype=int)
     return l
 
-def hnf_int(m: NDArray[np.int32]) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
+def hnf_int(m: NDArray[np.int32], return_q: bool = True) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
     """Decompose square integer matrix `m` into product of HNF matrix `h` and unimodular matrix `q`.
 
     Parameters
     ----------
     m : (N, N) array of ints
         The integer matrix to decompose, with positive determinant.
+    return_q : bool, optional
+        Whether to return the unimodular matrix `q`. Default is True.
     
     Returns
     -------
@@ -424,17 +440,17 @@ def hnf_int(m: NDArray[np.int32]) -> tuple[NDArray[np.int32], NDArray[np.int32]]
         The unimodular matrix satisfying `m` = `h @ q`.
     """
     assert m.dtype == int and la.det(m) > 0
-    N = m.shape[0]
     h = deepcopy(m)
-    for i in range(N):
+    for i in range(m.shape[0]):
         while not (h[i,i+1:] == 0).all():
             col_nonzero = i + np.nonzero(h[i,i:])[0]
             i0 = col_nonzero[np.argpartition(np.abs(h[i,col_nonzero]), kth=0)[0]]
             h[:,[i,i0]] = h[:,[i0,i]]
             if h[i,i] < 0: h[:,i] = - h[:,i]
-            h[:,i+1:] = h[:,i+1:] - np.outer(h[:,i], (h[i,i+1:] / h[i,i]).round().astype(int))
+            h[:,i+1:] = h[:,i+1:] - np.outer(h[:,i], h[i,i+1:] // h[i,i])
         if h[i,i] < 0: h[:,i] = - h[:,i]
         h[:,:i] = h[:,:i] - np.outer(h[:,i], h[i,:i] // h[i,i])
+    if not return_q: return h
     q = (la.inv(h) @ m).round().astype(int)
     return h, q
 
@@ -499,8 +515,8 @@ def vector_reduce(v: NDArray, divisors: NDArray) -> NDArray:
                 vv = vv - v0
     return vv
 
-def niggli_cell(c: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.int32]]:
-    """Reduce cell `c` to its Niggli cell.
+def cell_reduce(c: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.int32]]:
+    """Shorten the cell vectors of `c`.
 
     Parameters
     ----------

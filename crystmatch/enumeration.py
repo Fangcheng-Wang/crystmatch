@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 
 np.set_printoptions(suppress=True)
 
-def cong_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
+def standardize_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> tuple[SLM, int]:
     """The representative SLM of the congruence class of `slm`.
 
     Parameters
@@ -25,7 +25,7 @@ def cong_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDAr
 
     Returns
     -------
-    ss : slm
+    slm0 : slm
         The representative of the congruence class of `slm`.
     len_cl : int
         The size of the congruence class of `slm`.
@@ -36,8 +36,8 @@ def cong_slm(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDAr
     iA, iB = np.unravel_index(i[0], (gA.shape[0], gB.shape[0]))
     hAA, qA = hnf_int(gA[iA] @ hA)
     hBB, qB = hnf_int(gB[iB] @ hB)
-    ss = (hAA, hBB, qB @ q @ la.inv(qA).round().astype(int))
-    return ss, len(cl)
+    slm0 = (hAA, hBB, qB @ q @ la.inv(qA).round().astype(int))
+    return slm0, len(cl)
 
 def enumerate_slm(
     crystA: Cryst, crystB: Cryst, mu: int, kappa_max: float, tol: float = 1e-3,
@@ -76,8 +76,8 @@ def enumerate_slm(
     cB = crystB[0].T
     zA = crystA[2].shape[0]
     zB = crystB[2].shape[0]
-    hA = hnf_list(np.lcm(zA,zB) // zA * mu)
-    hB = hnf_list(np.lcm(zA,zB) // zB * mu)
+    hA = all_hnf(np.lcm(zA,zB) // zA * mu)
+    hB = all_hnf(np.lcm(zA,zB) // zB * mu)
     hA_inv = la.inv(hA)
     hB_inv = la.inv(hB)
     gA = get_pure_rotation(crystA, tol=tol)
@@ -125,7 +125,7 @@ def enumerate_slm(
                                         compute_uv=False)) < kappa_max)[0]                                          
         for i in index2:
             slm = (hA[index1[1][i]], hB[index1[2][i]], q[index1[0][i], index1[1][i], index1[2][i]])
-            slm, _ = cong_slm(slm, gA, gB)
+            slm, _ = standardize_slm(slm, gA, gB)
             repeated = False
             for j in range(len(slmlist)):
                 if (slm[0] == slmlist[j][0]).all() and (slm[1] == slmlist[j][1]).all() and (slm[2] == slmlist[j][2]).all():
@@ -250,10 +250,10 @@ def minimize_rmsd(
     species = crystA_sup[1]
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
-    N = pA_sup.shape[1]
+    z = pA_sup.shape[1]
     t0 = basinhopping(lambda z: minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ z.reshape(3,1))[0],
-            [0.5, 0.5, 0.5], T=0.05, niter=50+5*int(N**0.5), niter_success = None, minimizer_kwargs={"method": "BFGS"}).x
+            [0.5, 0.5, 0.5], T=0.05, niter=50+5*int(z**0.5), niter_success = None, minimizer_kwargs={"method": "BFGS"}).x
     _, p, ks = minimize_rmsd_t(c_sup_half, species, pA_sup, pB_sup + f_translate @ t0.reshape(3,1))
     t0 = (pA_sup - pB_sup[:,p] - ks).mean(axis=1, keepdims=True)
-    rmsd = la.norm(c_sup_half @ (pA_sup - pB_sup[:,p] - ks - t0)) / N**0.5
+    rmsd = la.norm(c_sup_half @ (pA_sup - pB_sup[:,p] - ks - t0)) / z**0.5
     return rmsd, p, ks, t0

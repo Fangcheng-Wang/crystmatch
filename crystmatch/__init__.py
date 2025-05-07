@@ -6,7 +6,7 @@ import sys
 import argparse
 
 __name__ = "crystmatch"
-__version__ = "1.1.6"
+__version__ = "1.2.0"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
@@ -17,7 +17,7 @@ __epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To ge
 [1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
 You are also welcome to contact me at ' + __email__ + ' for any questions, feedbacks or comments.'
 
-def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float):
+def enumerate_representative(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float):
     
     # enumerating SLMs
     print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f}:")
@@ -33,7 +33,7 @@ def enum_rep(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: fl
     _, ind = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0, return_index=True)
     slmlist = slmlist[ind]
     mulist = multiplicity(crystA, crystB, slmlist)
-    rmsslist = rmss(sing_val(crystA, crystB, slmlist))
+    rmsslist = rmss(deformation_gradient(crystA, crystB, slmlist))
     ind = np.lexsort((rmsslist.round(decimals=4), mulist))
     slmlist = slmlist[ind]
     mulist = mulist[ind]
@@ -78,9 +78,9 @@ def main():
     parser = argparse.ArgumentParser(
         prog=__name__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        usage='%(prog)s [-h] [-initial POSCAR_I] [-final POSCAR_F] [mode options] [output options]',
+        usage='%(prog)s [-h] [-V] [-initial POSCAR_I] [-final POSCAR_F] [mode options] [output options]',
         description=__description__, epilog=__epilog__)
-    parser.add_argument("-v", "--version", action='version', version="%(prog)s " + __version__)
+    parser.add_argument("-V", "-v", "--version", action='version', version="%(prog)s " + __version__)
     parser.add_argument("-E", "--enumeration", nargs=2, type=float, metavar=('MAX_MU','MAX_RMSS'),
                         help="use 'enumeration' mode, with MAX_MU and MAX_RMSS as the multiplicity and RMSS upper bounds")
     parser.add_argument("-R", "--read", type=str, metavar='CSM_LIST',
@@ -164,7 +164,7 @@ def main():
         crystB = load_poscar(args.final, tol=args.tolerance)
         check_chem_comp(crystA[1], crystB[1])
         job = f"m{mu_max:d}s{rmss_max:.2f}"
-        csm_bins, slmlist, mulist, rmsslist, rmsdlist = enum_rep(crystA, crystB, mu_max, rmss_max, args.tolerance)
+        csm_bins, slmlist, mulist, rmsslist, rmsdlist = enumerate_representative(crystA, crystB, mu_max, rmss_max, args.tolerance)
         table = np.array([np.arange(len(mulist)), np.arange(len(mulist)), mulist, rmsslist, rmsdlist], dtype=float).T
 
     elif args.read is not None:
@@ -203,19 +203,19 @@ def main():
         mB = (la.inv(cB) @ cB_sup).round().astype(int)
         hA, qA = hnf_int(mA)
         hB, qB = hnf_int(mB)
-        slmlist = [cong_slm((hA, hB, qB @ la.inv(qA).round().astype(int)),
+        slmlist = [standardize_slm((hA, hB, qB @ la.inv(qA).round().astype(int)),
                             get_pure_rotation(crystA, tol=args.tolerance), get_pure_rotation(crystB, tol=args.tolerance))[0]]
         mulist = multiplicity(crystA, crystB, slmlist)
         # computing principal strains
         _, sigma, vT = la.svd(cB_sup @ la.inv(cA_sup))
-        rmsslist = [rmss(sigma)]
+        rmsslist = [np.sqrt(np.mean((sigma - 1)**2, axis=1))]
         # computing rmsd and optimized final structure
         cB_sup_final = vT.T @ np.diag(sigma) @ vT @ cA_sup
         c_sup_half = vT.T @ np.diag(sigma ** 0.5) @ vT @ cA_sup
         pA_sup = crystA_sup[2].T
         pB_sup = crystB_sup[2].T
         t0 = basinhopping(lambda z: minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + z.reshape(3,1))[0],
-            [0.5, 0.5, 0.5], T=0.05, niter=75, minimizer_kwargs={"method": "BFGS"}).x
+                [0.5, 0.5, 0.5], T=0.05, niter=75, minimizer_kwargs={"method": "BFGS"}).x
         _, ks = minimize_rmsd_tp(c_sup_half, pA_sup, pB_sup + t0.reshape(3,1))
         t0 = (pA_sup - pB_sup - ks).mean(axis=1, keepdims=True)
         pB_sup_final = pB_sup + ks + t0

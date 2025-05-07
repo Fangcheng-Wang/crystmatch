@@ -18,7 +18,7 @@ The `crystmatch` command-line interface is already introduced in [Tutorial](http
 | Option | Description | Mode |
 | --- | --- | --- |
 | `-h`, `--help` | Show help message and exit. | *none* |
-| `-v`, `--version` | Show program's version number and exit. | *none* |
+| `-V`, `-v`, `--version` | Show program's version number and exit. | *none* |
 | `-E MAX_MU MAX_RMSS`<br>`--enumeration MAX_MU MAX_RMSS` | Use 'enumeration' mode, with `MAX_MU` and `MAX_RMSS` as the multiplicity and RMSS upper bounds. | 'enumeration' |
 | `-R CSM_LIST`<br>`--read CSM_LIST` | Use 'read' mode, with CSMs loaded from an existing NPZ file `CSM_LIST`. | 'read' |
 | `-S`<br>`--single` | Use 'single-CSM' mode, with the CSM uniquely determined by `-I` and `-F`. | 'single-CSM' |

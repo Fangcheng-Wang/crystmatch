@@ -57,22 +57,22 @@ crystmatch --help
 
 ### Enumerating CSMs
 
-To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with multiplicity upper bound `MAX_MU = 4` and RMSS upper bound `MAX_RMSS = 0.4`, run:
+To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with multiplicity upper bound `MAX_MU = 2` and RMSS upper bound `MAX_RMSS = 0.4`, run:
 
 ```
-crystmatch --initial fcc --final bcc --enumeration 4 0.4
+crystmatch --initial fcc --final bcc --enumeration 2 0.4
 ```
 
 !!! note
-    We recommend you to try `MAX_MU <= 4` and `MAX_RMSS = 0.4` first, and then gradually adjust these upper bounds (usually by increasing `MAX_MU` and decreasing `MAX_RMSS`) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
+    We recommend you to try `MAX_MU <= 2` and `MAX_RMSS = 0.4` first, and then gradually adjust these upper bounds (usually by increasing `MAX_MU` and decreasing `MAX_RMSS`) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
 
 The following files will be created in the current directory:
 
 ```
 ./
-├── CSM_LIST-m4s0.40.npz       # stores the enumerated CSMs and metadata.
-├── PLOT-m4s0.40.pdf           # shows the RMSD-RMSS distribution of the CSMs.
-└── TABLE-m4s0.40.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
+├── CSM_LIST-m2s0.40.npz       # stores the enumerated CSMs and metadata.
+├── PLOT-m2s0.40.pdf           # shows the RMSD-RMSS distribution of the CSMs.
+└── TABLE-m2s0.40.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
 ```
 
 ### Exporting CSMs from an NPZ file

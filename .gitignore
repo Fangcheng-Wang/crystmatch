@@ -1,4 +1,5 @@
 .DS_Store
+profile.pyspy
 .pytest_cache/
 build/
 crystmatch.egg-info/
