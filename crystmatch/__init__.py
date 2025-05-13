@@ -204,7 +204,7 @@ def main():
         hA, qA = hnf_int(mA)
         hB, qB = hnf_int(mB)
         slmlist = [standardize_imt((hA, hB, qB @ la.inv(qA).round().astype(int)),
-                            get_pure_rotation(crystA, tol=args.tolerance), get_pure_rotation(crystB, tol=args.tolerance))[0]]
+                            get_pure_rotation(crystA, tol=args.tolerance), get_pure_rotation(crystB, tol=args.tolerance))]
         mulist = imt_multiplicity(crystA, crystB, slmlist)
         # computing principal strains
         _, sigma, vT = la.svd(cB_sup @ la.inv(cA_sup))
@@ -285,10 +285,10 @@ def main():
     
     if args.plot:
         zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
-        save_scatter(unique_filename("Creating scatter plot in", f"PLOT-{job}.pdf"), table[:,3], table[:,4], table[:,2].round().astype(int),
+        visualize_slmlist(unique_filename("Creating scatter plot in", f"PLOT-{job}.pdf"), table[:,3], table[:,4], table[:,2].round().astype(int),
                     cbarlabel=f"Multiplicity (× {zlcm:.0f} atom{'s' if zlcm>1 else ''})")
         if args.orientation is not None:
-            save_scatter(unique_filename("Creating scatter plot in", f"OR-{job}.pdf"),
+            visualize_slmlist(unique_filename("Creating scatter plot in", f"OR-{job}.pdf"),
                         table[:,3], table[:,4], table[:,5]*180/np.pi, cbarlabel="Deviation (°)", cmap=plt.cm.get_cmap('jet'))
     
     print(f"\nTotal time spent: {time()-time0:.2f} seconds")

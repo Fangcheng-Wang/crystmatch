@@ -112,8 +112,8 @@ def deviation_angle(
         anglelist = np.arccos(np.clip(0.5 * (-1 + np.amax(np.trace(np.dot(la.inv(r_equiv), rS), axis1=1, axis2=3), axis=0)), -1, 1))
     return anglelist.round(decimals=7)
 
-def save_scatter(
-    filename : str,
+def visualize_slmlist(
+    filename : Union[str, None],
     rmsslist: ArrayLike,
     rmsdlist: ArrayLike,
     colorlist: ArrayLike,
@@ -125,7 +125,7 @@ def save_scatter(
     Parameters
     ----------
     filename : str
-        The filename of the saved plot.
+        The filename of the saved plot. If None, the plot is shown on screen.
     rmsslist : (N,) array_like
         The root-mean-square strain of each CSM.
     rmsdlist : (N,) array_like
@@ -160,8 +160,24 @@ def save_scatter(
     cbar.set_label(cbarlabel if cbarlabel != None else filename.split('.')[0], fontsize=13)
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.tick_params(axis='both', which='minor', labelsize=8)
-    plt.savefig(f"{filename}", bbox_inches='tight')
-    return
+    if filename: plt.savefig(f"{filename}", bbox_inches='tight')
+    else: plt.show()
+
+def visualize_pctlist(filename, pctlist, dlist):
+    _, ind = np.unique([pct[:,0] for pct in pctlist], axis=0, return_inverse=True)
+    d_min = []
+    for i in range(ind.max()+1):
+        d_min.append(dlist[ind==i].min())
+    a = np.argsort(d_min)
+    aa = np.zeros_like(a)
+    aa[a] = np.arange(len(a))
+    _, ax = plt.subplots()
+    ax.scatter(aa[ind], dlist, s=20, linewidths=1, c='r', marker='x')
+    ax.set_xticks(np.arange(len(a)))
+    ax.set_xticklabels([f'p{i+1}' for i in range(len(a))])
+    ax.grid(True, linestyle=':')
+    if filename: plt.savefig(f"{filename}", bbox_inches='tight')
+    else: plt.show()
 
 def save_interpolation(
     filename: str,
