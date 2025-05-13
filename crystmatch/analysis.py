@@ -149,8 +149,8 @@ def visualize_slmlist(
     if n0 >= 1:
         print(f"\nThere are {n0:d} CSMs (indices: {', '.join(np.nonzero(ind0)[0].astype(str).tolist())}) with {cbarlabel}=0, emphasized by pink stars in the plot.")
         plt.scatter(rmsslist[ind0], rmsdlist[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
-    plt.xlabel("Root-mean-square strain", fontsize=15)
-    plt.ylabel("RMSD (Å)", fontsize=15)
+    plt.xlabel("w (same units as input)", fontsize=13)
+    plt.ylabel("Shuffle distance (Å)", fontsize=13)
     plt.xlim(0, np.amax(rmsslist) * 1.05)
     plt.ylim(min(0, np.amin(rmsdlist) - 0.1), np.amax(rmsdlist) + 0.1)
     if colorlist.dtype == int:
@@ -174,7 +174,9 @@ def visualize_pctlist(filename, pctlist, dlist):
     _, ax = plt.subplots()
     ax.scatter(aa[ind], dlist, s=20, linewidths=1, c='r', marker='x')
     ax.set_xticks(np.arange(len(a)))
-    ax.set_xticklabels([f'p{i+1}' for i in range(len(a))])
+    ax.set_xticklabels([str(i+1) for i in range(len(a))])
+    ax.set_xlabel("#Permutation", fontsize=13)
+    ax.set_ylabel("Shuffle distance (Å)", fontsize=13)
     ax.grid(True, linestyle=':')
     if filename: plt.savefig(f"{filename}", bbox_inches='tight')
     else: plt.show()

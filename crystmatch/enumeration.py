@@ -10,6 +10,7 @@ np.set_printoptions(suppress=True)
 Constraint = namedtuple("Constraint", ["enforce", "prevent"])
 IMPOSSIBLE_DISTANCE = 1e10
 DELTA_K = np.mgrid[-1:1,-1:1,-1:1].reshape(3,1,1,-1)
+NEIGHBOR_K = np.mgrid[-1:2,-1:2,-1:2].reshape(3,-1).T[np.arange(27)!=13]
 
 def sigma_weight(sigma):
     """Return the weight of a given (3,) array of singular values, which is proportional to the standard measure on R^9 
@@ -108,7 +109,7 @@ def enumerate_imt(
     
     sobol6 = Sobol(6)
     if verbose >= 1:
-        progress_bar = tqdm(total=max_iter, position=0, desc=f"\r\tmu={mu:d}", ncols=60, mininterval=0.5,
+        progress_bar = tqdm(total=max_iter, position=0, desc=f"\tmu={mu:d}", ncols=60, mininterval=0.5,
                             bar_format=f'{{desc}}: {{percentage:3.0f}}% |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
     slmlist = np.array([], dtype=int).reshape(-1,3,3,3)
     iter = 0
@@ -191,7 +192,7 @@ def pct_distance(c, pA, pB, p, ks, weights=None, l=2, fixed=False):
         return np.average(((c @ (pB[:,p] + ks + t0 - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l), t0
     else:
         res = minimize(lambda t: np.average(la.norm(c @ (pB[:,p] + ks + t.reshape(3,1) - pA), axis=0)**l, weights=weights),
-                        -np.average(pB[:,p] + ks - pA, axis=1, weights=weights), method='BFGS', options={'disp': False})
+                        -np.average(pB[:,p] + ks - pA, axis=1, weights=weights), method='SLSQP', options={'disp': False})
         return res.fun ** (1/l), res.x
         
 def punishment_matrix(z, prevent, l=2):
@@ -226,7 +227,7 @@ def optimize_pct_fixed(c, species, pA, pB, constraint=Constraint(set(),set()), w
         The class-wise translation part of the PCT with the least shuffle distance.
     """
     if pA.shape[1] == pB.shape[1]: z = pA.shape[1]
-    else: ValueError("Atom numbers do not match. Please report this bug to wfc@pku.edu.cn if you see this message.")
+    else: raise ValueError("Atom numbers do not match. Please report this bug to wfc@pku.edu.cn if you see this message.")
     
     p = np.ones(z, dtype=int) * -1
     where_kij = np.ones((z,z), dtype=int) * -1
@@ -287,10 +288,11 @@ def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight
 def pct_fill(crystA, crystB, slm, p, ks0, d_max, weights=None, l=2, warning_threshold=1000):
     """Returns all class-wise translations with permutation p that has d <= d_max, including ks0.
     """
+    z = p.shape[0]
+    if z == 1: return np.array([ks0], dtype=int)
     crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, slm)
     if not (crystA_sup[1] == crystB_sup[1][p]).all():
-        ValueError("Permuation does not preserve atom species.")
-    z = p.shape[0]
+        raise ValueError("Permuation does not preserve atom species.")
     vs = (crystB_sup[2].T[:,p] - crystA_sup[2].T).reshape(1,3,z)
     if l == 2:
         def dl(ks):
@@ -298,25 +300,34 @@ def pct_fill(crystA, crystB, slm, p, ks0, d_max, weights=None, l=2, warning_thre
     else:
         def dl(ks):
             t0 = minimize(lambda t: np.average(la.norm(c_sup_half @ (vs + ks - t.reshape(-1,3,1)), axis=1) ** l, axis=1, weights=weights).sum(),
-                            np.average(vs + ks, axis=2, weights=weights).reshape(-1), method='BFGS', options={'disp': False}).x
+                            np.average(vs + ks, axis=2, weights=weights).reshape(-1), method='SLSQP', options={'disp': False}).x
             return np.average(la.norm(c_sup_half @ (vs + ks - t0), axis=1) ** l, axis=1, weights=weights)
     if not (dl(ks0.reshape(1,3,z)) <= d_max ** l).all():
-        ValueError("The shuffle distance of the given PCT already exceeds d_max.")
+        raise ValueError("The shuffle distance of the given PCT already exceeds d_max.")
 
     # flood-filling ks
-    dks = np.eye(3*z, dtype=int).reshape(3*z,z,3).transpose(0,2,1)
-    dks = np.concatenate([dks[3:], -dks[3:]], axis=0)
+    dks = []
+    for i in range(z):
+        if z == 2 and i == 0: continue
+        dk = np.zeros((3,z), dtype=int)
+        for nk in NEIGHBOR_K:
+            if i == 0: dk[:,1:] = -nk.reshape(3,1)
+            else: dk[:,i] = nk
+            dks.append(deepcopy(dk))
+    dks = np.array(dks, dtype=int)
+
     valid = np.array([ks0], dtype=int)
     visited = np.array([ks0], dtype=int)
     queue = ks0.reshape(1,3,z) + dks
     while queue.shape[0] > 0:
         visited = np.concatenate([visited, queue], axis=0)
         is_valid = dl(queue) <= d_max ** l
-        valid = np.concatenate([valid, queue[is_valid,:,:]], axis=0)
+        new_valid = queue[is_valid,:,:]
+        valid = np.concatenate([valid, new_valid], axis=0)
         if len(valid) > warning_threshold:
             print(f"\nWarning: Already filled {len(valid)} PCTs, which exceeds 'alarm_threshold'. We suggest you to use a smaller 'd_max'.")
             warning_threshold *= 2
-        queue = np.unique((queue[is_valid,:,:].reshape(-1,1,3,z) + dks.reshape(1,-1,3,z)).reshape(-1,3,z), axis=0)
+        queue = np.unique((new_valid.reshape(-1,1,3,z) + dks.reshape(1,-1,3,z)).reshape(-1,3,z), axis=0)
         is_nonvisited = (1 - (queue.reshape(-1,1,3,z) == visited.reshape(1,-1,3,z)).all(axis=(2,3)).any(axis=1)).astype(bool)
         queue = queue[is_nonvisited]
     return valid
@@ -359,9 +370,10 @@ def enumerate_pct(crystA, crystB, slm, d_max, weights=None, l=2, t_grid=16, inco
     pB_sup = crystB_sup[2].T
 
     if verbose >= 1:
+        print(f"Enumerating bottom PCTs with d <= {d_max:.4f} ...")
         prob_solved = 0
         prob_total = 1
-        progress_bar = tqdm(total=prob_total, position=prob_solved, desc=f"\r\titerations", ncols=60, mininterval=0.5,
+        progress_bar = tqdm(total=prob_total, position=prob_solved, desc="\tnodes", ncols=50, mininterval=0.5,
                             bar_format=f'{{desc}}: {{n_fmt:>2s}}/{{total_fmt:>2s}} |{{bar}}| [elapsed {{elapsed:5s}}]')
     bottom_pcts = []
     node_stack = [Constraint(set(),set())]
@@ -405,15 +417,24 @@ def enumerate_pct(crystA, crystB, slm, d_max, weights=None, l=2, t_grid=16, inco
             progress_bar.last_print_n = prob_solved
             progress_bar.refresh()
     progress_bar.close()
-    if verbose >= 1: print(f"Found {len(bottom_pcts)} {'incongruent permutations' if incong else 'permutations (not incongruent)'} with d <= {d_max}.")
+    if verbose >= 1:
+        print(f"\tFound {len(bottom_pcts)} {'incongruent bottom PCTs' if incong else 'bottom PCTs (not incongruent)'} with d <= {d_max}.")
+        print(f"Filling non-bottom PCTs with d <= {d_max:.4f} ...")
 
     pctlist = []
     dlist = []
-    for pct in bottom_pcts:
-        for ks in pct_fill(crystA, crystB, slm, pct[:,0], pct[:,1:].T, d_max, weights=weights, l=l):
-            pctlist.append(zip_pct(pct[:,0], ks))
-            dlist.append(pct_distance(c_sup_half, pA_sup, pB_sup, pct[:,0], ks, weights=weights, l=l)[0])
-    if verbose >= 1: print(f"Found {len(pctlist)} {'incongruent PCTs' if incong else 'PCTs (not incongruent)'} with d <= {d_max}.")
+    if verbose >= 1:
+        for pct in tqdm(bottom_pcts, desc="\tbottom PCTs", ncols=70, mininterval=0.5,
+                        bar_format=f'{{desc}}: {{n_fmt:>2s}}/{{total_fmt:>2s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]'):
+            for ks in pct_fill(crystA, crystB, slm, pct[:,0], pct[:,1:].T, d_max, weights=weights, l=l):
+                pctlist.append(zip_pct(pct[:,0], ks))
+                dlist.append(pct_distance(c_sup_half, pA_sup, pB_sup, pct[:,0], ks, weights=weights, l=l)[0])
+    else:
+        for pct in bottom_pcts:
+            for ks in pct_fill(crystA, crystB, slm, pct[:,0], pct[:,1:].T, d_max, weights=weights, l=l):
+                pctlist.append(zip_pct(pct[:,0], ks))
+                dlist.append(pct_distance(c_sup_half, pA_sup, pB_sup, pct[:,0], ks, weights=weights, l=l)[0])
+    if verbose >= 1: print(f"\tFound {len(pctlist)} {'incongruent PCTs' if incong else 'PCTs (not incongruent)'} with d <= {d_max}.")
     return np.array(pctlist, dtype=int), np.array(dlist)
 
 def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2):
