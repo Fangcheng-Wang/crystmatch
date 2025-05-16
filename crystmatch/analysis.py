@@ -13,32 +13,6 @@ rcParams.update({
 
 np.set_printoptions(suppress=True)
 
-def imt_multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], NDArray[np.int32]]) -> Union[int, NDArray[np.int32]]:
-    """Return multiplicities of elements in `slmlist`.
-
-    Parameters
-    ----------
-    crystA : cryst
-        The initial crystal structure, usually obtained by `load_poscar`.
-    crystB : cryst
-        The final crystal structure, usually obtained by `load_poscar`.
-    slmlist : list of slm
-        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
-
-    Returns
-    -------
-    mu : int or (...,) array of ints
-        Multiplicities of each SLM in `slmlist`.
-    """
-    slmlist = np.array(slmlist)
-    zA = crystA[2].shape[0]
-    zB = crystB[2].shape[0]
-    dA = np.lcm(zA,zB) // zA
-    if len(slmlist.shape) == 3:
-        return la.det(slmlist[0]).round().astype(int) // dA
-    else:
-        return la.det(slmlist[:,0,:,:]).round().astype(int) // dA
-
 def orient_matrix(vi: ArrayLike, vf: ArrayLike, wi: ArrayLike, wf: ArrayLike) -> NDArray[np.float64]:
     """Rotation matrix `r` such that `r @ vi` || `vf` and `r @ wi` || `wf`.
 
@@ -114,10 +88,10 @@ def deviation_angle(
 
 def visualize_slmlist(
     filename : Union[str, None],
-    rmsslist: ArrayLike,
-    rmsdlist: ArrayLike,
-    colorlist: ArrayLike,
-    cmap : colors.Colormap = plt.cm.get_cmap('viridis'),
+    wlist: ArrayLike,
+    d0list: ArrayLike,
+    colorlist: ArrayLike = None,
+    cmap : colors.Colormap = plt.get_cmap('viridis'),
     cbarlabel: str = None
 ) -> None:
     """Scatter plot of the CSMs with colorbar.
@@ -130,34 +104,37 @@ def visualize_slmlist(
         The root-mean-square strain of each CSM.
     rmsdlist : (N,) array_like
         The root-mean-square distance of each CSM.
-    colorlist : (N,) array_like
-        Some quantity of each CSM, which is to be colored.
+    colorlist : (N,) array_like, optional
+        Some quantity of each CSM, which is to be colored. If None, do not color the points.
     cmap : `matplotlib.colors.Colormap`, optional
         The colormap to use. Default is `plt.cm.get_cmap('viridis')`.
     cbarlabel : str, optional
         The label of the colorbar. Default is None, in which case the filename is used.
     """
-    rmsslist = np.array(rmsslist)
-    rmsdlist = np.array(rmsdlist)
-    colorlist = np.array(colorlist)
+    wlist = np.array(wlist)
+    d0list = np.array(d0list)
+    if colorlist is None:
+        colorlist = np.zeros_like(wlist)
+        n0 = 0
+    else:
+        colorlist = np.array(colorlist)
+        ind0 = colorlist==0
+        n0 = np.sum(ind0)
     plt.figure()
     ax = plt.subplot()
     ind = np.argsort(colorlist)[::-1]
-    sc = plt.scatter(rmsslist[ind], rmsdlist[ind], marker='d', c=colorlist[ind], cmap=cmap, s=20)
-    ind0 = colorlist==0
-    n0 = np.sum(ind0)
+    sc = plt.scatter(wlist[ind], d0list[ind], marker='d', c=colorlist[ind], cmap=cmap, s=20)
     if n0 >= 1:
         print(f"\nThere are {n0:d} CSMs (indices: {', '.join(np.nonzero(ind0)[0].astype(str).tolist())}) with {cbarlabel}=0, emphasized by pink stars in the plot.")
-        plt.scatter(rmsslist[ind0], rmsdlist[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
+        plt.scatter(wlist[ind0], d0list[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
     plt.xlabel("w (same units as input)", fontsize=13)
     plt.ylabel("Shuffle distance (Å)", fontsize=13)
-    plt.xlim(0, np.amax(rmsslist) * 1.05)
-    plt.ylim(min(0, np.amin(rmsdlist) - 0.1), np.amax(rmsdlist) + 0.1)
-    if colorlist.dtype == int:
-        cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
-    else:
-        cbar = plt.colorbar(sc, aspect=40)
-    cbar.set_label(cbarlabel if cbarlabel != None else filename.split('.')[0], fontsize=13)
+    plt.xlim(0, np.amax(wlist) * 1.05)
+    plt.ylim(min(0, np.amin(d0list) - 0.1), np.amax(d0list) + 0.1)
+    if (colorlist == 0).all(): pass
+    elif colorlist.dtype == int: cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
+    else: cbar = plt.colorbar(sc, aspect=40)
+    if (colorlist != 0).any() and cbarlabel is not None: cbar.set_label(cbarlabel, fontsize=13)
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.tick_params(axis='both', which='minor', labelsize=8)
     if filename: plt.savefig(f"{filename}", bbox_inches='tight')
@@ -175,7 +152,7 @@ def visualize_pctlist(filename, pctlist, dlist):
     ax.scatter(aa[ind], dlist, s=20, linewidths=1, c='r', marker='x')
     ax.set_xticks(np.arange(len(a)))
     ax.set_xticklabels([str(i+1) for i in range(len(a))])
-    ax.set_xlabel("#Permutation", fontsize=13)
+    ax.set_xlabel("Permutation index", fontsize=13)
     ax.set_ylabel("Shuffle distance (Å)", fontsize=13)
     ax.grid(True, linestyle=':')
     if filename: plt.savefig(f"{filename}", bbox_inches='tight')

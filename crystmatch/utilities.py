@@ -5,12 +5,12 @@ Load/save crystal structures and CSMs from/to files.
 from os import makedirs, environ
 from os.path import sep, exists, splitext
 import numpy as np
+import numba as nb
 import numpy.linalg as la
-from copy import deepcopy
 from collections import namedtuple
-from spglib import get_spacegroup, find_primitive, get_symmetry
+from spglib import get_spacegroup, get_symmetry, standardize_cell, refine_cell, get_symmetry_dataset
 from tqdm import tqdm
-from typing import Union, Tuple, List, Callable
+from typing import Union, Tuple, List, Dict, Callable
 from numpy.typing import NDArray, ArrayLike
 from scipy.spatial.transform import Rotation
 
@@ -27,7 +27,7 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
         The name of the POSCAR file to be read.
     to_primitive : bool, optional
         Using the primitive cell instead of the cell given by the POSCAR file. Default is True.
-    tol : str
+    tol : float, optional
         The tolerance for `spglib` symmetry detection; default is 1e-3.
 
     Returns
@@ -53,25 +53,22 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
         unit = ''
         while not unit.startswith(('D','d','C','c','K','k')):
             unit = f.readline().strip()
-        unit = unit[0]
-        N = sp_counts.sum()
-        positions = np.zeros((N,3), dtype=float)
-        for i in range(N):
-            if unit in ['D','d']:
+        z = sp_counts.sum()
+        positions = np.zeros((z,3), dtype=float)
+        for i in range(z):
+            if unit.startswith(('D','d')):
                 positions[i,:] = np.array(f.readline().split()[:3], dtype=float)
-            elif unit in ['C','c','K','k']:
+            elif unit.startswith(('C','c','K','k')):
                 positions[i,:] = np.dot(la.inv(lattice.transpose()), np.array(f.readline().split()[:3], dtype=float))
-    sp_name_sorted, numbers = np.unique(species, return_inverse=True)
-    if verbose: print(f"\tSpace group: {get_spacegroup((lattice, positions, numbers), symprec=tol)}.")
-    if to_primitive:
-        lattice, positions, numbers = find_primitive((lattice, positions, numbers), symprec=tol)
-        if len(numbers) != len(species):
-            if verbose: print(f"\tCell in POSCAR file is not primitive! Using primitive cell (Z = {len(numbers):d}) now.")
-        else:
-            if verbose: print(f"\tCell in POSCAR file is already primitive (Z = {len(numbers):d}).")
-        species = sp_name_sorted[numbers]
-    elif verbose: print(f"\tUsing cell in POSCAR file (Z = {len(numbers):d}).")
     cryst = (lattice, species, positions)
+
+    if verbose: print(f"\tSpace group: {get_spacegroup(cryst_to_spglib(cryst), symprec=tol)}.")
+    if to_primitive:
+        cryst = primitive_cryst(cryst, tol=tol)
+        if verbose:
+            if len(cryst[1]) != len(species): print(f"\tCell in POSCAR file is not primitive! Using primitive cell (Z = {len(cryst[1]):d}) now.")
+            else: print(f"\tCell in POSCAR file is already primitive (Z = {len(cryst[1]):d}).")
+    elif verbose: print(f"\tUsing cell in POSCAR file (Z = {len(species):d}).")
     return cryst
 
 def load_csmcar(filename: str, verbose: bool = True):
@@ -86,23 +83,23 @@ def load_csmcar(filename: str, verbose: bool = True):
     -------
     voigtA, voigtB : (6, 6) array
         The loaded elastic tensor for the initial and final structure, in Voigt notation (ordered as XX, YY, ZZ, YZ, ZX, XY).
-    distance_weight : dict
+    weight_func : dict
         The loaded weight function for the shuffle distance.
-    orientation_relationship : (2, 2, 3) array
-        The two loaded parallelisms.
+    ori_rel : (2, 2, 3) array
+        The two loaded parallelisms, representing the orientation relationship between the initial and final structure.
     """
     with open(filename, mode='r') as f:
         if verbose: print(f"Loading crystmatch parameters from file '{filename}' ...")
         voigtA = None
         voigtB = None
-        weight_function = None
-        orientation_relationship = None
+        weight_func = None
+        ori_rel = None
         standard_axes = ['XX', 'YY', 'ZZ', 'YZ', 'ZX', 'XY']
         nl = '\n'
         tab = '\t'
         info = f.readline()
         while info:
-            info = info.strip()
+            info = info.split('#')[0].strip()
             if info.startswith(('I', 'i')):
                 if voigtA: print("Warning: Initial elastic tensor is defined multiple times! The last definition will be used.")
                 voigtA = np.zeros((6, 6))
@@ -134,8 +131,8 @@ def load_csmcar(filename: str, verbose: bool = True):
             elif info.startswith(('D', 'd')):
                 species = f.readline().strip().split()
                 weights = np.array(f.readline().strip().split(), dtype=float)
-                weight_function = {s: w for s, w in zip(species, weights)}
-                if verbose: print(f"Distance weight function:\n{nl.join([tab + key + tab + str(value) for key, value in weight_function.items()])}")
+                weight_func = {s: w for s, w in zip(species, weights)}
+                if verbose: print(f"Distance weight function:\n{nl.join([tab + key + tab + str(value) for key, value in weight_func.items()])}")
             elif info.startswith(('O', 'o')):
                 vs = f.readline().split("||")
                 vix, viy, viz = [float(x) for x in vs[0].strip().split()]
@@ -143,12 +140,12 @@ def load_csmcar(filename: str, verbose: bool = True):
                 ws = f.readline().split("||")
                 wix, wiy, wiz = [float(x) for x in ws[0].strip().split()]
                 wfx, wfy, wfz = [float(x) for x in ws[1].strip().split()]
-                orientation_relationship = np.array([[[vix, viy, viz], [vfx, vfy, vfz]], [[wix, wiy, wiz], [wfx, wfy, wfz]]])
+                ori_rel = np.array([[[vix, viy, viz], [vfx, vfy, vfz]], [[wix, wiy, wiz], [wfx, wfy, wfz]]])
                 if verbose:
                     print(f"Orientation relationship:\n\t({vix:.3f}, {viy:.3f}, {viz:.3f}) || ({vfx:.3f}, {vfy:.3f}, {vfz:.3f})")
                     print(f"\t({wix:.3f}, {wiy:.3f}, {wiz:.3f}) || ({wfx:.3f}, {wfy:.3f}, {wfz:.3f})")
             info = f.readline()
-    return voigtA, voigtB, weight_function, orientation_relationship
+    return voigtA, voigtB, weight_func, ori_rel
 
 def unique_filename(message: Union[str, None], filename: str) -> str:
     """Get a unique filename by appending a number to the end of the given filename.
@@ -229,6 +226,55 @@ def save_poscar(
     else:
         return content
 
+def cryst_to_spglib(cryst, return_dict=False):
+    species_dict, numbers = np.unique(cryst[1], return_inverse=True)
+    spglib_cell = (cryst[0], cryst[2], numbers)
+    if return_dict: return spglib_cell, species_dict
+    else: return spglib_cell
+
+def spglib_to_cryst(spglib_cell, species_dict):
+    return (spglib_cell[0], species_dict[spglib_cell[2]], spglib_cell[1])
+
+def primitive_cryst(cryst_sup, tol=1e-3):
+    cell_sup, species_dict = cryst_to_spglib(cryst_sup, return_dict=True)
+    cell = standardize_cell(cell_sup, to_primitive=True, no_idealize=True, symprec=tol)
+    return spglib_to_cryst(cell, species_dict)
+
+def supercell_decomposition(cryst_sup, cryst=None, tol=1e-3):
+    """Compute the rotation `r` and the integer transformation matrix `m` such that `c_sup = r @ c @ m`
+    """
+    if cryst is None:
+        q = np.eye(3, dtype=int)
+        r0 = np.eye(3)
+    else:
+        sym0 = get_symmetry_dataset(cryst_to_spglib(cryst), symprec=tol)
+        q = sym0.transformation_matrix.round().astype(int)
+        r0 = sym0.std_rotation_matrix
+        if not np.abs(la.det(q)).round(8) == 1: raise ValueError("'cryst' must be primitive or left as None.")
+    sym = get_symmetry_dataset(cryst_to_spglib(cryst_sup), symprec=tol)
+    m = (la.inv(q) @ sym.transformation_matrix).round().astype(int)
+    r = r0 @ sym.std_rotation_matrix.T
+    return r, m
+
+def triangularize_cryst(cryst_sup, return_primitive=False, tol=1e-3):
+    """Rotate the crystal structure and change its lattice basis such that `c` is lower triangular.
+    """
+    c_sup = cryst_sup[0].T
+    p_sup = cryst_sup[2].T
+    r, m = supercell_decomposition(cryst_sup, tol=tol)
+    h, q = hnf_int(m, return_q=True)
+    c_sup_tri = la.inv(r) @ c_sup @ la.inv(q)
+    p_sup_tri = (q @ p_sup) % 1.0
+    cryst_sup_tri = (c_sup_tri.T, cryst_sup[1], p_sup_tri.T)
+    if return_primitive:
+        cell_sup, species_dict = cryst_to_spglib(cryst_sup, return_dict=True)
+        cryst_tri = spglib_to_cryst(refine_cell(cell_sup, symprec=tol), species_dict)
+        if not np.allclose(cryst_tri[0].T @ h, c_sup_tri):
+            raise ValueError("Error in triangularization. Please report this bug to wfc@pku.edu.cn.")
+        return cryst_sup_tri, cryst_tri
+    else:
+        return cryst_sup_tri
+
 def check_chem_comp(speciesA, speciesB):
     spA, ctA = np.unique(speciesA, return_counts=True)
     spB, ctB = np.unique(speciesB, return_counts=True)
@@ -280,8 +326,8 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     # Sorting supercell species and positions.
     speciesA_sup = np.tile(speciesA, la.det(mA).round().astype(int))
     speciesB_sup = np.tile(speciesB, la.det(mB).round().astype(int))
-    pA_sup = (la.inv(mA) @ (pA.reshape(3,1,-1) + int_vec_inside(mA).reshape(3,-1,1)).reshape(3,-1)) % 1.0
-    pB_sup = (la.inv(mB) @ (pB.reshape(3,1,-1) + int_vec_inside(mB).reshape(3,-1,1)).reshape(3,-1)) % 1.0
+    pA_sup = (la.inv(mA) @ (pA.reshape(3,1,-1) + int_vec_inside(mA).reshape(3,-1,1)).reshape(3,-1))
+    pB_sup = (la.inv(mB) @ (pB.reshape(3,1,-1) + int_vec_inside(mB).reshape(3,-1,1)).reshape(3,-1))
     argsortA = np.argsort(speciesA_sup)
     argsortB = np.argsort(speciesB_sup)
     if not (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all():
@@ -334,6 +380,32 @@ def int_arrays_to_pair(crystA: Cryst, crystB: Cryst, slm: SLM,
         pB_sup = pB_sup - np.mean(pB_sup - pA_sup, axis=1, keepdims=True)
     return crystA_sup, (crystB_sup[0], crystB_sup[1][p], pB_sup.T)
 
+def imt_multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], NDArray[np.int32]]) -> Union[int, NDArray[np.int32]]:
+    """Return multiplicities of elements in `slmlist`.
+
+    Parameters
+    ----------
+    crystA : cryst
+        The initial crystal structure, usually obtained by `load_poscar`.
+    crystB : cryst
+        The final crystal structure, usually obtained by `load_poscar`.
+    slmlist : list of slm
+        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
+
+    Returns
+    -------
+    mu : int or (...,) array of ints
+        Multiplicities of each SLM in `slmlist`.
+    """
+    slmlist = np.array(slmlist)
+    zA = crystA[2].shape[0]
+    zB = crystB[2].shape[0]
+    dA = np.lcm(zA,zB) // zA
+    if len(slmlist.shape) == 3:
+        return la.det(slmlist[0]).round().astype(int) // dA
+    else:
+        return la.det(slmlist[:,0,:,:]).round().astype(int) // dA
+
 def cube_to_so3(vec):
     """Map `vec` in [0,1)^3 to SO(3), preserving the uniformity of distribution.
     """
@@ -384,6 +456,9 @@ def rmss(slist: NDArray[np.float64]) -> NDArray[np.float64]:
 def zip_pct(p, ks):
     return np.hstack((p.reshape(-1,1), ks.T), dtype=int)
 
+def unzip_pct(pct):
+    return pct[:,0], pct[:,1:].T
+
 def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
     """Find all pure rotations appeared in the space group of `cryst`.
 
@@ -400,10 +475,39 @@ def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
         A point group of the first kind, containing all pure rotations appeared in the space group of `cryst`, \
             elements of which are integer matrices (under fractional coordinates).
     """
-    g = get_symmetry((cryst[0],cryst[2],np.unique(cryst[1], return_inverse=True)[1]), symprec=tol)['rotations']
+    g = get_symmetry(cryst_to_spglib(cryst), symprec=tol)['rotations']
     g = g[la.det(g).round(decimals=4)==1,:,:]
     g = np.unique(g, axis=0)
     return g
+
+
+@nb.njit
+def mul_xor_hash(arr, init=65537, k=37):
+    """This function is provided by @norok2 on StackOverflow: https://stackoverflow.com/a/66674679.
+    """
+    result = init
+    for x in arr.view(np.uint64):
+        result = (result * k) ^ x
+    return result
+
+@nb.njit
+def setdiff2d(arr1, arr2):
+    """This function is provided by @norok2 on StackOverflow: https://stackoverflow.com/a/66674679.
+    """
+    delta = {mul_xor_hash(arr2[0])}
+    for i in range(1, arr2.shape[0]):
+        delta.add(mul_xor_hash(arr2[i]))
+    n = 0
+    for i in range(arr1.shape[0]):
+        if mul_xor_hash(arr1[i]) not in delta:
+            n += 1
+    result = np.empty((n, arr1.shape[-1]), dtype=arr1.dtype)
+    j = 0
+    for i in range(arr1.shape[0]):
+        if mul_xor_hash(arr1[i]) not in delta:
+            result[j] = arr1[i]
+            j += 1
+    return result
 
 def int_vec_inside(c: NDArray[np.int32]) -> NDArray[np.int32]:
     """Integer vectors inside the cell `c` whose elements are integers.
@@ -516,26 +620,22 @@ def all_hnf(det: int) -> NDArray[np.int32]:
     l = np.array(l, dtype=int)
     return l
 
-def hnf_int(m: NDArray[np.int32], return_q: bool = True) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
-    """Decompose square integer matrix `m` into product of HNF matrix `h` and unimodular matrix `q`.
+def hnf(m: NDArray[np.int32]) -> NDArray[np.int32]:
+    """Return the Hermite normal form (HNF) of square integer matrix `m`.
 
     Parameters
     ----------
-    m : (N, N) array of ints
-        The integer matrix to decompose, with positive determinant.
-    return_q : bool, optional
-        Whether to return the unimodular matrix `q`. Default is True.
+    m : (M, N) array of ints
+        The integer matrix to reduce, with positive determinant and M <= N (the function will not check this).
     
     Returns
     -------
-    h : (N, N) array of ints
+    h : (M, N) array of ints
         The column-style Hermite normal form of `m`.
-    q : (N, N) array of ints
-        The unimodular matrix satisfying `m` = `h @ q`.
     """
-    assert m.dtype == int and la.det(m) > 0
-    h = deepcopy(m)
-    for i in range(m.shape[0]):
+    h = m.copy()
+    n_row = h.shape[0]
+    for i in range(n_row):
         while (h[i,i+1:] != 0).any():
             col_nonzero = i + np.nonzero(h[i,i:])[0]
             i0 = col_nonzero[np.argpartition(np.abs(h[i,col_nonzero]), kth=0)[0]]
@@ -544,11 +644,32 @@ def hnf_int(m: NDArray[np.int32], return_q: bool = True) -> tuple[NDArray[np.int
             h[:,i+1:] = h[:,i+1:] - np.outer(h[:,i], h[i,i+1:] // h[i,i])
         if h[i,i] < 0: h[:,i] = - h[:,i]
         h[:,:i] = h[:,:i] - np.outer(h[:,i], h[i,:i] // h[i,i])
-    if not return_q: return h
-    q = (la.inv(h) @ m).round().astype(int)
-    return h, q
+    return h
 
-def hnf_rational(m: ArrayLike, max_divisor = 10000) -> NDArray[np.float64]:
+def hnf_int(m: NDArray[np.int32], return_q: bool = True) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
+    """Decompose square integer matrix `m` into product of HNF matrix `h` and unimodular matrix `q`.
+
+    Parameters
+    ----------
+    m : (M, N) array of ints
+        The integer matrix to decompose, with positive determinant and M <= N.
+    return_q : bool, optional
+        Whether to return the unimodular matrix `q`. Default is True.
+    
+    Returns
+    -------
+    h : (M, N) array of ints
+        The column-style Hermite normal form of `m`.
+    q : (N, N) array of ints
+        The unimodular matrix satisfying `m` = `h @ q`.
+    """
+    if not m.dtype == int: raise TypeError(f"Input matrix must be integer:\n{m}")
+    if not la.matrix_rank(m, tol=1e-6) == m.shape[0]: raise ValueError(f"Input matrix must be full-row-rank:\n{m}")
+    h = hnf(m)
+    if not return_q or m.shape[1] != m.shape[0]: return h
+    else: return h, (la.inv(h) @ m).round().astype(int)
+
+def hnf_rational(m: ArrayLike, max_divisor = 100, tol=1e-3) -> NDArray[np.float64]:
     """The Hermite normal form (HNF) of full-row-rank rational matrix `m` (not necessarily square or integer).
     
     Parameters
@@ -557,6 +678,8 @@ def hnf_rational(m: ArrayLike, max_divisor = 10000) -> NDArray[np.float64]:
         The full-row-rank rational matrix to reduce.
     max_divisor : int
         A positive integer. The least common multiple of all divisors in `m` should not be greater than `max_divisor`.
+    tol : float
+        The tolerance for rational approximation.
     
     Returns
     -------
@@ -564,21 +687,12 @@ def hnf_rational(m: ArrayLike, max_divisor = 10000) -> NDArray[np.float64]:
         The HNF of `m` obtained via elementary column operations over integers.
     """
     for divisor in range(1, max_divisor+1):
-        if (np.absolute(np.rint(m * divisor) - m * divisor) <= 1 / max(10000,max_divisor)).all(): break
-        elif divisor == max_divisor: raise ValueError("Input matrix must be rational.")
+        if (np.abs((m * divisor) % 1.0) <= tol * divisor).all(): break
+        elif divisor == max_divisor: raise ValueError(f"Input matrix must be rational with divisor LCM <= {max_divisor}:\n{m}")
     h = (m * divisor).round().astype(int)
-    M, N = h.shape
-    assert M <= N and la.matrix_rank(h, tol=1/max(10000,max_divisor)) == M
-    for i in range(M):
-        while not (h[i,i+1:] == 0).all():
-            col_nonzero = i + np.nonzero(h[i,i:])[0]
-            i0 = col_nonzero[np.argpartition(np.abs(h[i,col_nonzero]), kth=0)[0]]
-            h[:,[i,i0]] = h[:,[i0,i]]
-            if h[i,i] < 0: h[:,i] = - h[:,i]
-            h[:,i+1:] = h[:,i+1:] - np.outer(h[:,i], (h[i,i+1:] / h[i,i]).round().astype(int))
-        if h[i,i] < 0: h[:,i] = - h[:,i]
-        h[:,:i] = h[:,:i] - np.outer(h[:,i], h[i,:i] // h[i,i])
-    return h / divisor
+    n_row, n_col = h.shape
+    if not (n_row <= n_col and la.matrix_rank(h, tol=tol) == n_row): raise ValueError(f"Input matrix must be full-row-rank:\n{m}")
+    return hnf_int(h, return_q=False) / divisor
 
 def vector_reduce(v: NDArray, divisors: NDArray) -> NDArray:
     """Minimizing the norm of `v` by adding and subtracting columns of `divisors`.
@@ -595,7 +709,7 @@ def vector_reduce(v: NDArray, divisors: NDArray) -> NDArray:
     vv : (N,) array
         The reduced `v` with minimum Euclidean norm.
     """
-    vv = deepcopy(v)
+    vv = v.copy()
     converged = False
     while not converged:
         converged = True
@@ -625,9 +739,9 @@ def cell_reduce(c: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np
         The unimodular matrix satisfying `cc = c @ q`.
     """
     c0 = np.zeros((3,3))
-    cc = deepcopy(c)
+    cc = c.copy()
     while (cc != c0).any():
-        c0 = deepcopy(cc)
+        c0 = cc.copy()
         cc = cc[:,np.argsort(la.norm(cc, axis=0))]
         cc[:,2] = vector_reduce(cc[:,2], cc[:,0:2])
     if la.det(cc) < 0: cc = -cc

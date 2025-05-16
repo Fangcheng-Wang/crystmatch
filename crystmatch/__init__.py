@@ -17,59 +17,6 @@ __epilog__ = 'The current version (v' + __version__ + ') may contain bugs. To ge
 [1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
 You are also welcome to contact me at ' + __email__ + ' for any questions, feedbacks or comments.'
 
-def enumerate_representative(crystA: Cryst, crystB: Cryst, mu_max: int, rmss_max: float, tol: float):
-    
-    # enumerating SLMs
-    print(f"\nEnumerating incongruent SLMs for mu <= {mu_max} and rmss <= {rmss_max:.4f}:")
-    slmlist = []
-    for mu in range(1,mu_max+1): slmlist = slmlist + enumerate_slm(crystA, crystB, mu, rmss_max, tol=tol)
-    print(f"A total of {len(slmlist):d} incongruent SLMs are enumerated:")
-    if len(slmlist) == 0: raise Warning("No SLM is found. Try larger arguments for '--enumeration' or check if the input POSCARs are correct.")
-    slmlist = np.array(slmlist)
-    mulist = imt_multiplicity(crystA, crystB, slmlist)
-    print(f"\tmu  {' '.join(f'{i:5d}' for i in range(1,mu_max+1))}")
-    print(f"\t#SLM{' '.join(f'{s:5d}' for s in np.bincount(mulist, minlength=mu_max+1)[1:])}")
-    
-    _, ind = np.unique((slmlist[:,1,:,:] @ slmlist[:,2,:,:] @ la.inv(slmlist[:,0,:,:])).round(decimals=4), axis=0, return_index=True)
-    slmlist = slmlist[ind]
-    mulist = imt_multiplicity(crystA, crystB, slmlist)
-    rmsslist = rmss(deformation_gradient(crystA, crystB, slmlist))
-    ind = np.lexsort((rmsslist.round(decimals=4), mulist))
-    slmlist = slmlist[ind]
-    mulist = mulist[ind]
-    rmsslist = rmsslist[ind]
-    print(f"Among them, a total of {len(slmlist):d} SLMs has distinct deformation gradients:")
-    print(f"\tmu  {' '.join(f'{i:5d}' for i in range(1,mu_max+1))}")
-    print(f"\t#SLM{' '.join(f'{s:5d}' for s in np.bincount(mulist, minlength=mu_max+1)[1:])}")
-
-    # computing representative CSMs
-    csm_bins = [np.array("arr_mu.npy saves the shuffles of those CSMs with multiplicity mu", dtype=str)]
-    rmsdlist = np.inf * np.ones(len(slmlist))
-    print(f"Minimizing RMSD to obtain the representative CSM of each deformation gradient:")
-    zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
-    n_digit = np.floor(np.log10(np.bincount(mulist).max())).astype(int) + 1
-    for mu in range(1,mu_max+1):
-        n_csm = np.sum(mulist == mu)
-        if n_csm == 0:
-            csm_bins.append(np.array(f"No CSM with multiplicity {mu}", dtype=str))
-            continue
-        shufflelist = np.zeros((n_csm, mu * zlcm, 4), dtype=int)
-        for i in tqdm(range(n_csm), desc=f"\r\tmu={mu:d}", ncols=57+2*n_digit, mininterval=0.5,
-                    bar_format=f'{{desc}}: {{n_fmt:>{n_digit}s}}/{{total_fmt:>{n_digit}s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]'):
-            d, p, ks, _ = minimize_rmsd(crystA, crystB, slmlist[mulist == mu][i])
-            rmsdlist[np.sum(mulist < mu) + i] = d
-            shufflelist[i,:,0] = p
-            shufflelist[i,:,1:] = ks.T
-        ind = np.lexsort((rmsdlist[mulist == mu].round(decimals=4), rmsslist[mulist == mu].round(decimals=4)))
-        slmlist[mulist == mu] = slmlist[mulist == mu][ind]
-        mulist[mulist == mu] = mulist[mulist == mu][ind]
-        rmsslist[mulist == mu] = rmsslist[mulist == mu][ind]
-        rmsdlist[mulist == mu] = rmsdlist[mulist == mu][ind]
-        shufflelist = shufflelist[ind]
-        csm_bins.append(shufflelist)
-    
-    return csm_bins, slmlist, mulist, rmsslist, rmsdlist
-
 def main():
     time0 = time()
     sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
@@ -156,7 +103,7 @@ def main():
         elif rmss_max <= 0: raise ValueError("Root-mean-square-strain should be a positive float.")
         if mu_max >= 8 or rmss_max > 0.5:
             print(f"Warning: Current MAX_MU = {mu_max:d} and MAX_RMSS = {rmss_max:.2f} may result in a large number of CSMs, which may take "
-                    + "a long time to enumerate. If you are new to 'crystmatch', we recommend using MAX_MU <= 4 and MAX_RMSS = 0.4 first, "
+                    + "a long time to enumerate. If you are new to 'crystmatch', we recommend using MAX_MU <= 2 and MAX_RMSS = 0.4 first, "
                     + "and then increase MAX_MU and decrease MAX_RMSS gradually.")
         if args.initial == None: args.initial = input("Enter the path of the initial POSCAR file: ")
         crystA = load_poscar(args.initial, tol=args.tolerance)
