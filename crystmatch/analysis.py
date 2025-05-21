@@ -13,6 +13,47 @@ rcParams.update({
 
 np.set_printoptions(suppress=True)
 
+def decompose_cryst(cryst_sup, cryst_prim=None, tol=1e-3):
+    """Compute the rotation `r` and the integer transformation matrix `m` such that `c_sup = r @ c_prim @ m`
+    """
+    if cryst_prim is None:
+        cryst_prim = primitive_cryst(cryst_sup, tol=tol)
+
+    # c_conv @ m0 = r0 @ c_prim
+    sym0 = get_symmetry_dataset(cryst_to_spglib(cryst_prim), symprec=tol)
+    m0 = sym0.transformation_matrix
+    r0 = sym0.std_rotation_matrix
+
+    # c_conv @ m1 = r1 @ c_sup
+    sym1 = get_symmetry_dataset(cryst_to_spglib(cryst_sup), symprec=tol)
+    m1 = sym1.transformation_matrix
+    r1 = sym1.std_rotation_matrix
+
+    # c_sup = (r1.inv @ r0) @ c_prim @ (m0.inv @ m1)
+    r = r1.T @ r0
+    m = la.inv(m0) @ m1
+    if (np.abs(m - m.round()) < tol).all(): m = m.round().astype(int)
+    return r, m
+
+def triangularize_cryst(cryst_sup, return_primitive=False, tol=1e-3):
+    """Rotate the crystal structure and change its lattice basis such that `c` is lower triangular.
+    """
+    c_sup = cryst_sup[0].T
+    p_sup = cryst_sup[2].T
+    r, m = decompose_cryst(cryst_sup, tol=tol)
+    h, q = hnf_int(m.round().astype(int), return_q=True)
+    c_sup_tri = la.inv(r) @ c_sup @ la.inv(q)
+    p_sup_tri = (q @ p_sup) % 1.0
+    cryst_sup_tri = (c_sup_tri.T, cryst_sup[1], p_sup_tri.T)
+    if return_primitive:
+        cell_sup, species_dict = cryst_to_spglib(cryst_sup, return_dict=True)
+        cryst_tri = spglib_to_cryst(refine_cell(cell_sup, symprec=tol), species_dict)
+        if not np.allclose(cryst_tri[0].T @ h, c_sup_tri):
+            raise ValueError("Error in triangularization. Please report this bug to wfc@pku.edu.cn.")
+        return cryst_sup_tri, cryst_tri
+    else:
+        return cryst_sup_tri
+
 def orient_matrix(vi: ArrayLike, vf: ArrayLike, wi: ArrayLike, wf: ArrayLike) -> NDArray[np.float64]:
     """Rotation matrix `r` such that `r @ vi` || `vf` and `r @ wi` || `wf`.
 
@@ -40,7 +81,7 @@ def deviation_angle(
     crystB: Cryst,
     slmlist: Union[List[SLM], NDArray[np.int32]],
     r: NDArray[np.float64],
-    uspfix: bool = False
+    manner: Literal['rotation-free', 'usp-fixed']
 ) -> NDArray[np.float64]:
     """Calculate how much each SLM in `slmlist` differ from a given orientation relationship.
 
@@ -72,7 +113,9 @@ def deviation_angle(
     s = cB @ np.array(hB) @ np.array(q) @ la.inv(cA @ np.array(hA))
     u, sigma, vT = la.svd(s)
     rS = u @ vT
-    if uspfix:
+    if manner == 'rotation-free':
+        anglelist = np.arccos(np.clip(0.5 * (-1 + np.amax(np.trace(np.dot(la.inv(r_equiv), rS), axis1=1, axis2=3), axis=0)), -1, 1))
+    elif manner == 'usp-fixed':
         eps = np.array([[[0,0,0],[0,0,-1],[0,1,0]],[[0,0,1],[0,0,0],[-1,0,0]],[[0,-1,0],[1,0,0],[0,0,0]]])
         v_cross = np.tensordot(vT[:,1,:], eps, axes=(1,0))
         s1 = sigma[:,0]
@@ -82,8 +125,6 @@ def deviation_angle(
         rH = np.eye(3).reshape(1,3,3) + np.sin(theta).reshape(-1,1,1) * v_cross + (1 - np.cos(theta)).reshape(-1,1,1) * (v_cross @ v_cross)
         rS = np.array([rS @ rH, rS @ la.inv(rH)])       # rS.shape = (2, ..., 3, 3)
         anglelist = np.arccos(np.clip(0.5 * (-1 + np.amax(np.trace(np.dot(la.inv(r_equiv), rS), axis1=1, axis2=4), axis=(0,1))), -1, 1))
-    else:
-        anglelist = np.arccos(np.clip(0.5 * (-1 + np.amax(np.trace(np.dot(la.inv(r_equiv), rS), axis1=1, axis2=3), axis=0)), -1, 1))
     return anglelist.round(decimals=7)
 
 def visualize_slmlist(
@@ -157,6 +198,118 @@ def visualize_pctlist(filename, pctlist, dlist):
     ax.grid(True, linestyle=':')
     if filename: plt.savefig(f"{filename}", bbox_inches='tight')
     else: plt.show()
+
+def cell_lines(c):
+    line1 = c @ np.array([[0,0,0,0,0,1,1,0], [0,1,1,0,0,0,1,1], [0,0,1,1,0,0,0,0]])
+    line2 = c @ np.array([[0,1,1], [0,0,0], [1,1,0]])
+    line3 = c @ np.array([[0,1,1], [1,1,1], [1,1,0]])
+    line4 = c @ np.array([[1,1], [0,1], [1,1]])
+    return line1, line2, line3, line4
+
+def colors_dark(i):
+    """Returns the i-th dark color.
+
+    Parameters
+    ----------
+    i : int
+        Index of the color to return; must be between 0 and 8.
+
+    Returns
+    -------
+    rgba : (4, ) tuple of float
+        RGBA values of the i-th dark color.
+    """
+    if i > 8: raise ValueError('i must be between 0 and 8')
+    return plt.get_cmap('Set1')(0.1 * i + 0.05)
+
+def colors_light(i):
+    """Returns the i-th light color.
+
+    Parameters
+    ----------
+    i : int
+        Index of the color to return; must be between 0 and 8.
+
+    Returns
+    -------
+    rgba : (4, ) tuple of float
+        RGBA values of the i-th light color.
+    """
+    if i > 8: raise ValueError('i must be between 0 and 8')
+    return plt.get_cmap('Pastel1')(0.1 * i + 0.05)
+
+def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, show_cluster=True, show_conventional=True, tol=1e-3):
+    """Use with `%matplotlib widget` in Jupyter notebook (need to install `ipympl`) to interactively visualize the shuffling process.
+    """
+    z = len(p)
+    crystA_sup, crystB_sup, c_half, _, _ = create_common_supercell(crystA, crystB, slm)
+    species, numbers = np.unique(crystA_sup[1], return_inverse=True)
+    if numbers.max() > 8: raise ValueError("Too many (>8) atoms species to visualize.")
+    cA = crystA_sup[0].T
+    cB = crystB_sup[0].T
+    pA = crystA_sup[2].T
+    pB = crystB_sup[2].T
+    t_cl = pA // 1.0
+    t_cen = np.average(pA % 1.0, weights=weights, axis=1, keepdims=True) - np.ones((3,1)) * 0.5
+    t0 = pct_distance(c_half, pA, pB, p, ks, weights=weights, l=l, return_t0=True)[1]
+    
+    fig = plt.figure(figsize=(8,4))
+    for left in [True, False]:
+        c = cA if left else cB
+        cooA = c @ (pA - t_cl - t_cen)
+        cooB = c @ (pB[:,p] + ks - t_cl + t0 - t_cen)
+        shuf = np.array([cooA, cooB]).transpose(2,1,0)
+        if show_cluster:
+            center = c @ np.ones((3,1)) * 0.5
+            radius = la.norm(c @ np.mgrid[0:2,0:2,0:2].reshape(3,-1) - center, axis=0).max() * 2
+            dcoo = c @ np.mgrid[-1:2,-1:2,-1:2].reshape(3,-1)[:,np.arange(27) != 13]
+
+        ax = fig.add_subplot(1, 2, 1 if left else 2, projection='3d')
+        ax.set_facecolor('white')
+        ax.set_proj_type('ortho')
+        ax.grid(False)
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.xaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+        ax.yaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+        ax.zaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
+        ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_zticks([])
+
+        for line in cell_lines(c):
+            ax.plot(line[0], line[1], line[2], color='#cccccc', linewidth=1)
+        for i in range(numbers.max()+1):
+            ind = numbers == i
+            ax.scatter(cooA[0,ind], cooA[1,ind], cooA[2,ind], color=colors_dark(i), s=32 if left else 16, marker='o' if left else 'x')
+            ax.scatter(cooB[0,ind], cooB[1,ind], cooB[2,ind], color=colors_dark(i), s=24 if left else 32, marker='*' if left else 'o')
+            if show_cluster:
+                cooA0 = (cooA[:,ind].reshape(3,-1,1) + dcoo.reshape(3,1,-1)).reshape(3,-1)
+                cooA0 = cooA0[:, la.norm(cooA0 - center, axis=0) < radius]
+                ax.scatter(cooA0[0], cooA0[1], cooA0[2], color=colors_light(i), s=8)
+        for i in range(z):
+            ax.plot(shuf[i,0], shuf[i,1], shuf[i,2], color=colors_light(numbers[i]), linewidth=1)
+        if show_conventional:
+            cryst = crystA_sup if left else crystB_sup
+            sym = get_symmetry_dataset(cryst_to_spglib(cryst), symprec=tol)
+            c_conv = sym.std_rotation_matrix.T @ sym.std_lattice.T
+            for i in range(3):
+                ax.plot([0,c_conv[0,i]], [0,c_conv[1,i]], [0,c_conv[2,i]], color='#666666', linewidth=1)
+
+        xlim = ax.get_xlim3d()
+        ylim = ax.get_ylim3d()
+        zlim = ax.get_zlim3d()
+        ax.set_box_aspect((xlim[1]-xlim[0], ylim[1]-ylim[0], zlim[1]-zlim[0]))
+        ax.text2D(0.05, 0.95, f"{'Initial' if left else 'Final'} structure ({sym.international})", transform=ax.transAxes)
+        for i, s in enumerate(species):
+            ax.text2D(0.05 + 0.1 * i, 0.05, s, transform=ax.transAxes, color=colors_dark(i))
+
+    fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
+    plt.show()
 
 def save_interpolation(
     filename: str,

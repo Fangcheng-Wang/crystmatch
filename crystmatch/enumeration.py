@@ -109,7 +109,7 @@ def enumerate_imt(
     
     sobol6 = Sobol(6)
     if verbose >= 1:
-        progress_bar = tqdm(total=max_iter, position=0, desc=f"\tmu={mu:d}", ncols=60, mininterval=0.5,
+        progress_bar = tqdm(total=max_iter, position=0, desc=f"\tmu={mu:-2d}", ncols=60, mininterval=0.5,
                             bar_format=f'{{desc}}: {{percentage:3.0f}}% |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
     slmlist = np.array([], dtype=int).reshape(-1,3,3,3)
     iter = 0
@@ -159,58 +159,6 @@ def enumerate_imt(
         if verbose >= 1: progress_bar.update(1)
     if verbose >= 1: progress_bar.close()
     return np.array(slmlist, dtype=int)
-
-def pct_distance(c, pA, pB, p, ks, weights=None, l=2, minimize=True, return_t0=False):
-    """Return the shuffle distance of a PCT.
-    
-    Parameters
-    ----------
-    c : (3, 3) array
-        The lattice vectors of the crystal structure.
-    pA, pB : (3, Z) array
-        The fractional coordinates of the atoms in the initial and final structures, respectively.
-    p : (Z, ) array of ints
-        The permutation of the atoms.
-    ks : (3, Z) array of floats
-        The class-wise translations (fractional coordinates) of the atoms in `pB`.
-    weights : (Z, ) array of floats, optional
-        The weights of each atom. Default is None, which means all atoms have the same weight.
-    l : float, optional
-        The l-norm to be used for distance calculation, must not be less than 1. Default is 2.
-    minimize : bool, optional
-        Set to True to minimize the shuffle distance by translating the final structure. Default is True.
-    return_t0 : bool, optional
-        Whether to return the best overall translation if `minimize` is True. Default is False.
-    
-    Returns
-    -------
-    distance : float
-        The shuffle distance.
-    t0 : (3, ) array
-        The best overall translation.
-    """
-    if ks.shape != (3,len(p)): raise ValueError("'p' and 'ks' must have the same number of atoms.")
-    if not minimize: return np.average(((c @ (pB[:,p] + ks - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
-    elif l == 2:
-        t0 = -np.average(pB[:,p] + ks - pA, axis=1, weights=weights, keepdims=True)
-        d = np.average(((c @ (pB[:,p] + ks + t0 - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
-    else:
-        res = minimize(lambda t: np.average(la.norm(c @ (pB[:,p] + ks + t.reshape(3,1) - pA), axis=0)**l, weights=weights),
-                        -np.average(pB[:,p] + ks - pA, axis=1, weights=weights), method='SLSQP', options={'disp': False})
-        d = res.fun ** (1/l)
-        t0 = res.x
-    if return_t0: return d, t0
-    else: return d
-
-def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2, minimize=True, return_t0=False):
-    """Return the shuffle distance of a CSM.
-    """
-    crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, slm)
-    pA_sup = crystA_sup[2].T
-    pB_sup = crystB_sup[2].T
-    species = crystA_sup[1]
-    weights = [weight_func[s] for s in species] if weight_func else None
-    return pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, minimize=minimize, return_t0=return_t0)
 
 def punishment_matrix(z, prevent, l=2):
     m = np.zeros((z,z))
@@ -436,8 +384,8 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
             progress_bar.n = prob_solved
             progress_bar.last_print_n = prob_solved
             progress_bar.refresh()
-    progress_bar.close()
     if verbose >= 1:
+        progress_bar.close()
         print(f"\tFound {len(bottom_pcts)} {'incongruent bottom PCTs' if incong else 'bottom PCTs (not incongruent)'} with d <= {d_max}.")
         print(f"Filling non-bottom PCTs with d <= {d_max:.4f} ...")
 

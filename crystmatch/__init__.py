@@ -46,9 +46,13 @@ def main():
                         help="tolerance for determining crystal symmetry (default is 1e-3)")
     parser.add_argument("-o", "--orientation", nargs=12, type=float, metavar=('vix','viy','viz','vfx','vfy','vfz','wix','wiy','wiz','wfx','wfy','wfz'),
                         help="benchmark CSMs by the orientation relationship: vi||vf, wi||wf")
-    parser.add_argument("-c", "--csv", action='store_true', help="whether to create CSV file")
-    parser.add_argument("-p", "--plot", action='store_true', help="whether to create scatter plot")
+    parser.add_argument("-c", "--csv", action='store_true', help="create CSV file (default in 'enumeration' mode)")
+    parser.add_argument("-p", "--plot", action='store_true', help="create scatter plot (default in 'enumeration' mode)")
     parser.add_argument("-u", "--uspfix", action='store_true', help="use USP-fixed manner [1] in '--orientation'")
+    # new
+    parser.add_argument("-s", "--standardize", action='store_true', help="standardize (lower-triangularize) the cell matrices before all calculations")
+    parser.add_argument("-d", "--distance", type=float, default=None, metavar='D_MAX', help="maximum shuffle distance for PCT enumeration")
+    # deprecated
     parser.add_argument("-A", nargs='*', type=str, metavar='', help="deprecated")
     parser.add_argument("-B", nargs='*', type=str, metavar='', help="deprecated")
     args = parser.parse_args()

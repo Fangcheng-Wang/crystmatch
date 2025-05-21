@@ -10,7 +10,7 @@ import numpy.linalg as la
 from collections import namedtuple
 from spglib import get_spacegroup, get_symmetry, standardize_cell, refine_cell, get_symmetry_dataset
 from tqdm import tqdm
-from typing import Union, Tuple, List, Dict, Callable
+from typing import Union, Tuple, List, Dict, Callable, Literal
 from numpy.typing import NDArray, ArrayLike
 from scipy.spatial.transform import Rotation
 
@@ -240,40 +240,10 @@ def primitive_cryst(cryst_sup, tol=1e-3):
     cell = standardize_cell(cell_sup, to_primitive=True, no_idealize=True, symprec=tol)
     return spglib_to_cryst(cell, species_dict)
 
-def supercell_decomposition(cryst_sup, cryst=None, tol=1e-3):
-    """Compute the rotation `r` and the integer transformation matrix `m` such that `c_sup = r @ c @ m`
-    """
-    if cryst is None:
-        q = np.eye(3, dtype=int)
-        r0 = np.eye(3)
-    else:
-        sym0 = get_symmetry_dataset(cryst_to_spglib(cryst), symprec=tol)
-        q = sym0.transformation_matrix.round().astype(int)
-        r0 = sym0.std_rotation_matrix
-        if not np.abs(la.det(q)).round(8) == 1: raise ValueError("'cryst' must be primitive or left as None.")
-    sym = get_symmetry_dataset(cryst_to_spglib(cryst_sup), symprec=tol)
-    m = (la.inv(q) @ sym.transformation_matrix).round().astype(int)
-    r = r0 @ sym.std_rotation_matrix.T
-    return r, m
-
-def triangularize_cryst(cryst_sup, return_primitive=False, tol=1e-3):
-    """Rotate the crystal structure and change its lattice basis such that `c` is lower triangular.
-    """
-    c_sup = cryst_sup[0].T
-    p_sup = cryst_sup[2].T
-    r, m = supercell_decomposition(cryst_sup, tol=tol)
-    h, q = hnf_int(m, return_q=True)
-    c_sup_tri = la.inv(r) @ c_sup @ la.inv(q)
-    p_sup_tri = (q @ p_sup) % 1.0
-    cryst_sup_tri = (c_sup_tri.T, cryst_sup[1], p_sup_tri.T)
-    if return_primitive:
-        cell_sup, species_dict = cryst_to_spglib(cryst_sup, return_dict=True)
-        cryst_tri = spglib_to_cryst(refine_cell(cell_sup, symprec=tol), species_dict)
-        if not np.allclose(cryst_tri[0].T @ h, c_sup_tri):
-            raise ValueError("Error in triangularization. Please report this bug to wfc@pku.edu.cn.")
-        return cryst_sup_tri, cryst_tri
-    else:
-        return cryst_sup_tri
+def conventional_cryst(cryst, tol=1e-3):
+    cell, species_dict = cryst_to_spglib(cryst, return_dict=True)
+    sym = get_symmetry_dataset(cell, symprec=tol)
+    return spglib_to_cryst((sym.std_lattice, sym.std_positions, sym.std_types), species_dict)
 
 def check_chem_comp(speciesA, speciesB):
     spA, ctA = np.unique(speciesA, return_counts=True)
@@ -789,3 +759,55 @@ def voigt_to_tensor(voigt_matrix, cryst=None, tol=1e-3, verbose=True):
         if dev > 0.2: print(f"\nWarning: Elastic tensor does not have the expected symmetry ({spg})! Check if the input POSCAR and elastic tensor are consistent.\n")
         return tensor_sym
     else: return tensor
+
+def pct_distance(c, pA, pB, p, ks, weights=None, l=2, minimize=True, return_t0=False):
+    """Return the shuffle distance of a PCT.
+    
+    Parameters
+    ----------
+    c : (3, 3) array
+        The lattice vectors of the crystal structure.
+    pA, pB : (3, Z) array
+        The fractional coordinates of the atoms in the initial and final structures, respectively.
+    p : (Z, ) array of ints
+        The permutation of the atoms.
+    ks : (3, Z) array of floats
+        The class-wise translations (fractional coordinates) of the atoms in `pB`.
+    weights : (Z, ) array of floats, optional
+        The weights of each atom. Default is None, which means all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation, must not be less than 1. Default is 2.
+    minimize : bool, optional
+        Set to True to minimize the shuffle distance by translating the final structure. Default is True.
+    return_t0 : bool, optional
+        Whether to return the best overall translation if `minimize` is True. Default is False.
+    
+    Returns
+    -------
+    distance : float
+        The shuffle distance.
+    t0 : (3, 1) array
+        The best overall translation, reshaped as a 3x1 matrix.
+    """
+    if ks.shape != (3,len(p)): raise ValueError("'p' and 'ks' must have the same number of atoms.")
+    if not minimize: return np.average(((c @ (pB[:,p] + ks - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
+    elif l == 2:
+        t0 = -np.average(pB[:,p] + ks - pA, axis=1, weights=weights, keepdims=True)
+        d = np.average(((c @ (pB[:,p] + ks + t0 - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
+    else:
+        res = minimize(lambda t: np.average(la.norm(c @ (pB[:,p] + ks + t.reshape(3,1) - pA), axis=0)**l, weights=weights),
+                        -np.average(pB[:,p] + ks - pA, axis=1, weights=weights), method='SLSQP', options={'disp': False})
+        d = res.fun ** (1/l)
+        t0 = res.x
+    if return_t0: return d, t0
+    else: return d
+
+def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2, minimize=True, return_t0=False):
+    """Return the shuffle distance of a CSM.
+    """
+    crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, slm)
+    pA_sup = crystA_sup[2].T
+    pB_sup = crystB_sup[2].T
+    species = crystA_sup[1]
+    weights = [weight_func[s] for s in species] if weight_func else None
+    return pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, minimize=minimize, return_t0=return_t0)
