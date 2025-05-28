@@ -3,6 +3,7 @@ Analyze and visualize CSMs.
 """
 
 from .utilities import *
+from .enumeration import *
 from matplotlib import rcParams, colors
 import matplotlib.pyplot as plt
 rcParams.update({
@@ -41,7 +42,7 @@ def triangularize_cryst(cryst_sup, return_primitive=False, tol=1e-3):
     c_sup = cryst_sup[0].T
     p_sup = cryst_sup[2].T
     r, m = decompose_cryst(cryst_sup, tol=tol)
-    h, q = hnf_int(m.round().astype(int), return_q=True)
+    h, q = hnf_square(m.round().astype(int), return_q=True)
     c_sup_tri = la.inv(r) @ c_sup @ la.inv(q)
     p_sup_tri = (q @ p_sup) % 1.0
     cryst_sup_tri = (c_sup_tri.T, cryst_sup[1], p_sup_tri.T)
@@ -238,12 +239,12 @@ def colors_light(i):
     if i > 8: raise ValueError('i must be between 0 and 8')
     return plt.get_cmap('Pastel1')(0.1 * i + 0.05)
 
-def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, show_cluster=True, show_conventional=True, tol=1e-3):
+def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, cluster_size=1.5, show_conventional=True, tol=1e-3):
     """Use with `%matplotlib widget` in Jupyter notebook (need to install `ipympl`) to interactively visualize the shuffling process.
     """
     z = len(p)
     crystA_sup, crystB_sup, c_half, _, _ = create_common_supercell(crystA, crystB, slm)
-    species, numbers = np.unique(crystA_sup[1], return_inverse=True)
+    species, numbers, counts = np.unique(crystA_sup[1], return_inverse=True, return_counts=True)
     if numbers.max() > 8: raise ValueError("Too many (>8) atoms species to visualize.")
     cA = crystA_sup[0].T
     cB = crystB_sup[0].T
@@ -258,11 +259,11 @@ def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, show_cluster=Tr
         c = cA if left else cB
         cooA = c @ (pA - t_cl - t_cen)
         cooB = c @ (pB[:,p] + ks - t_cl + t0 - t_cen)
-        shuf = np.array([cooA, cooB]).transpose(2,1,0)
-        if show_cluster:
-            center = c @ np.ones((3,1)) * 0.5
-            radius = la.norm(c @ np.mgrid[0:2,0:2,0:2].reshape(3,-1) - center, axis=0).max() * 2
-            dcoo = c @ np.mgrid[-1:2,-1:2,-1:2].reshape(3,-1)[:,np.arange(27) != 13]
+        shuf = cooB - cooA
+        center = c @ np.ones((3,1)) * 0.5
+        radius = la.norm(c @ np.mgrid[0:2,0:2,0:2].reshape(3,-1) - center, axis=0).max() * cluster_size
+        dcoo = c @ np.mgrid[-2:3,-2:3,-2:3].reshape(3,-1)
+        dcoo = dcoo[:,(dcoo!=0).any(axis=0)]
 
         ax = fig.add_subplot(1, 2, 1 if left else 2, projection='3d')
         ax.set_facecolor('white')
@@ -282,31 +283,32 @@ def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, show_cluster=Tr
         ax.set_zticks([])
 
         for line in cell_lines(c):
-            ax.plot(line[0], line[1], line[2], color='#cccccc', linewidth=1)
+            ax.plot(line[0], line[1], line[2], color='#cccccc', linestyle='--', linewidth=0.8)
         for i in range(numbers.max()+1):
             ind = numbers == i
-            ax.scatter(cooA[0,ind], cooA[1,ind], cooA[2,ind], color=colors_dark(i), s=32 if left else 16, marker='o' if left else 'x')
-            ax.scatter(cooB[0,ind], cooB[1,ind], cooB[2,ind], color=colors_dark(i), s=24 if left else 32, marker='*' if left else 'o')
-            if show_cluster:
-                cooA0 = (cooA[:,ind].reshape(3,-1,1) + dcoo.reshape(3,1,-1)).reshape(3,-1)
-                cooA0 = cooA0[:, la.norm(cooA0 - center, axis=0) < radius]
-                ax.scatter(cooA0[0], cooA0[1], cooA0[2], color=colors_light(i), s=8)
-        for i in range(z):
-            ax.plot(shuf[i,0], shuf[i,1], shuf[i,2], color=colors_light(numbers[i]), linewidth=1)
+            # cell content
+            coo = cooA[:,ind] if left else cooB[:,ind]
+            ax.scatter(coo[0], coo[1], coo[2], color=colors_dark(i), s=32)
+            ax.quiver(cooA[0,ind], cooA[1,ind], cooA[2,ind], shuf[0,ind], shuf[1,ind], shuf[2,ind], color='#bbbbbb', arrow_length_ratio=0.5)
+            # cluster
+            coo = (coo.reshape(3,-1,1) + dcoo.reshape(3,1,-1)).reshape(3,-1)
+            coo = coo[:, la.norm(coo - center, axis=0) < radius]
+            ax.scatter(coo[0], coo[1], coo[2], color=colors_light(i), s=8)
         if show_conventional:
             cryst = crystA_sup if left else crystB_sup
             sym = get_symmetry_dataset(cryst_to_spglib(cryst), symprec=tol)
             c_conv = sym.std_rotation_matrix.T @ sym.std_lattice.T
-            for i in range(3):
-                ax.plot([0,c_conv[0,i]], [0,c_conv[1,i]], [0,c_conv[2,i]], color='#666666', linewidth=1)
+            ax.quiver(np.zeros(3), np.zeros(3), np.zeros(3), c_conv[0], c_conv[1], c_conv[2], color=['#666666', '#888888', '#aaaaaa'], arrow_length_ratio=0.2)
 
         xlim = ax.get_xlim3d()
         ylim = ax.get_ylim3d()
         zlim = ax.get_zlim3d()
         ax.set_box_aspect((xlim[1]-xlim[0], ylim[1]-ylim[0], zlim[1]-zlim[0]))
-        ax.text2D(0.05, 0.95, f"{'Initial' if left else 'Final'} structure ({sym.international})", transform=ax.transAxes)
+        ax.text2D(0.05, 0.95, f"{'Initial' if left else 'Final'} structure ({sym.international})", fontsize=10, transform=ax.transAxes)
+        if show_conventional: ax.text2D(0.05, 0.91, f"with conventional basis represented by gray arrows", color='#777777', fontsize=8, transform=ax.transAxes)
+        ax.text2D(0.05, 0.10, f"Atoms in the dashed supercell (shuffle lattice):", color='#999999', fontsize=9, transform=ax.transAxes)
         for i, s in enumerate(species):
-            ax.text2D(0.05 + 0.1 * i, 0.05, s, transform=ax.transAxes, color=colors_dark(i))
+            ax.text2D(0.05 + 0.1 * i, 0.05, f"{counts[i]:d}{s}", color=colors_dark(i), fontsize=9, transform=ax.transAxes)
 
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.show()

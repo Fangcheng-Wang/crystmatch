@@ -3,7 +3,7 @@ Enumerate SLMs and CSMs.
 """
 
 from .utilities import *
-from scipy.optimize import linear_sum_assignment, minimize, OptimizeResult
+from scipy.optimize import linear_sum_assignment, minimize, basinhopping
 from scipy.stats.qmc import Sobol
 
 np.set_printoptions(suppress=True)
@@ -34,6 +34,58 @@ def strain_energy_function(elasticA, elasticB):
                         + np.einsum('ijkl,...im,...jm,...kn,...ln,...m,...n->...', elasticB, u, u, u, u, sigma**-0.5 - 1, sigma**-0.5 - 1))
     return w
 
+def pct_distance(c, pA, pB, p, ks, weights=None, l=2, min_t0=True, return_t0=False):
+    """Return the shuffle distance of a PCT.
+    
+    Parameters
+    ----------
+    c : (3, 3) array
+        The lattice vectors of the crystal structure.
+    pA, pB : (3, Z) array
+        The fractional coordinates of the atoms in the initial and final structures, respectively.
+    p : (Z, ) array of ints
+        The permutation of the atoms.
+    ks : (3, Z) array of floats
+        The class-wise translations (fractional coordinates) of the atoms in `pB`.
+    weights : (Z, ) array of floats, optional
+        The weights of each atom. Default is None, which means all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation, must not be less than 1. Default is 2.
+    min_t0 : bool, optional
+        Set to True to minimize the shuffle distance by translating the final structure. Default is True.
+    return_t0 : bool, optional
+        Whether to return the best overall translation if `min_t0` is True. Default is False.
+    
+    Returns
+    -------
+    distance : float
+        The shuffle distance.
+    t0 : (3, 1) array
+        The best overall translation, reshaped as a 3x1 matrix.
+    """
+    if ks.shape != (3,len(p)): raise ValueError("'p' and 'ks' must have the same number of atoms.")
+    if not min_t0: return np.average(((c @ (pB[:,p] + ks - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
+    if l == 2:
+        t0 = -np.average(pB[:,p] + ks - pA, axis=1, weights=weights, keepdims=True)
+        d = np.average(((c @ (pB[:,p] + ks + t0 - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
+    else:
+        res = minimize(lambda t: np.average(la.norm(c @ (pB[:,p] + ks + t.reshape(3,1) - pA), axis=0)**l, weights=weights),
+                        -np.average(pB[:,p] + ks - pA, axis=1, weights=weights), method='SLSQP', options={'disp': False})
+        d = res.fun ** (1/l)
+        t0 = res.x
+    if return_t0: return d, t0
+    else: return d
+
+def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2, min_t0=True, return_t0=False):
+    """Return the shuffle distance of a CSM.
+    """
+    crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, slm)
+    pA_sup = crystA_sup[2].T
+    pB_sup = crystB_sup[2].T
+    species = crystA_sup[1]
+    weights = [weight_func[s] for s in species] if weight_func else None
+    return pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, min_t0=min_t0, return_t0=return_t0)
+
 def standardize_imt(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> SLM:
     """The representative SLM of the congruence class of `slm`.
 
@@ -61,8 +113,8 @@ def standardize_imt(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], g
         if len(ind) == 1: break
     iA, iB = np.unravel_index(ind, (gA.shape[0], gB.shape[0]))
     i = np.lexsort(np.array([gA[iA], gB[iB]]).transpose((0,2,3,1)).reshape(18,-1))[0]
-    hAA, qA = hnf_int(gA[iA[i]] @ hA)
-    hBB, qB = hnf_int(gB[iB[i]] @ hB)
+    hAA, qA = hnf_square(gA[iA[i]] @ hA)
+    hBB, qB = hnf_square(gB[iB[i]] @ hB)
     slm0 = (hAA, hBB, qB @ q @ la.inv(qA).round().astype(int))
     return slm0
 
@@ -100,8 +152,8 @@ def enumerate_imt(
     cB = crystB[0].T
     zA = crystA[2].shape[0]
     zB = crystB[2].shape[0]
-    hA = all_hnf(np.lcm(zA,zB) // zA * mu)
-    hB = all_hnf(np.lcm(zA,zB) // zB * mu)
+    hA = all_hnfs(np.lcm(zA,zB) // zA * mu)
+    hB = all_hnfs(np.lcm(zA,zB) // zB * mu)
     hA_inv = la.inv(hA)
     hB_inv = la.inv(hB)
     gA = get_pure_rotation(crystA, tol=tol)
@@ -203,7 +255,7 @@ def optimize_pct_fixed(c, species, pA, pB, constraint=Constraint(set(),set()), w
         diff_frac = (pB[:,enforce[:,1]] - pA[:,enforce[:,0]]).reshape(3,-1,1) % 1.0 + DELTA_K.reshape(3,1,8)
         norm_squared = np.sum(np.tensordot(c, diff_frac, axes=(1,0))**2, axis=0)
         where_kij[enforce[:,0], enforce[:,1]] = np.argmin(norm_squared, axis=1)
-    punish = punishment_matrix(z, constraint.prevent)
+    punish = punishment_matrix(z, constraint.prevent, l=l)
     
     for s in np.unique(species):
         row_ind = species == s
@@ -213,9 +265,7 @@ def optimize_pct_fixed(c, species, pA, pB, constraint=Constraint(set(),set()), w
         col_ind = species == s
         col_ind[enforce[:,1]] = False
         diff_frac = (pB[:,col_ind].reshape(3,1,-1,1) - pA[:,row_ind].reshape(3,-1,1,1)) % 1.0 + DELTA_K
-        temp = np.zeros((3,zz*zz*8))
-        np.dot(c, diff_frac.reshape(3,-1), out=temp)
-        norm_squared = np.sum(temp**2, axis=0).reshape(zz,zz,8)
+        norm_squared = np.sum(np.tensordot(c, diff_frac, axes=(1,0))**2, axis=0)
         where_kij[np.ix_(row_ind, col_ind)] = np.argmin(norm_squared, axis=2)
         cost_matrix = np.min(norm_squared, axis=2) ** (l/2) + punish[np.ix_(row_ind, col_ind)]
         result = linear_sum_assignment(cost_matrix)[1]
@@ -223,30 +273,34 @@ def optimize_pct_fixed(c, species, pA, pB, constraint=Constraint(set(),set()), w
             return IMPOSSIBLE_DISTANCE, None, None
         p[row_ind] = np.nonzero(col_ind)[0][result]
         
-    ks = (- np.floor(pB[:,p] - pA) + DELTA_K[:,0,0,where_kij[np.arange(z),p]]).round().astype(int)
-    return pct_distance(c, pA, pB, p, ks, weights=weights, l=l, minimize=False), p, ks
+    ks = (-np.floor(pB[:,p] - pA) + DELTA_K[:,0,0,where_kij[np.arange(z),p]]).round().astype(int)
+    d = pct_distance(c, pA, pB, p, ks, weights=weights, l=l, min_t0=False)
+    return d, p, ks
+
+def optimize_pct_local(c, species, pA, pB, t, constraint=Constraint(set(),set()), weight_func=None, l=2):
+    t0 = t.reshape(3,1)
+    n_iter = 0
+    weights = [weight_func[s] for s in species] if weight_func else None
+    while True:
+        n_iter += 1
+        dh, p, ks = optimize_pct_fixed(c, species, pA, pB+t0, constraint=constraint, weight_func=weight_func, l=l)
+        if dh >= IMPOSSIBLE_DISTANCE: return IMPOSSIBLE_DISTANCE, None, None, None
+        d, t0 = pct_distance(c, pA, pB, p, ks, weights=weights, l=l, return_t0=True)
+        if dh - d < 1e-4: break
+        if n_iter > 100: raise RecursionError("PCT optimization failed to converge. Please report this bug to wfc@pku.edu.cn if you see this message.")
+    return d, p, ks, t0
 
 def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight_func=None, l=2, t_grid=64):
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
-    f = f_translate(mA, mB)
+    f = frac_cell(mA, mB)
     species = crystA_sup[1]
     z = species.shape[0]
-    weights = [weight_func[s] for s in species] if weight_func else None
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
-    def d_hat(t):
-        return optimize_pct_fixed(c_sup_half, species, pA_sup, pB_sup + f @ t.reshape(3,1),
-                                constraint=constraint, weight_func=weight_func, l=l)[0]
-    temp = np.inf
-    for t in Sobol(3).random(t_grid):
-        res = minimize(d_hat, t, method='SLSQP', options={'disp': False, 'ftol': 1e-7})
-        if res.fun < temp:
-            temp = res.fun
-            t0 = res.x
-    _, p, ks = optimize_pct_fixed(c_sup_half, species, pA_sup, pB_sup + f @ t0.reshape(3,1),
-                                constraint=constraint, weight_func=weight_func, l=l)
-    if (punishment_matrix(z, constraint.prevent)[np.arange(z),p] != 0).any(): return IMPOSSIBLE_DISTANCE, None, None, None
-    d, t0 = pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, return_t0=True)
+    reslist = [optimize_pct_local(c_sup_half, species, pA_sup, pB_sup, t, constraint=constraint, weight_func=weight_func, l=l)
+                for t in Sobol(3).random(t_grid) @ f.T]
+    ind = np.argmin([res[0] for res in reslist])
+    d, p, ks, t0 = reslist[ind]
     return d, p, ks, t0
 
 def pct_fill(crystA, crystB, slm, d_max, p, ks0=None, weight_func=None, l=2, warning_threshold=1000):
@@ -331,7 +385,7 @@ def cong_permutations(p, crystA, crystB, slm):
 
 def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, incong=True, verbose=1):
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
-    f = f_translate(mA, mB)
+    f = frac_cell(mA, mB)
     species = crystA_sup[1]
     weights = [weight_func[s] for s in species] if weight_func else None
     pA_sup = crystA_sup[2].T
@@ -359,15 +413,9 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
                 split_stack.pop(i)
                 break
         if not split:
-            def d_hat(t):
-                return optimize_pct_fixed(c_sup_half, species, pA_sup, pB_sup + f @ t.reshape(3,1),
-                                        constraint=node, weight_func=weight_func, l=l)[0]
-            for t in sobol3.random(t_grid):
-                res = minimize(d_hat, t, method='SLSQP', options={'disp': False})
-                if res.fun <= d_max:
-                    t0 = res.x
-                    _, p, ks = optimize_pct_fixed(c_sup_half, species, pA_sup, pB_sup + f @ t0.reshape(3,1),
-                                            constraint=node, weight_func=weight_func, l=l)
+            for t in sobol3.random(t_grid) @ f.T:
+                d, p, ks, _ = optimize_pct_local(c_sup_half, species, pA_sup, pB_sup, t, constraint=node, weight_func=weight_func, l=l)
+                if d <= d_max:
                     bottom_pcts.append(zip_pct(p, ks))
                     for new_node in murty_split(node, p):
                         node_stack.append(new_node)
@@ -375,9 +423,7 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
                     if incong:
                         for p_cong in cong_permutations(p, crystA, crystB, slm):
                             split_stack.append(p_cong)
-                    break
-                elif res.fun >= IMPOSSIBLE_DISTANCE:
-                    break
+                if d <= d_max or d >= IMPOSSIBLE_DISTANCE: break
         if verbose >= 1:
             prob_solved += 1
             progress_bar.total = prob_total
@@ -407,31 +453,35 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
 def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2):
     """
     """
-    k_grid = (- np.floor(pB[:,p] - pA).reshape(3,-1,1) + DELTA_K.reshape(3,1,-1)).round().astype(int)
+    k_grid = (-np.floor(pB[:,p] - pA).reshape(3,-1,1) + DELTA_K.reshape(3,1,-1)).round().astype(int)
     norm_squared = (np.tensordot(c, (pB[:,p] - pA).reshape(3,-1,1) + k_grid, axes=(1,0))**2).sum(axis=0)
     ks = k_grid[:,np.arange(len(p)),np.argmin(norm_squared, axis=1)]
-    return pct_distance(c, pA, pB, p, ks, weights=weights, l=l, minimize=False), ks
+    return pct_distance(c, pA, pB, p, ks, weights=weights, l=l, min_t0=False), ks
+
+def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2):
+    t0 = t.reshape(3,1)
+    n_iter = 0
+    while True:
+        n_iter += 1
+        dh, ks = optimize_ct_fixed(c, pA, pB+t0, weights=weights, l=l)
+        d, t0 = pct_distance(c, pA, pB, p, ks, weights=weights, l=l, return_t0=True)
+        if dh - d < 1e-4: break
+        if n_iter > 100: raise RecursionError("CT optimization failed to converge. Please report this bug to wfc@pku.edu.cn if you see this message.")
+    return d, ks, t0
 
 def optimize_ct(crystA, crystB, slm, p, weight_func=None, l=2, t_grid=64):
     """
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
-    f = f_translate(mA, mB)
+    f = frac_cell(mA, mB)
     species = crystA_sup[1]
     if not (crystB_sup[1][p] == species).all(): raise ValueError("The given permutation does not preserve atomic species.")
     weights = [weight_func[s] for s in species] if weight_func else None
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
-    def d_hat(t):
-        return optimize_ct_fixed(c_sup_half, pA_sup, pB_sup + f @ t.reshape(3,1), p, weights=weights, l=l)[0]
-    temp = np.inf
-    for t in Sobol(3).random(t_grid):
-        res = minimize(d_hat, t, method='SLSQP', options={'disp': False, 'ftol': 1e-7})
-        if res.fun < temp:
-            temp = res.fun
-            t0 = res.x
-    _, ks = optimize_ct_fixed(c_sup_half, pA_sup, pB_sup + f @ t0.reshape(3,1), p, weights=weights, l=l)
-    d, t0 = pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, return_t0=True)
+    reslist = [optimize_ct_local(c_sup_half, pA_sup, pB_sup, t, weights=weights, l=l) for t in Sobol(3).random(t_grid) @ f.T]
+    ind = np.argmin([res[0] for res in reslist])
+    d, ks, t0 = reslist[ind]
     return d, ks, t0
 
 def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, mu_max: int, w_max: float,

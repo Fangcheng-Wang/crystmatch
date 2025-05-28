@@ -152,8 +152,8 @@ def main():
         # computing SLM
         mA = (la.inv(cA) @ cA_sup).round().astype(int)
         mB = (la.inv(cB) @ cB_sup).round().astype(int)
-        hA, qA = hnf_int(mA)
-        hB, qB = hnf_int(mB)
+        hA, qA = hnf_square(mA)
+        hB, qB = hnf_square(mB)
         slmlist = [standardize_imt((hA, hB, qB @ la.inv(qA).round().astype(int)),
                             get_pure_rotation(crystA, tol=args.tolerance), get_pure_rotation(crystB, tol=args.tolerance))]
         mulist = imt_multiplicity(crystA, crystB, slmlist)

@@ -1,5 +1,9 @@
 # Python API
 
+!!! warning "Under development"
+    **The API reference for `crystmatch` v1.2.0 is still under development. Please do not rely on it yet.**
+
+
 ## Data structures
 
 | Type | Structure | Description |
