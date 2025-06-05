@@ -14,6 +14,15 @@ from tqdm import tqdm
 from typing import Union, Tuple, List, Dict, Callable, Literal
 from numpy.typing import NDArray, ArrayLike
 from scipy.spatial.transform import Rotation
+from scipy.optimize import linear_sum_assignment, minimize, basinhopping
+from scipy.stats.qmc import Sobol
+from matplotlib import rcParams, colors
+import matplotlib.pyplot as plt
+rcParams.update({
+    'font.family': 'serif',
+    'pgf.rcfonts': False,
+    'figure.dpi': 150
+})
 
 np.set_printoptions(suppress=True)
 Cryst = Tuple[NDArray[np.float64], NDArray[np.str_], NDArray[np.float64]]
@@ -29,7 +38,7 @@ def load_poscar(filename: str, to_primitive: bool = True, tol: float = 1e-3, ver
     to_primitive : bool, optional
         Using the primitive cell instead of the cell given by the POSCAR file. Default is True.
     tol : float, optional
-        The tolerance for `spglib` symmetry detection; default is 1e-3.
+        The tolerance for `spglib` symmetry detection. Default is 1e-3.
 
     Returns
     -------
@@ -149,20 +158,6 @@ def load_csmcar(filename: str, verbose: bool = True):
     return voigtA, voigtB, weight_func, ori_rel
 
 def unique_filename(message: Union[str, None], filename: str) -> str:
-    """Get a unique filename by appending a number to the end of the given filename.
-
-    Parameters
-    ----------
-    filename : str
-        The filename to be modified.
-    message : str, optional
-        A message to print before the filename.
-
-    Returns
-    -------
-    new_filename : str
-        The modified filename with a unique number appended.
-    """
     base, ext = splitext(filename)
     counter = 1
     new_filename = filename
@@ -171,61 +166,6 @@ def unique_filename(message: Union[str, None], filename: str) -> str:
         counter += 1
     if message != None: print(f"{message} '{new_filename}' ...")
     return new_filename
-
-def species_poscar_format(species: NDArray[np.str_]) -> Tuple[NDArray[np.str_], NDArray[np.int32]]:
-    """
-    Examine whether a species array is sorted. If so, convert it to the POSCAR format.
-    
-    Parameters
-    ----------
-    species : (N,) array of str
-        The species array.
-    
-    Returns
-    -------
-    species_unique : (M,) array of str
-        The unique species in the order of their first appearance in `species`.
-    species_counts : (M,) array of int
-        The number of occurrences of each unique species in `species`.
-    """
-    _, sp_idx, sp_inv, sp_counts = np.unique(species, return_index=True, return_inverse=True, return_counts=True)
-    if np.sum(np.diff(sp_inv) != 0) != sp_idx.shape[0] - 1:
-        raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
-    return species[np.sort(sp_idx)], sp_counts
-
-def save_poscar(
-    filename: Union[str, None],
-    cryst: Cryst,
-    crystname: Union[str, None] = None
-) -> None:
-    """
-    Save the crystal structure to a POSCAR file.
-
-    Parameters
-    ----------
-    filename : str
-        The name of the file to save, must not already exist in current directory. If `filename = None`, a string will be returned instead.
-    cryst : cryst
-        The crystal structure to be saved, consisting of the lattice vectors, species, and positions.
-    crystname : str, optional
-        A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
-    """
-    species_name, species_counts = species_poscar_format(cryst[1])
-    if crystname is not None: content = crystname
-    else: content = ""
-    content += "\n1.0\n"
-    content += "\n".join(f"{v[0]:.12f}\t{v[1]:.12f}\t{v[2]:.12f}" for v in cryst[0].tolist())
-    content += "\n" + " ".join(species_name.tolist())
-    content += "\n" + " ".join(str(n) for n in species_counts.tolist())
-    content += "\nDirect\n"
-    content += "\n".join(f"{p[0]:.12f}\t{p[1]:.12f}\t{p[2]:.12f}" for p in cryst[2].tolist())
-    if filename is not None:
-        f = open(filename, mode='x')
-        f.write(content)
-        f.close()
-        return
-    else:
-        return content
 
 def cryst_to_spglib(cryst, return_dict=False):
     species_dict, numbers = np.unique(cryst[1], return_inverse=True)
@@ -237,16 +177,22 @@ def spglib_to_cryst(spglib_cell, species_dict):
     return (spglib_cell[0], species_dict[spglib_cell[2]], spglib_cell[1])
 
 def primitive_cryst(cryst_sup, tol=1e-3):
+    """
+    """
     cell_sup, species_dict = cryst_to_spglib(cryst_sup, return_dict=True)
     cell = standardize_cell(cell_sup, to_primitive=True, no_idealize=True, symprec=tol)
     return spglib_to_cryst(cell, species_dict)
 
 def conventional_cryst(cryst, tol=1e-3):
+    """
+    """
     cell, species_dict = cryst_to_spglib(cryst, return_dict=True)
     sym = get_symmetry_dataset(cell, symprec=tol)
     return spglib_to_cryst((sym.std_lattice, sym.std_positions, sym.std_types), species_dict)
 
-def check_chem_comp(speciesA, speciesB):
+def is_stoichiometric(speciesA, speciesB):
+    """
+    """
     spA, ctA = np.unique(speciesA, return_counts=True)
     spB, ctB = np.unique(speciesB, return_counts=True)
     if not (spA == spB).all(): raise ValueError("Atomic species are not the same!")
@@ -267,11 +213,11 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     Returns
     -------
     crystA_sup : cryst
-        The supercell of $\mathcal{A}$.
-    crystB_sup_final : cryst
-        The supercell of $\sqrt{S^{\\text{T}} S}\mathcal{A}$, which equals the supercell of $(S^{\\text{T}} S)^{-1/2}\mathcal{B}$.
+        The supercell structure of `crystA`.
+    crystB_sup_norot : cryst
+        The supercell structure of `crystB` in the rotation-free orientation.
     c_sup_half : (3, 3) array of floats
-        The half-distorted supercell, which equals the supercel of $(S^{\\text{T}} S)^{1/4}\mathcal{A}$ and that of $(S^{\\text{T}} S)^{-1/4}\mathcal{B}$.
+        The half-distorted supercell, which equals the supercell of $(S^{\\text{T}} S)^{1/4}\mathcal{A}$ and that of $(S^{\\text{T}} S)^{-1/4}\mathcal{B}$.
     mA, mB : (3, 3) array of ints
         The matrices that transform `crystA` to `crystA_sup` and `crystB` to `crystB_sup`, respectively.
     """
@@ -282,7 +228,7 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     speciesB = crystB[1]
     pA = crystA[2].T
     pB = crystB[2].T
-    check_chem_comp(speciesA, speciesB)
+    is_stoichiometric(speciesA, speciesB)
     
     # Determining the supercell geometries from the SLM.
     hA, hB, q = slm
@@ -302,56 +248,22 @@ def create_common_supercell(crystA: Cryst, crystB: Cryst, slm: SLM) -> Tuple[Cry
     argsortA = np.argsort(speciesA_sup)
     argsortB = np.argsort(speciesB_sup)
     if not (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all():
-        raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
+        raise AssertionError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
     species_sup = speciesA_sup[argsortA]
     pA_sup = pA_sup[:,argsortA]
     pB_sup = pB_sup[:,argsortB]
     
     # Computing output.
     crystA_sup = (cA_sup.T, species_sup, pA_sup.T)
-    crystB_sup_final = (cB_sup_final.T, species_sup, pB_sup.T)
-    return crystA_sup, crystB_sup_final, c_sup_half, mA, mB
+    crystB_sup_norot = (cB_sup_final.T, species_sup, pB_sup.T)
+    return crystA_sup, crystB_sup_norot, c_sup_half, mA, mB
 
 def frac_cell(mA, mB):
     """The primitive cell of the lattice generated by mA^{-1} and mB^{-1}.
     """
     lcm = np.lcm(la.det(mA).round().astype(int), la.det(mB).round().astype(int))
     dual = (np.hstack((la.inv(mA), la.inv(mB))) * lcm).round().astype(int)
-    return lll_reduce(hnf(dual)[:,:3] / lcm)[0]
-
-def int_arrays_to_pair(crystA: Cryst, crystB: Cryst, slm: SLM,
-    p: NDArray[np.int32], ks: NDArray[np.int32], centered: bool = True
-) -> Tuple[Cryst, Cryst]:
-    """Convert the integer arrays representation `(slm, p, translations)` of a CSM to a pair of crysts.
-    
-    Parameters
-    ----------
-    crystA, crystB : cryst
-        The initial and final structures.
-    slm : slm
-        The SLM of the CSM.
-    p : (Z, ) array of ints
-        The permutaion of the shuffle.
-    ks : (3, Z) array of ints
-        The lattice-vector translations of the shuffle.
-    centered : bool, optional
-        Whether to make the centers of `crystA_sup` and `crystB_sup_final` coincide. Default is True.
-        
-    Returns
-    -------
-    crystA_sup : cryst
-        The initial structure, whose lattice vectors and atoms are matched to `crystB_sup` according to the CSM.
-    crystB_sup_final : cryst
-        The final structure, whose lattice vectors and atoms are matched to `crystA_sup` according to the CSM, with rotation-free orientation.
-    """
-    crystA_sup, crystB_sup, _, _, _ = create_common_supercell(crystA, crystB, slm)
-    if not (crystA_sup[1] == crystB_sup[1][p]).all():
-        raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
-    pA_sup = crystA_sup[2].T
-    pB_sup = crystB_sup[2].T[:,p] + ks
-    if centered:
-        pB_sup = pB_sup - np.mean(pB_sup - pA_sup, axis=1, keepdims=True)
-    return crystA_sup, (crystB_sup[0], crystB_sup[1][p], pB_sup.T)
+    return lll_reduce(_hnf(dual)[:,:3] / lcm)[0]
 
 def imt_multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM], NDArray[np.int32]]) -> Union[int, NDArray[np.int32]]:
     """Return multiplicities of elements in `slmlist`.
@@ -427,9 +339,13 @@ def rmss(slist: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.sqrt(np.mean((la.svd(slist, compute_uv=False) - 1) ** 2, axis=-1))
 
 def zip_pct(p, ks):
+    """
+    """
     return np.hstack((p.reshape(-1,1), ks.T), dtype=int)
 
 def unzip_pct(pct):
+    """
+    """
     return pct[:,0], pct[:,1:].T
 
 def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
@@ -440,7 +356,7 @@ def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
     cryst : 3-tuple
         `(lattice, species, positions)`, representing the crystal structure, usually obtained by `load_poscar`.
     tol : float, optional
-        The tolerance for `spglib` symmetry detection; default is 1e-3.
+        The tolerance for `spglib` symmetry detection. Default is 1e-3.
     
     Returns
     -------
@@ -453,11 +369,9 @@ def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:
     g = np.unique(g, axis=0)
     return g
 
-
 @nb.njit
-def mul_xor_hash(arr, init=65537, k=37):
-    """This function is provided by @norok2 on StackOverflow: https://stackoverflow.com/a/66674679.
-    """
+def _mul_xor_hash(arr, init=65537, k=37):
+    # This function is provided by @norok2 on StackOverflow: https://stackoverflow.com/a/66674679.
     result = init
     for x in arr.view(np.uint64):
         result = (result * k) ^ x
@@ -465,25 +379,24 @@ def mul_xor_hash(arr, init=65537, k=37):
 
 @nb.njit
 def setdiff2d(arr1, arr2):
-    """This function is provided by @norok2 on StackOverflow: https://stackoverflow.com/a/66674679.
-    """
-    delta = {mul_xor_hash(arr2[0])}
+    # This function is provided by @norok2 on StackOverflow: https://stackoverflow.com/a/66674679.
+    delta = {_mul_xor_hash(arr2[0])}
     for i in range(1, arr2.shape[0]):
-        delta.add(mul_xor_hash(arr2[i]))
+        delta.add(_mul_xor_hash(arr2[i]))
     n = 0
     for i in range(arr1.shape[0]):
-        if mul_xor_hash(arr1[i]) not in delta:
+        if _mul_xor_hash(arr1[i]) not in delta:
             n += 1
     result = np.empty((n, arr1.shape[-1]), dtype=arr1.dtype)
     j = 0
     for i in range(arr1.shape[0]):
-        if mul_xor_hash(arr1[i]) not in delta:
+        if _mul_xor_hash(arr1[i]) not in delta:
             result[j] = arr1[i]
             j += 1
     return result
 
 def int_vec_inside(c: NDArray[np.int32]) -> NDArray[np.int64]:
-    """Integer vectors inside the cell `c` whose elements are integers.
+    """Integer vectors inside the cell `c @ [0, 1)^3` whose elements are integers.
 
     Parameters
     ----------
@@ -493,30 +406,18 @@ def int_vec_inside(c: NDArray[np.int32]) -> NDArray[np.int64]:
     Returns
     -------
     v_int : (3, ...) array of ints
-        Its columns are vectors satisfying `v = c @ k`, where `k[0]`, `k[1]`, `k[2]` $\in [0, 1)$.
+        Its columns are vectors satisfying `v = c @ k`, where `k[0]`, `k[1]`, `k[2]` are all in `[0, 1)`.
     """
-    assert c.dtype == int
+    if not c.dtype == int: raise TypeError(f"Input matrix must be integer.")
     vertices = c @ np.mgrid[0:2,0:2,0:2].reshape(3,-1)
     candidates = np.mgrid[np.amin(vertices[0,:]):np.amax(vertices[0,:])+1, np.amin(vertices[1,:]):np.amax(vertices[1,:])+1, \
         np.amin(vertices[2,:]):np.amax(vertices[2,:])+1].reshape(3,-1)
     fractional = (la.inv(c) @ candidates).round(decimals=7)
     is_inside = (np.prod(fractional < 1, axis=0) * np.prod(fractional >= 0, axis=0)).astype(bool)
-    assert np.sum(is_inside) == la.det(c).round().astype(int)
+    assert np.sum(is_inside) == np.abs(la.det(c)).round().astype(int)
     return candidates[:,is_inside]
 
-def int_fact(n: int) -> List[Tuple[int, int]]:
-    """Factorize positive integer `n` into products of two integers.
-
-    Parameters
-    ----------
-    n : int
-        The integer to be factorized.
-    
-    Returns
-    -------
-    l : list of 2-tuples of ints
-        Contains all `(a, b)` such that a*b=n.
-    """
+def _int_fact(n: int) -> List[Tuple[int, int]]:
     l = []
     for a in range(1,n+1):
         if n % a == 0: l.append((a, n//a))
@@ -537,8 +438,8 @@ def all_hnfs(det: int) -> NDArray[np.int32]:
     """
     # Enumerate 3-factorizations of `det`.
     diag_list = []
-    for a, aa in int_fact(det):
-        for b, c in int_fact(aa):
+    for a, aa in _int_fact(det):
+        for b, c in _int_fact(aa):
             diag_list.append((a, b, c))
     # Enumerate HNFs.
     l = []
@@ -554,19 +455,7 @@ def all_hnfs(det: int) -> NDArray[np.int32]:
     l = np.array(l, dtype=int)
     return l
 
-def hnf(m: NDArray[np.int32]) -> NDArray[np.int32]:
-    """Return the Hermite normal form (HNF) of square integer matrix `m`.
-
-    Parameters
-    ----------
-    m : (M, N) array of ints
-        The integer matrix to reduce, with positive determinant and M <= N (the function will not check this).
-    
-    Returns
-    -------
-    h : (M, N) array of ints
-        The column-style Hermite normal form of `m`.
-    """
+def _hnf(m: NDArray[np.int32]) -> NDArray[np.int32]:
     h = m.copy()
     n_row = h.shape[0]
     for i in range(n_row):
@@ -580,8 +469,8 @@ def hnf(m: NDArray[np.int32]) -> NDArray[np.int32]:
         h[:,:i] = h[:,:i] - np.outer(h[:,i], h[i,:i] // h[i,i])
     return h
 
-def hnf_square(m: NDArray[np.int32], return_q: bool = True) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
-    """Decompose square integer matrix `m` into product of HNF matrix `h` and unimodular matrix `q`.
+def hnf(m: NDArray[np.int32], return_q: bool = False) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
+    """Compute the Hermite normal form of integer matrix `m`.
 
     Parameters
     ----------
@@ -599,11 +488,14 @@ def hnf_square(m: NDArray[np.int32], return_q: bool = True) -> tuple[NDArray[np.
     """
     if not m.dtype == int: raise TypeError(f"Input matrix must be integer:\n{m}")
     if not la.matrix_rank(m, tol=1e-6) == m.shape[0]: raise ValueError(f"Input matrix must be full-row-rank:\n{m}")
-    h = hnf(m)
-    if not return_q or m.shape[1] != m.shape[0]: return h
-    else: return h, (la.inv(h) @ m).round().astype(int)
+    h = _hnf(m)
+    if return_q:
+        if not m.shape[1] == m.shape[0]: raise ValueError(f"Input matrix must be square:\n{m}")
+        return h, (la.inv(h) @ m).round().astype(int)
+    else:
+        return h
 
-def gram_schmidt(c: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _gram_schmidt(c: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     n = c.shape[1]
     cc = np.zeros_like(c, dtype=float)
     mu = np.zeros((n, n), dtype=float)
@@ -627,7 +519,7 @@ def lll_reduce(c: NDArray[np.float64], delta: float = 0.75) -> tuple[NDArray[np.
     c : (3, 3) array
         The cell to be reduced, whose columns are cell vectors.
     delta : float, optional
-        The parameter for the LLL algorithm; default is 0.75.
+        The parameter for the LLL algorithm. Default is 0.75.
     
     Returns
     -------
@@ -639,20 +531,20 @@ def lll_reduce(c: NDArray[np.float64], delta: float = 0.75) -> tuple[NDArray[np.
     cc = c.copy()
     n = cc.shape[1]
     k = 1
-    _, mu, norm2 = gram_schmidt(cc)
+    _, mu, norm2 = _gram_schmidt(cc)
 
     while k < n:
         for j in range(k-1, -1, -1):
             q = round(mu[k,j])
             if abs(q) > 0:
                 cc[:,k] -= q * cc[:,j]
-        _, mu, norm2 = gram_schmidt(cc)
+        _, mu, norm2 = _gram_schmidt(cc)
 
         if norm2[k] >= (delta - mu[k,k-1] ** 2) * norm2[k-1]:
             k += 1
         else:
             cc[:,[k,k-1]] = cc[:,[k-1,k]]
-            _, mu, norm2 = gram_schmidt(cc)
+            _, mu, norm2 = _gram_schmidt(cc)
             k = max(k-1, 1)
     
     if la.det(cc) < 0: cc[:,-1] = -cc[:,-1]
@@ -700,3 +592,45 @@ def voigt_to_tensor(voigt_matrix, cryst=None, tol=1e-3, verbose=True):
         if dev > 0.2: print(f"\nWarning: Elastic tensor does not have the expected symmetry ({spg})! Check if the input POSCAR and elastic tensor are consistent.\n")
         return tensor_sym
     else: return tensor
+
+def pct_distance(c, pA, pB, p, ks, weights=None, l=2, min_t0=True, return_t0=False):
+    """Return the shuffle distance of a PCT.
+    
+    Parameters
+    ----------
+    c : (3, 3) array
+        The lattice vectors of the crystal structure.
+    pA, pB : (3, Z) array
+        The fractional coordinates of the atoms in the initial and final structures, respectively.
+    p : (Z, ) array of ints
+        The permutation of the atoms.
+    ks : (3, Z) array of floats
+        The class-wise translations (fractional coordinates) of the atoms in `pB`.
+    weights : (Z, ) array of floats, optional
+        The weights of each atom. Default is None, which means all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation, must not be less than 1. Default is 2.
+    min_t0 : bool, optional
+        Set to True to minimize the shuffle distance by translating the final structure. Default is True.
+    return_t0 : bool, optional
+        Whether to return the best overall translation if `min_t0` is True. Default is False.
+    
+    Returns
+    -------
+    distance : float
+        The shuffle distance.
+    t0 : (3, 1) array
+        The best overall translation, reshaped as a 3x1 matrix.
+    """
+    if ks.shape != (3,len(p)): raise ValueError("'p' and 'ks' must have the same number of atoms.")
+    if not min_t0: return np.average(((c @ (pB[:,p] + ks - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
+    if l == 2:
+        t0 = -np.average(pB[:,p] + ks - pA, axis=1, weights=weights, keepdims=True)
+        d = np.average(((c @ (pB[:,p] + ks + t0 - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
+    else:
+        res = minimize(lambda t: np.average(la.norm(c @ (pB[:,p] + ks + t.reshape(3,1) - pA), axis=0)**l, weights=weights),
+                        -np.average(pB[:,p] + ks - pA, axis=1, weights=weights), method='SLSQP', options={'disp': False})
+        d = res.fun ** (1/l)
+        t0 = res.x
+    if return_t0: return d, t0
+    else: return d

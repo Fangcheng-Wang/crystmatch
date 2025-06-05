@@ -22,7 +22,7 @@ The main goals of `crystmatch` are as follows:
     - Score CSMs by RMSS and RMSD.
     - Benchmark a CSM by its deviation angle from an orientation relationship (OR).
 
-Congruent CSMs (those differ only by a space-group transformation) are identified and excluded from the enumeration using the `spglib` library by [Atsushi Togo *et al.*](https://www.tandfonline.com/doi/full/10.1080/27660400.2024.2384822)
+Congruent CSMs (those differ only by a space-group transformation) are identified and excluded from the enumeration using the **[Spglib](https://spglib.readthedocs.io/en/stable/python-interface.html)** library by [Atsushi Togo *et al.*](https://www.tandfonline.com/doi/full/10.1080/27660400.2024.2384822)
 
 ## Installation
 
@@ -50,9 +50,9 @@ crystmatch --version
 
 To run `crystmatch`, one of the following modes must be selected:
 
-1. **Enumeration mode**: Generate a list of CSMs, save them to a `CSM_LIST.npz` file, and perform preliminary analysis. The initial and final crystal structures must be specified in the form of POSCAR files.
-2. **Read mode**: Read CSMs from a `CSM_LIST.npz` file. You can export specific CSMs to POSCARs, perform OR analysis, generate CSV tables of CSM properties, and visualize the RMSD-RMSS-multiplicity distribution in a 2D scatter plot.
-3. **Single-CSM mode**: Directly determine a single CSM by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.
+1. **`enumerate`**: Generate a list of CSMs, save them to a `CSM_LIST.npz` file, and perform preliminary analysis. The initial and final crystal structures must be specified in the form of POSCAR files.
+2. **`read`**: Read CSMs from a `CSM_LIST.npz` file. You can export specific CSMs to POSCARs, perform OR analysis, generate CSV tables of CSM properties, and visualize the RMSD-RMSS-multiplicity distribution in a 2D scatter plot.
+3. **`direct`**: Directly determine a single CSM by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.
 
 **We strongly recommend starting with the [examples](#examples) provided below.** If you are still confused, run `crystmatch` directly in the command line without any arguments for an interactive calculation. To [see all available options](https://fangcheng-wang.github.io/crystmatch/cli/), run:
 
@@ -67,7 +67,7 @@ crystmatch --help
 To generate a list of representative [[1]](https://arxiv.org/abs/2305.05278) CSMs between two crystal structures stored in `./fcc` and `./bcc`, with multiplicity upper bound `MAX_MU = 2` and RMSS upper bound `MAX_RMSS = 0.4`, run:
 
 ```
-crystmatch --initial fcc --final bcc --enumeration 2 0.4
+crystmatch --initial fcc --final bcc --enumerate 2 0.4
 ```
 
 The following files will be created in the current directory:
