@@ -4,12 +4,11 @@ Save, load, analyze and visualize CSMs.
 
 from .utilities import *
 
-__all__ = ["decompose_cryst", "conventional_cryst", "csm_to_cryst", "csm_distance", "primitive_shuffle",
-            "orient_matrix", "rot_usp", "deviation_angle", "visualize_slmlist", "visualize_pctlist", "visualize_csm",
+__all__ = ["decompose_cryst", "conventional_cryst", "csm_to_cryst", "cryst_to_csm", "csm_distance", "primitive_shuffle",
+            "orient_matrix", "rot_usp", "deviation_angle", "visualize_slmlist", "visualize_pctlist", "visualize_csm", 
             "save_npz", "load_npz", "unzip_csm", "save_poscar", "save_xdatcar"]
 
 np.set_printoptions(suppress=True)
-Table = namedtuple("Table", ["data", "header"])
 
 def decompose_cryst(cryst_sup, cryst_prim=None, tol=1e-3):
     """Compute the rotation `r` and the integer transformation matrix `m` such that `c_sup = r @ c_prim @ m`
@@ -34,7 +33,7 @@ def decompose_cryst(cryst_sup, cryst_prim=None, tol=1e-3):
     return r, m
 
 def conventional_cryst(cryst_sup, return_primitive=False, tol=1e-3):
-    """Rotate the crystal structure and change its lattice basis such that `c` is lower triangular.
+    """Rotate the crystal structure and change its lattice basis to make it conventional.
     """
     c_sup = cryst_sup[0].T
     p_sup = cryst_sup[2].T
@@ -53,10 +52,10 @@ def conventional_cryst(cryst_sup, return_primitive=False, tol=1e-3):
         return cryst_sup_tri
 
 def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], ks: NDArray[np.int32],
-    orientation: Literal['norot', 'uspfixed'] = 'norot',
-    min_t0: bool = True, weight_func: Union[Dict[str, float], None] = None, l: float = 2
+    tol: float = 1e-3, orientation: Literal['norot', 'uspfixed'] = 'norot',
+    min_t0: bool = False, weight_func: Union[Dict[str, float], None] = None, l: float = 2
 ) -> Union[Tuple[Cryst, Cryst], Tuple[Cryst, Cryst, Cryst]]:
-    """Convert the integer arrays representation `(slm, p, translations)` of a CSM to a pair of crysts.
+    """Convert the IMT and PCT representation of a CSM to a pair of crysts.
     
     Parameters
     ----------
@@ -68,12 +67,14 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
         The permutaion of the shuffle.
     ks : (3, Z) array of ints
         The lattice-vector translations of the shuffle.
+    tol : float, optional
+        The tolerance for symmetry finding. Default is 1e-3.
     orientation : str, optional
         The orientation of the final structure, either 'norot' or 'uspfixed', which means that the deformation is rotation-free \
             or fixing the uniformly scaled plane (USP). When 'uspfixed', two final structures are returned since there are two USPs. \
             Default is 'norot'. 
     min_t0 : bool, optional
-        Whether to use optimal translation of `crystB_sup_norot` to minimize the shuffle distance. Default is True.
+        Whether to use optimal translation of `crystB_sup_norot` to minimize the shuffle distance. Default is False.
     weight_func : dict, optional
         The weight function used when minimizing the shuffle distance, with keys as atomic species. \
             Default is None, which means all atoms have the same weight.
@@ -89,22 +90,51 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
     crystB_sup_uspfixed_1, crystB_sup_uspfixed_2 : cryst
         The final structure, whose lattice vectors and atoms are matched to `crystA_sup` according to the CSM, with uniformly scaled plane fixed.
     """
-    crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, slm)
-    species = crystA_sup[1]
-    if not (crystB_sup[1][p] == species).all():
-        raise ValueError("The input permutation does not preserve the atomic species.")
+    gA = get_pure_rotation(crystA, tol=tol)
+    gB = get_pure_rotation(crystB, tol=tol)
+    crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, standardize_imt(slm, gA, gB))
+    speciesA = crystA_sup[1]
+    speciesB = crystB_sup[1]
+    if not (speciesA == speciesB[p]).all(): raise ValueError("The input permutation does not preserve the atomic species.")
     cB = crystB_sup[0].T
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
     if min_t0:
-        weights = [weight_func[s] for s in species] if weight_func else None
+        weights = [weight_func[s] for s in speciesA] if weight_func else None
         pB_sup = pB_sup - pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, return_t0=True)[1]
     if orientation == 'norot':
-        return crystA_sup, (cB.T, species, pB_sup.T)
+        return crystA_sup, (cB.T, speciesB[p], (pB_sup[:,p] + ks).T)
     elif orientation == 'uspfixed':
         rH = rot_usp(deformation_gradient(crystA_sup, crystB_sup, slm))
-        return crystA_sup, ((rH @ cB).T, species, pB_sup.T), ((rH.T @ cB).T, species, pB_sup.T)
+        return crystA_sup, ((rH @ cB).T, speciesB[p], (pB_sup[:,p] + ks).T), ((rH.T @ cB).T, speciesB[p], (pB_sup[:,p] + ks).T)
     else: raise ValueError("'deformation' must be 'norot' or 'uspfixed'.")
+
+def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
+    """Return the primitive crysts and IMT and PCT representation of a CSM determined by a pair of crysts.
+    """
+    crystA = primitive_cryst(crystA_sup, tol=tol)
+    crystB = primitive_cryst(crystB_sup, tol=tol)
+    _, mA0 = decompose_cryst(crystA_sup, cryst_prim=crystA, tol=tol)
+    _, mB0 = decompose_cryst(crystB_sup, cryst_prim=crystB, tol=tol)
+    if not (mA0.dtype == int and mB0.dtype == int): raise ValueError("Both 'crystA' and 'crystB' must be primitive.")
+    if not (la.det(mA0) > 0 and la.det(mB0) > 0): raise ValueError("The cell vectors must be right-handed.")
+    hA, qA = hnf(mA0, return_q=True)
+    hB, qB = hnf(mB0, return_q=True)
+    q = (qB @ la.inv(qA)).round().astype(int)
+    gA = get_pure_rotation(crystA, tol=tol)
+    gB = get_pure_rotation(crystB, tol=tol)
+    slm = np.array(standardize_imt((hA, hB, q), gA, gB), dtype=int)
+
+    crystA_sup_lll, crystB_sup_lll, _, mA, mB = create_common_supercell(crystA, crystB, slm)
+    pA = crystA_sup_lll[2].T
+    pB = crystB_sup_lll[2].T
+    pA0 = crystA_sup[2].T
+    pB0 = crystB_sup[2].T
+    # since pA0 -> pB0, we expect pA == pA0[:,p0] + ks0 -> pB[:,p] + ks == pB0[:,p0] + ks0
+    p0 = np.nonzero(((pA.reshape(3,-1,1) - pA0.reshape(3,1,-1) + tol) % 1.0 < 2 * tol).all(axis=0))[1]
+    p = np.nonzero(((pB.reshape(3,1,-1) - pB0[:,p0].reshape(3,-1,1) + tol) % 1.0 < 2 * tol).all(axis=0))[1]
+    ks = (pB0[:,p0] - pA0[:,p0] + pA - pB[:,p]).round().astype(int)
+    return crystA, crystB, slm, p, ks
 
 def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2, min_t0=True, return_t0=False):
     """Return the shuffle distance of a CSM.
@@ -118,9 +148,9 @@ def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2, min_t0=True,
 
 def _is_translation_element(t, pA, pB, p, ks):
     # since pA -> pB[:,p] + ks, we expect pA[:,pAt] + ksAt -> pB[:,p[pAt]] + ks[:,pAt] + ksAt == pB[:,pBt[p]] + ks + ksBt
-    pAt = np.nonzero((((pA.reshape(3,1,-1) + t.reshape(3,1,1) - pA.reshape(3,-1,1)).round(7) % 1.0) == 0).all(axis=0))[1]
+    pAt = np.nonzero(((pA.reshape(3,1,-1) + t.reshape(3,1,1) - pA.reshape(3,-1,1)).round(7) % 1.0 == 0).all(axis=0))[1]
     ksAt = (pA + t.reshape(3,1) - pA[:,pAt]).round().astype(int)
-    pBt = np.nonzero((((pB.reshape(3,1,-1) + t.reshape(3,1,1) - pB.reshape(3,-1,1)).round(7) % 1.0) == 0).all(axis=0))[1]
+    pBt = np.nonzero(((pB.reshape(3,1,-1) + t.reshape(3,1,1) - pB.reshape(3,-1,1)).round(7) % 1.0 == 0).all(axis=0))[1]
     ksBt = (pB[:,p] + t.reshape(3,1) - pB[:,pBt[p]]).round().astype(int)
     return (p[pAt] == pBt[p]).all() and (ks[:,pAt] + ksAt == ks + ksBt).all()
 
@@ -144,7 +174,7 @@ def primitive_shuffle(crystA, crystB, slm0, p0, ks0):
     hA = hnf((mA0 @ np.hstack([np.eye(3), f.reshape(3,-1)])).round().astype(int), return_q=False)[:,:3]
     hB = hnf((mB0 @ np.hstack([np.eye(3), f.reshape(3,-1)])).round().astype(int), return_q=False)[:,:3]
     q = (la.inv(hB) @ hB0 @ q0 @ la.inv(hA0) @ hA).round().astype(int)
-    slm = np.array([hA, hB, q])
+    slm = np.array([hA, hB, q], dtype=int)
 
     # calculate new PCT
     crystA_sup, crystB_sup, _, mA, mB = create_common_supercell(crystA, crystB, slm)
@@ -219,7 +249,7 @@ def deviation_angle(
         The initial crystal structure, usually obtained by `load_poscar`.
     crystB : cryst
         The final crystal structure, usually obtained by `load_poscar`.
-    slmlist : list of slm
+    slmlist : (N, 3, 3, 3) array of ints
         A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
     r : (3, 3) array
         A rotation matrix representing the given orientation relationship.
@@ -229,7 +259,7 @@ def deviation_angle(
 
     Returns
     -------
-    anglelist : (...,) array
+    anglelist : (N,) array
         Contains rotation angles that measure the difference of each SLM and the given orientation.
     """
     assert la.det(r).round(decimals=4) == 1
@@ -253,33 +283,18 @@ def deviation_angle(
 
 def visualize_slmlist(
     filename : Union[str, None],
-    wlist: ArrayLike,
+    strainlist: ArrayLike,
     d0list: ArrayLike,
     colorlist: ArrayLike = None,
     cmap : colors.Colormap = plt.get_cmap('viridis'),
     cbarlabel: str = None
 ) -> None:
     """Scatter plot of the CSMs with colorbar.
-
-    Parameters
-    ----------
-    filename : str
-        The filename of the saved plot. If None, the plot is shown on screen.
-    rmsslist : (N,) array_like
-        The root-mean-square strain of each CSM.
-    rmsdlist : (N,) array_like
-        The root-mean-square distance of each CSM.
-    colorlist : (N,) array_like, optional
-        Some quantity of each CSM, which is to be colored. If None, do not color the points.
-    cmap : `matplotlib.colors.Colormap`, optional
-        The colormap to use. Default is `plt.cm.get_cmap('viridis')`.
-    cbarlabel : str, optional
-        The label of the colorbar. Default is None, in which case the filename is used.
     """
-    wlist = np.array(wlist)
+    strainlist = np.array(strainlist)
     d0list = np.array(d0list)
     if colorlist is None:
-        colorlist = np.zeros_like(wlist)
+        colorlist = np.zeros_like(strainlist)
         n0 = 0
     else:
         colorlist = np.array(colorlist)
@@ -288,13 +303,13 @@ def visualize_slmlist(
     plt.figure()
     ax = plt.subplot()
     ind = np.argsort(colorlist)[::-1]
-    sc = plt.scatter(wlist[ind], d0list[ind], marker='d', c=colorlist[ind], cmap=cmap, s=20)
+    sc = plt.scatter(strainlist[ind], d0list[ind], marker='d', c=colorlist[ind], cmap=cmap, s=20)
     if n0 >= 1:
         print(f"\nThere are {n0:d} CSMs (indices: {', '.join(np.nonzero(ind0)[0].astype(str).tolist())}) with {cbarlabel}=0, emphasized by pink stars in the plot.")
-        plt.scatter(wlist[ind0], d0list[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
+        plt.scatter(strainlist[ind0], d0list[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
     plt.xlabel("w (same units as input)", fontsize=13)
     plt.ylabel("Shuffle distance (Å)", fontsize=13)
-    plt.xlim(0, np.amax(wlist) * 1.05)
+    plt.xlim(0, np.amax(strainlist) * 1.05)
     plt.ylim(min(0, np.amin(d0list) - 0.1), np.amax(d0list) + 0.1)
     if (colorlist == 0).all(): pass
     elif colorlist.dtype == int: cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
@@ -412,7 +427,7 @@ def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, cluster_size=1.
             # cell content
             coo = cooA[:,ind] if left else cooB[:,ind]
             ax.scatter(coo[0], coo[1], coo[2], color=colors_dark(i), s=32)
-            ax.quiver(cooA[0,ind], cooA[1,ind], cooA[2,ind], shuf[0,ind], shuf[1,ind], shuf[2,ind], color='#bbbbbb', arrow_length_ratio=0.5)
+            ax.quiver(cooA[0,ind], cooA[1,ind], cooA[2,ind], shuf[0,ind], shuf[1,ind], shuf[2,ind], color='#cccccc', arrow_length_ratio=0.5)
             # cluster
             coo = (coo.reshape(3,-1,1) + dcoo.reshape(3,1,-1)).reshape(3,-1)
             coo = coo[:, la.norm(coo - center, axis=0) < radius]
@@ -428,8 +443,12 @@ def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, cluster_size=1.
         zlim = ax.get_zlim3d()
         ax.set_box_aspect((xlim[1]-xlim[0], ylim[1]-ylim[0], zlim[1]-zlim[0]))
         ax.text2D(0.05, 0.95, f"{'Initial' if left else 'Final'} structure ({sym.international})", fontsize=10, transform=ax.transAxes)
-        if show_conventional: ax.text2D(0.05, 0.91, f"with conventional basis represented by gray arrows", color='#777777', fontsize=8, transform=ax.transAxes)
-        ax.text2D(0.05, 0.10, f"Atoms in the dashed supercell (shuffle lattice):", color='#999999', fontsize=9, transform=ax.transAxes)
+        if show_conventional:
+            ax.text2D(0.05, 0.91, "Dark arrows represent its conventional", fontsize=8, transform=ax.transAxes)
+            ax.text2D(0.620, 0.91, "a", color='#666666', fontsize=10, transform=ax.transAxes)
+            ax.text2D(0.653, 0.91, "b", color='#888888', fontsize=10, transform=ax.transAxes)
+            ax.text2D(0.689, 0.91, "c", color='#aaaaaa', fontsize=10, transform=ax.transAxes)
+        ax.text2D(0.05, 0.10, "Light arrows represent the shuffle, whose period has:", fontsize=8, transform=ax.transAxes)
         for i, s in enumerate(species):
             ax.text2D(0.05 + 0.1 * i, 0.05, f"{counts[i]:d}{s}", color=colors_dark(i), fontsize=9, transform=ax.transAxes)
 
@@ -457,7 +476,7 @@ def load_npz(filename, verbose=True):
     pct_arrs = [npz[f'arr_{i}'] for i in range(max_mu+1)]
     data = npz['table']
     if verbose:
-        print(f"A total of {len(slmlist)} distinct SLMs and {len(slm_ind)} CSMs were loaded from {filename}.")
+        print(f"A total of {len(slmlist)} distinct SLMs and {len(slm_ind)} CSMs are loaded from {filename}.")
         print(f"\tmu  {' '.join(f'{mu:5d}' for mu in range(1,max_mu+1))}")
         print(f"\t#CSM{' '.join(f'{arr.shape[0]:5d}' for arr in pct_arrs[1:])}")
     return crystA, crystB, slmlist, slm_ind, pct_arrs, Table(data, header)

@@ -6,7 +6,7 @@ from .utilities import *
 
 __all__ = ["strain_energy_func", "standardize_imt", "enumerate_imt", "optimize_pct",
             "pct_fill", "murty_split", "cong_permutations", "enumerate_pct", "optimize_ct",
-            "enumerate_rep_csm"]
+            "enumerate_rep_csm", "enumerate_all_csm"]
 
 np.set_printoptions(suppress=True)
 Constraint = namedtuple("Constraint", ["enforce", "prevent"])
@@ -35,38 +35,6 @@ def strain_energy_func(elasticA, elasticB):
             return 1/2 * (np.einsum('ijkl,...mi,...mj,...nk,...nl,...m,...n->...', elasticA, vt, vt, vt, vt, sigma**0.5 - 1, sigma**0.5 - 1)
                         + np.einsum('ijkl,...im,...jm,...kn,...ln,...m,...n->...', elasticB, u, u, u, u, sigma**-0.5 - 1, sigma**-0.5 - 1))
     return w
-
-def standardize_imt(slm: Union[SLM, NDArray[np.int32]], gA: NDArray[np.int32], gB: NDArray[np.int32]) -> SLM:
-    """The standard SLM of the congruence class of `slm`.
-
-    Parameters
-    ----------
-    slm : slm
-        `(hA, hB, q)`, representing a SLM.
-    gA : (..., 3, 3) array of ints
-        The rotation group of the initial crystal structure, whose elements are \
-            integer matrices under fractional coordinates.
-    gB : (..., 3, 3) array of ints
-        The rotation group of the final crystal structure, whose elements are \
-            integer matrices under fractional coordinates.
-
-    Returns
-    -------
-    slm0 : slm
-        The standardized SLM.
-    """
-    hA, hB, q = slm
-    cl = np.dot((gB @ hB) @ q, la.inv(gA @ hA)).transpose((2,0,1,3)).reshape(-1,9).round(4)
-    ind = np.arange(cl.shape[0])
-    for j in range(9):
-        ind = ind[cl[ind,j] == np.min(cl[ind,j])]
-        if len(ind) == 1: break
-    iA, iB = np.unravel_index(ind, (gA.shape[0], gB.shape[0]))
-    i = np.lexsort(np.array([gA[iA], gB[iB]]).transpose((0,2,3,1)).reshape(18,-1))[0]
-    hAA, qA = hnf(gA[iA[i]] @ hA, return_q=True)
-    hBB, qB = hnf(gB[iB[i]] @ hB, return_q=True)
-    slm0 = (hAA, hBB, qB @ q @ la.inv(qA).round().astype(int))
-    return slm0
 
 def enumerate_imt(
     crystA: Cryst, crystB: Cryst, mu: int, max_strain: float,
@@ -258,8 +226,8 @@ def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight
     d, p, ks, t0 = reslist[ind]
     return d, p, ks, t0
 
-def pct_fill(crystA, crystB, slm, d_max, p, ks0=None, weight_func=None, l=2, warning_threshold=5000):
-    """Returns all class-wise translations with permutation p that has d <= d_max, including ks0.
+def pct_fill(crystA, crystB, slm, max_d, p, ks0=None, weight_func=None, l=2, warning_threshold=5000):
+    """Returns all class-wise translations with permutation p that has d <= max_d, including ks0.
     """
     z = p.shape[0]
     if z == 1: return np.array([ks0], dtype=int)
@@ -280,7 +248,7 @@ def pct_fill(crystA, crystB, slm, d_max, p, ks0=None, weight_func=None, l=2, war
     if ks0 is None:
         d0, ks0, _ = optimize_ct(crystA, crystB, slm, p, weight_func=weight_func, l=l)
     else: d0 = dl(ks0.reshape(1,3,z)) ** (1/l)
-    if d0 > d_max: raise ValueError("The shuffle distance of the given PCT already exceeds d_max.")
+    if d0 > max_d: raise ValueError("The shuffle distance of the given PCT already exceeds max_d.")
 
     # flood-filling ks
     dks = []
@@ -298,11 +266,11 @@ def pct_fill(crystA, crystB, slm, d_max, p, ks0=None, weight_func=None, l=2, war
     queue = ks0.reshape(1,3,z) + dks
     while queue.shape[0] > 0:
         visited = np.concatenate([visited, queue], axis=0)
-        is_valid = dl(queue) <= d_max ** l
+        is_valid = dl(queue) <= max_d ** l
         new_valid = queue[is_valid,:,:]
         valid = np.concatenate([valid, new_valid], axis=0)
         if len(valid) > warning_threshold:
-            print(f"\nWarning: Already filled {len(valid)} PCTs, which exceeds 'alarm_threshold'. We suggest you to use a smaller 'd_max'.")
+            print(f"\nWarning: Already filled {len(valid)} PCTs, which exceeds 'alarm_threshold'. We suggest you to use a smaller 'max_d'.")
             warning_threshold *= 4
         queue = np.unique((new_valid.reshape(-1,1,3,z) + dks.reshape(1,-1,3,z)).reshape(-1,3,z), axis=0)
         queue = setdiff2d(queue.reshape(-1,3*z), visited.reshape(-1,3*z)).reshape(-1,3,z)
@@ -344,7 +312,7 @@ def cong_permutations(p, crystA, crystB, slm):
                         .round(7) % 1.0) == 0).all(axis=0))[1] for j in range(tB.shape[1])]
     return np.unique([kB[p[kA]] for kA in lA for kB in lB], axis=0)
 
-def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, incong=True, verbose=1, warning_threshold=5000):
+def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, incong=True, verbose=1, warning_threshold=5000):
     """
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
@@ -355,7 +323,7 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
     pB_sup = crystB_sup[2].T
 
     if verbose >= 1:
-        print(f"Enumerating bottom PCTs with d <= {d_max:.4f} ...")
+        print(f"Enumerating bottom PCTs with d <= {max_d:.4f} ...")
         prob_solved = 0
         prob_total = 1
         progress_bar = tqdm(total=prob_total, position=prob_solved, desc="\tnodes", ncols=50, mininterval=0.5,
@@ -378,7 +346,7 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
         if not split:
             for t in sobol3.random(t_grid) @ f.T:
                 d, p, ks, _ = optimize_pct_local(c_sup_half, species, pA_sup, pB_sup, t, constraint=node, weight_func=weight_func, l=l)
-                if d <= d_max:
+                if d <= max_d:
                     bottom_pcts.append(zip_pct(p, ks))
                     for new_node in murty_split(node, p):
                         node_stack.append(new_node)
@@ -386,7 +354,7 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
                     if incong:
                         for p_cong in cong_permutations(p, crystA, crystB, slm):
                             split_stack.append(p_cong)
-                if d <= d_max or d >= IMPOSSIBLE_DISTANCE: break
+                if d <= max_d or d >= IMPOSSIBLE_DISTANCE: break
         if verbose >= 1:
             prob_solved += 1
             progress_bar.total = prob_total
@@ -395,8 +363,8 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
             progress_bar.refresh()
     if verbose >= 1:
         progress_bar.close()
-        print(f"\tFound {len(bottom_pcts)} {'incongruent bottom PCTs' if incong else 'bottom PCTs (not incongruent)'} with d <= {d_max}.")
-        print(f"Filling non-bottom PCTs with d <= {d_max:.4f} ...")
+        print(f"\tFound {len(bottom_pcts)} {'noncongruent bottom PCTs' if incong else 'bottom PCTs (may be congruent)'} with d <= {max_d}.")
+        print(f"Filling non-bottom PCTs with d <= {max_d:.4f} ...")
 
     pctlist = []
     dlist = []
@@ -404,13 +372,13 @@ def enumerate_pct(crystA, crystB, slm, d_max, weight_func=None, l=2, t_grid=16, 
         progress_bar = tqdm(total=len(bottom_pcts), position=0, desc="\tbottom PCTs", ncols=70, mininterval=0.5,
                         bar_format=f'{{desc}}: {{n_fmt:>2s}}/{{total_fmt:>2s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
     for pct in bottom_pcts:
-        for ks in pct_fill(crystA, crystB, slm, d_max, pct[:,0], ks0=pct[:,1:].T, weight_func=weight_func, l=l, warning_threshold=warning_threshold):
+        for ks in pct_fill(crystA, crystB, slm, max_d, pct[:,0], ks0=pct[:,1:].T, weight_func=weight_func, l=l, warning_threshold=warning_threshold):
             pctlist.append(zip_pct(pct[:,0], ks))
             dlist.append(pct_distance(c_sup_half, pA_sup, pB_sup, pct[:,0], ks, weights=weights, l=l))
         if verbose >= 1: progress_bar.update(1)
     if verbose >= 1:
         progress_bar.close()
-        print(f"\tFound {len(pctlist)} {'incongruent PCTs' if incong else 'PCTs (not incongruent)'} with d <= {d_max}.")
+        print(f"\tFound {len(pctlist)} {'noncongruent PCTs' if incong else 'PCTs (may be congruent)'} with d <= {max_d}.")
     return np.array(pctlist, dtype=int), np.array(dlist)
 
 def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2):
@@ -428,7 +396,7 @@ def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2):
     n_iter = 0
     while True:
         n_iter += 1
-        dh, ks = optimize_ct_fixed(c, pA, pB+t0, weights=weights, l=l)
+        dh, ks = optimize_ct_fixed(c, pA, pB+t0, p, weights=weights, l=l)
         d, t0 = pct_distance(c, pA, pB, p, ks, weights=weights, l=l, return_t0=True)
         if dh - d < 1e-4: break
         if n_iter > 100: raise RecursionError("CT optimization failed to converge. Please report this bug to wfc@pku.edu.cn if you see this message.")
@@ -444,15 +412,16 @@ def optimize_ct(crystA, crystB, slm, p, weight_func=None, l=2, t_grid=64):
     weights = [weight_func[s] for s in species] if weight_func else None
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
-    reslist = [optimize_ct_local(c_sup_half, pA_sup, pB_sup, t, weights=weights, l=l) for t in Sobol(3).random(t_grid) @ f.T]
+    reslist = [optimize_ct_local(c_sup_half, pA_sup, pB_sup, p, t, weights=weights, l=l) for t in Sobol(3).random(t_grid) @ f.T]
     ind = np.argmin([res[0] for res in reslist])
     d, ks, t0 = reslist[ind]
     return d, ks, t0
 
 def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: float,
     strain: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss, tol: float = 1e-3, max_iter: int = 1000,
-    weight_func: Union[Dict[str, float], None] = None, l: int = 2, t_grid: int = 64, verbose: int = 1):
-    """Enumerating all IMTs of multiplicity `mu` with `w` smaller than `w_max` and their representative CSMs.
+    weight_func: Union[Dict[str, float], None] = None, l: int = 2, t_grid: int = 64, verbose: int = 1
+) -> tuple[NDArray[np.int32], List[NDArray[np.int32]], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]:
+    """Enumerating all representative CSMs with multiplicity and strain not larger than `max_mu` and `max_strain`.
     
     Parameters
     ----------
@@ -481,25 +450,25 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     
     Returns
     -------
-    pct_arrs : list of (..., 4) arrays of ints
-        The PCTs of representative CSMs, where `...` is the number of CSMs with multiplicity `mu`.
     slmlist : (N, 3, 3, 3) array of ints
         The IMTs enumerated.
+    pct_arrs : list of (..., 4) arrays of ints
+        The PCTs of representative CSMs, where `...` is the number of CSMs with multiplicity `mu`.
     mulist : (N,) array of ints
-        The multiplicities of the IMTs.
-    wlist : (N,) array of floats
-        The values of the function `w` for the IMTs.
+        The multiplicities of the representative CSMs.
+    strainlist : (N,) array of floats
+        The `strain` values of the representative CSMs.
     d0list : (N, ) array of floats
         The shuffle distances of the representative CSMs.
     """
     
     # enumerate SLMs
-    if verbose: print(f"\nEnumerating incongruent SLMs for mu <= {max_mu} and {'rmss' if strain == rmss else 'w'} <= {max_strain:.4f} ...")
+    if verbose: print(f"\nEnumerating noncongruent SLMs for mu <= {max_mu} and {'rmss' if strain == rmss else 'w'} <= {max_strain:.4f} ...")
     slmlist = np.array([], dtype=int).reshape(0,3,3,3)
     for mu in range(1,max_mu+1):
         slmlist = np.concatenate([slmlist, enumerate_imt(crystA, crystB, mu, max_strain, strain=strain, tol=tol, max_iter=max_iter, verbose=verbose)], axis=0)
     slmlist = np.array(slmlist)
-    if verbose: print(f"A total of {len(slmlist):d} incongruent SLMs are enumerated:")
+    if verbose: print(f"A total of {len(slmlist):d} noncongruent SLMs are enumerated:")
     if len(slmlist) == 0:
         print("Warning: No SLM is found. Try larger arguments for '--enumeration' or check if the input POSCARs are correct.")
         return None, None, None, None, None
@@ -512,27 +481,27 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     _, ind = np.unique(deformation_gradient(crystA, crystB, slmlist).round(decimals=4), axis=0, return_index=True)
     slmlist = slmlist[ind]
     mulist = imt_multiplicity(crystA, crystB, slmlist)
-    wlist = strain(deformation_gradient(crystA, crystB, slmlist))
+    strainlist = strain(deformation_gradient(crystA, crystB, slmlist))
     
     # sort SLMs by 'mu' and then by 'w'
-    ind = np.lexsort((wlist.round(decimals=4), mulist))
+    ind = np.lexsort((strainlist.round(decimals=4), mulist))
     slmlist = slmlist[ind]
     mulist = mulist[ind]
-    wlist = wlist[ind]
+    strainlist = strainlist[ind]
     if verbose:
         print(f"Among them, there are {len(slmlist):d} distinct deformation gradients:")
         print(f"\tmu0 {' '.join(f'{i:5d}' for i in range(1,max_mu+1))}")
         print(f"\t#S  {' '.join(f'{s:5d}' for s in np.bincount(mulist, minlength=max_mu+1)[1:])}")
 
     # computing representative CSMs
-    pct_arrs = [np.array("arr_mu.npy saves the PCTs of those CSMs with multiplicity mu", dtype=str)]
+    pct_arrs = [NPZ_ARR_COMMENT]
     d0list = np.zeros(len(slmlist))
     if verbose: print(f"Computing representative CSMs (the one with the lowest d among all CSMs with the same deformation gradient):")
     n_digit = np.floor(np.log10(np.bincount(mulist).max())).astype(int) + 1
-    for mu in range(1,max_mu+1):
+    for mu in range(1, max_mu + 1):
         n_csm = np.sum(mulist == mu)
         if n_csm == 0:
-            pct_arrs.append(np.array(f"There is no CSM with multiplicity {mu}", dtype=str))
+            pct_arrs.append(np.zeros((0, mu * np.lcm(crystA[2].shape[0], crystB[2].shape[0]), 4)), dtype=int)
             continue
         pctlist = []
         if verbose: 
@@ -547,11 +516,95 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
         pctlist = np.array(pctlist, dtype=int)
         
         # sort CSMs by 'w' and then by 'd'
-        ind = np.lexsort((d0list[mulist == mu].round(decimals=4), wlist[mulist == mu].round(decimals=4)))
+        ind = np.lexsort((d0list[mulist == mu].round(decimals=4), strainlist[mulist == mu].round(decimals=4)))
         slmlist[mulist == mu] = slmlist[mulist == mu][ind]
         mulist[mulist == mu] = mulist[mulist == mu][ind]
-        wlist[mulist == mu] = wlist[mulist == mu][ind]
+        strainlist[mulist == mu] = strainlist[mulist == mu][ind]
         d0list[mulist == mu] = d0list[mulist == mu][ind]
         pctlist = pctlist[ind]
         pct_arrs.append(pctlist)
-    return pct_arrs, slmlist, mulist, wlist, d0list
+    return slmlist, pct_arrs, mulist, strainlist, d0list
+
+def enumerate_all_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: float, max_d: float,
+    strain: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss, tol: float = 1e-3, max_iter: int = 1000,
+    weight_func: Union[Dict[str, float], None] = None, l: int = 2, t_grid: int = 16, verbose: int = 1
+) -> tuple[NDArray[np.int32], NDArray[np.int32], List[NDArray[np.int32]], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]:
+    """Enumerating all CSMs with multiplicity, strain, and shuffle distance not larger than `max_mu`, `max_strain`, and `max_d`.
+    
+    Parameters
+    ----------
+    crystA : Cryst
+        The initial crystal structure.
+    crystB : Cryst
+        The final crystal structure.
+    max_mu : int
+        The maximum multiplicity.
+    max_strain : float
+        The maximum value of the function `strain`.
+    max_d : float
+        The maximum shuffle distance.
+    strain : Callable, optional
+        How to quantify the strain, usually `rmss` or obtained via `strain_energy_func()`. Default is `rmss`.
+    tol : float, optional
+        The tolerance for `spglib` symmetry detection. Default is 1e-3.
+    max_iter : int, optional
+        The maximum iteration number for IMT generation. Default is 1000.
+    weight_func : dict, optional
+        A dictionary of atomic weights for each species. Default is None, which means all atoms have the same weight.
+    l : float, optional
+        The type of norm to be used for distance calculation. Default is 2.
+    t_grid : int, optional
+        The number of grid points for PCT optimization. Default is 16.
+    verbose : int, optional
+        The level of verbosity. Default is 1.
+    
+    Returns
+    -------
+    slmlist : (N, 3, 3, 3) array of ints
+        The IMTs enumerated.
+    slm_ind : (N,) array of ints
+        The indices of the IMTs of the CSMs.
+    pct_arrs : list of (..., 4) arrays of ints
+        The PCTs of the CSMs, where `...` is the number of CSMs with multiplicity `mu`.
+    mulist : (N,) array of ints
+        The multiplicities of the CSMs.
+    strainlist : (N,) array of floats
+        The `strain` values of the CSMs.
+    dlist : (N, ) array of floats
+        The shuffle distances of the CSMs.
+    """
+    
+    if verbose: print(f"\nEnumerating noncongruent CSMs for mu <= {max_mu}, {'rmss' if strain == rmss else 'w'} <= {max_strain:.4f}, and d <= {max_d:.4f} ...")
+    zlcm = np.lcm(crystA[2].shape[0], crystB[2].shape[0])
+    slmlist = np.array([], dtype=int).reshape(0,3,3,3)
+    slm_ind = []
+    pct_arrs = []
+    dlist = np.array([], dtype=float)
+
+    slm_count = 0
+    for mu in range(1, max_mu + 1):
+        slmlist_mu = enumerate_imt(crystA, crystB, mu, max_strain, strain=strain, tol=tol, max_iter=max_iter, verbose=verbose)
+        slmlist = np.concatenate([slmlist, slmlist_mu], axis=0)
+        pct_arr = np.array([], dtype=int).reshape(0, mu * zlcm, 4)
+        if verbose:
+            n_slm_mu = len(slmlist_mu)
+            print(f"\tFound {n_slm_mu:d} noncongruent SLMs with mu = {mu:d}, enumerating their PCTs ...")
+            progress_bar = tqdm(total=n_slm_mu, position=0, desc=f"\r\tSLMs", ncols=60, mininterval=0.5,
+                    bar_format=f'{{desc}}: {{n_fmt:>3s}}/{{total_fmt:>3s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
+        for slm in slmlist_mu:
+            pcts, ds = enumerate_pct(crystA, crystB, slm, max_d, weight_func=weight_func, l=l, t_grid=t_grid, verbose=0, warning_threshold=100000)
+            slm_ind += [slm_count] * pcts.shape[0]
+            pct_arr = np.concatenate([pct_arr, pcts], axis=0)
+            dlist = np.concatenate([dlist, ds], axis=0)
+            slm_count += 1
+            if verbose: progress_bar.update(1)
+        if verbose: progress_bar.close()
+        pct_arrs.append(pct_arr)
+    
+    slmlist = np.array(slmlist, dtype=int)
+    slm_ind = np.array(slm_ind, dtype=int)
+    mulist = imt_multiplicity(crystA, crystB, slmlist)[slm_ind]
+    strainlist = strain(deformation_gradient(crystA, crystB, slmlist))[slm_ind]
+    if verbose:
+        print(f"\nA total of {slmlist.shape[0]:d} noncongruent SLMs and {slm_ind.shape[0]:d} CSMs are enumerated.")
+    return slmlist, slm_ind, pct_arrs, mulist, strainlist, dlist

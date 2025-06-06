@@ -72,9 +72,9 @@ If you use `crystmatch` in your research, please cite one of the following paper
     }
     ```
 
-- **Classification and Enumeration of Solid-Solid Phase Transition Mechanisms**
+- **[Classification and Enumeration of Solid-Solid Phase Transition Mechanisms](https://arxiv.org/abs/2506.05105)**
 
-    *In preparation*
+    *Under review* (2025)
 
     ```
     @unpublished{wang2025classification,
@@ -110,19 +110,19 @@ crystmatch --help
 
 ### Enumerating CSMs
 
-To generate a list of representative CSMs between two crystal structures given by `./POSCAR_I` and `./POSCAR_F`, with upper bounds `MAX_MU = 2` for multiplicity and `MAX_W = 0.4` for RMSS, run:
+To generate a list of representative CSMs between two crystal structures given by `graphite.poscar` and `diamond.poscar`, with upper bounds `MAX_MU = 2` for multiplicity and `MAX_STRAIN = 0.4` for RMSS, run:
 
 ```
-crystmatch --enumerate ./POSCAR_I ./POSCAR_F 2 0.4
+crystmatch --enumerate graphite.poscar diamond.poscar 2 0.4
 ```
 
 The following files will be created in the current directory:
 
 ```powershell
 ./
-├── CSMLIST-m2s0.40.npz       # stores the enumerated CSMs and metadata.
-├── SUMMARY-m2s0.40.csv       # lists the multiplicity, RMSS, and RMSD.
-└── SCATTER-m2s0.40.pdf       # shows the RMSD-RMSS distribution of the CSMs.
+├── CSMLIST-m2s0.4.npz       # stores the enumerated CSMs and metadata.
+├── SUMMARY-m2s0.4.csv       # lists the multiplicity, RMSS, and RMSD.
+└── SCATTER-m2s0.4.pdf       # shows the RMSD-RMSS distribution of the CSMs.
 ```
 
 !!! warning "Caveat"

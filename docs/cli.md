@@ -20,7 +20,7 @@ flowchart TB
 CSMCAR is a plain text file that provides extra information for generating and analyzing CSMs. `crystmatch` will **not** read a CSMCAR file unless it is specified in the `--extra` option, as:
 
 ```
-crystmatch --enumerate ./graphite ./diamond 2 0.3 --extra ./CSMCAR.txt
+crystmatch --enumerate graphite.poscar diamond.poscar 2 0.3 --extra CSMCAR.txt
 ```
 
 CSMCAR may contain at most three fields:
@@ -56,9 +56,9 @@ final elastic tensor:
 The axis name must be given in each row. The above CSMCAR is in the order of `XX`, `YY`, `ZZ`, `XY`, `YZ`, `ZX`, which is the same as [VASP](https://www.vasp.at/wiki/index.php/Phonons_from_finite_differences). However, the elastic tensors provided by [Materials Project](https://docs.materialsproject.org/methodology/materials-methodology/elasticity) are in the order of `XX`, `YY`, `ZZ`, `YZ`, `ZX`, `XY`, in which case you should write the axis name in the same order.
 
 !!! note
-    Once you use `--extra` or `-e` and provide the elastic tensors, the `--enumerate` mode will interpret its last parameter `MAX_W` as the maximum strain energy density, not the maximum root-mean-square strain (RMSS). The unit of `MAX_W` is the same as the unit of the elastic tensors in the CSMCAR file.
+    Once you use `--extra` or `-e` and provide the elastic tensors, the `--enumerate` mode will interpret its last parameter `MAX_STRAIN` as the maximum strain energy density, not the maximum root-mean-square strain (RMSS). The unit of `MAX_STRAIN` is the same as the unit of the elastic tensors in the CSMCAR file.
 
-    If you want to use the RMSS as the pruning criterion, and then calculate the strain energy density $w$ for each CSM, you can use `--enumerate` without providing the elastic tensors, and then use `--read` and `--extra` to calculate $w$ for each CSM in the NPZ file.
+    If you want to use the RMSS as the pruning criterion, and then calculate the strain energy density $w$ for each CSM, please use `crystmatch` as a [Python module](https://fangcheng-wang.github.io/crystmatch/api/).
 
 ### Atomic weights
 
@@ -78,7 +78,7 @@ $$
 d(\mathcal{J})=\min_{\mathbf{t}_0 \in \mathbb{R}^{3}}\sqrt{\sum_{i=1}^{\tilde Z}\theta_i\left|\tilde{\mathcal{J}}(\tilde{\mathbf{a}}_i)+\mathbf{t}_0-\tilde{\mathbf{a}}_i\right|^2},
 $$
 
-where $\mathcal{J}\colon\mathcal{A}\to\mathcal{B}$ is a CSM, $\tilde{\mathcal{J}}\colon\tilde{\mathcal{A}}\to\tilde{\mathcal{B}}$ its standard shuffle, $\tilde Z$ its period, $\tilde{\mathbf{a}}_i\in\tilde{\mathcal{A}}$ the position of the $i$-th atom, and $\theta_i$ the normalized weight of the $i$-th atom. See [this paper] for more details.
+where $\mathcal{J}\colon\mathcal{A}\to\mathcal{B}$ is a CSM, $\tilde{\mathcal{J}}\colon\tilde{\mathcal{A}}\to\tilde{\mathcal{B}}$ its standard shuffle, $\tilde Z$ its period, $\tilde{\mathbf{a}}_i\in\tilde{\mathcal{A}}$ the position of the $i$-th atom, and $\theta_i$ the normalized weight of the $i$-th atom. See [this paper](https://arxiv.org/abs/2506.05105) for more details.
 
 ### Orientation relationship
 
@@ -100,10 +100,16 @@ To benchmark CSMs with a given orientation relationship, two parameters must be 
     [hk\ell]=h\mathbf{a}+k\mathbf{b}+\ell\mathbf{c},
     $$
     
-    where $\mathbf{a}, \mathbf{b}, \mathbf{c}$ are the lattice vectors of the **conventional cell**. They depend only on the crystal systems of the initial and final structures, and are determined using **[Spglib](https://spglib.readthedocs.io/en/stable/definition.html#def-idealize-cell)**.
+    where $\mathbf{a}, \mathbf{b}, \mathbf{c}$ are the lattice vectors of the **conventional cell**. They are determined by **[Spglib](https://spglib.readthedocs.io/en/stable/definition.html#def-idealize-cell)** and depend only on the crystal systems of the initial and final structures.
 
     !!! warning "Caveat"
-        **The conventional cell is not the primitive cell if the [Bravais lattice](https://en.wikipedia.org/wiki/Bravais_lattice) is base-centered, face-centered, or body-centered.** If your space group name does not begin with `P` or `R`, we recommend using `--interact` to check if the conventional cell is the same as you expect.
+        **The conventional cell is not the primitive cell if the [Bravais lattice](https://en.wikipedia.org/wiki/Bravais_lattice) is base-centered, face-centered, or body-centered.** We recommend using
+        
+        ```
+        crystmatch --read CSMLIST.npz 0 --interact
+        ```
+
+        to check if the conventional cell is the same as you expect.
 
 2. The assumption used to determine the orientation of the final structure, must be one of the following:
 
@@ -116,26 +122,26 @@ To benchmark CSMs with a given orientation relationship, two parameters must be 
 If you have a `CSMLIST.npz` file and a `CSMCAR.txt` file containing an orientation relationship, you can run:
 
 ```
-crystmatch --read ./CSMLIST.npz --extra ./CSMCAR.txt --orientation 'norot'
+crystmatch --read CSMLIST.npz --extra CSMCAR.txt --orientation 'norot'
 ```
 or
 
 ```
-crystmatch --read ./CSMLIST.npz --extra ./CSMCAR.txt --orientation 'uspfixed'
+crystmatch --read CSMLIST.npz --extra CSMCAR.txt --orientation 'uspfixed'
 ```
 
 ## All options
 
 ```bash
-crystmatch [--help] [--version] \                           # package information
-           [--extra CSMCAR] [--tolerance TOL] \             # global settings
-           [--enumerate POSCAR_I POSCAR_F MAX_MU MAX_W] \   # enumerate representative CSMs
-           [--read CSMLIST [IND1 IND2 ...]] \               # read from CSMLIST
-           [--direct POSCAR_I POSCAR_F] \                   # read from POSCARs
-           [--all MAX_D] \                                  # exhaustive enumeration
-           [--orientation ASSUM] \                          # orientation benchmarking
-           [--poscar [ASSUM]] [--xdatcar [ASSUM]] \         # export individual CSMs
-           [--csv] [--scatter] [--interact [SIZE]]          # summary and visualization
+crystmatch [--help] [--version] \                               # package information
+           [--extra CSMCAR] [--tolerance TOL] \                 # global settings
+           [--enumerate POSCAR_I POSCAR_F MAX_MU MAX_STRAIN] \  # enumerate rep. CSMs
+           [--read CSMLIST [IND1 IND2 ...]] \                   # read CSMs from NPZ
+           [--direct POSCAR_I POSCAR_F] [--literal] \           # single CSM analysis
+           [--all MAX_D] \                                      # exhaustive enumeration
+           [--orientation ASSUM] \                              # orientation benchmarking
+           [--poscar [ASSUM]] [--xdatcar [ASSUM]] \             # export individual CSMs
+           [--csv] [--scatter] [--interact [SIZE]]              # summarize and visualize
 ```
 
 If you are not familiar with `crystmatch`, we recommend you first read the [tutorial](https://fangcheng-wang.github.io/crystmatch/) and then come back to this page for a detailed explanation of the options.
@@ -148,9 +154,9 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
 
     Show program's version number and exit.
 
-- `-E POSCAR_I POSCAR_F MAX_MU MAX_W`, `--enumerate POSCAR_I POSCAR_F MAX_MU MAX_W`
+- `-E POSCAR_I POSCAR_F MAX_MU MAX_STRAIN`, `--enumerate POSCAR_I POSCAR_F MAX_MU MAX_STRAIN`
 
-    Enumerate representative CSMs (those with the minimal shuffle distance among all CSMs that share the same deformation gradient) between the initial and final structures defined in `POSCAR_I` and `POSCAR_F`, with `MAX_MU` and `MAX_W` as upper bounds for the multiplicity and RMSS. If elastic tensors are provided, `MAX_W` is instead interpreted as the maximum strain energy density (with the same unit as in the [CSMCAR](#elastic-tensors) file).
+    Enumerate representative CSMs (those with the minimal shuffle distance among all CSMs that share the same deformation gradient) between the initial and final structures defined in `POSCAR_I` and `POSCAR_F`, with `MAX_MU` and `MAX_STRAIN` as upper bounds for the multiplicity and RMSS. If elastic tensors are provided, `MAX_STRAIN` is instead interpreted as the maximum strain energy density (with the same unit as in the [CSMCAR](#elastic-tensors) file).
 
 - `-R CSMLIST [IND1 IND2 ...]`, `--read CSMLIST [IND1 IND2 ...]`
 
@@ -158,10 +164,14 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
 
 - `-D POSCAR_I POSCAR_F`, `--direct POSCAR_I POSCAR_F`
 
-    Directly read a single CSM from a pair of POSCAR files `POSCAR_I` and `POSCAR_F`.
+    Directly read a single CSM from a pair of POSCAR files `POSCAR_I` and `POSCAR_F`. The CSM is determined such that each cell vector or atomic position in `POSCAR_I` is mapped to the corresponding one (with the same row index) in `POSCAR_F`. **Make sure that the cell vectors and atomic positions in `POSCAR_I` and `POSCAR_F` are ordered as you expect.**
 
     !!! warning "Caveat"
-        When writing the POSCAR, some softwares may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. In such cases, you should use `--all` and `--interact` to restore and identify the expected CSM.
+        When writing the POSCAR, some softwares may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. To avoid this issue, `crystmatch` will automatically add integers to the fractional coordinates to minimize the shuffle distance. However, if you are confident that the fractional coordinates represent the true initial and final atomic positions, use `--literal` to keep the original fractional coordinates.
+
+- `-l`, `--literal`
+
+    Keep the original fractional coordinates in the POSCAR files when using `--direct`.
 
 - `-e CSMCAR`, `--extra CSMCAR`
 
@@ -173,7 +183,7 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
 
 - `-t TOL`, `--tolerance TOL`
 
-    Tolerance for determining crystal symmetry. Default is `1e-3`.
+    Tolerance in angstroms for detecting symmetry. Default is `1e-3`.
 
 - `-i [SIZE]`, `--interact [SIZE]`
 
