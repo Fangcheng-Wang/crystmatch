@@ -740,13 +740,15 @@ and update it by running:
 <p><img alt="3D interactive plot" src="src/interact.jpg" /></p>
 <p>However, using <code>--interact</code> in <code>--enumerate</code> mode might be unwise, as you would have to visually inspect numerous CSMs one by one. The recommended workflow is:</p>
 <ol>
-<li>Perform <a href="#enumerating-representative-csms">enumeration</a>, generating <code>SCATTER.pdf</code>, <code>SUMMARY.csv</code>, and <code>CSMLIST.npz</code>.</li>
+<li>Perform <a href="#enumerating-representative-csms">enumeration</a> (using <code>-all MAX_D</code> or not), generating <code>SCATTER.pdf</code>, <code>SUMMARY.csv</code>, and <code>CSMLIST.npz</code>.</li>
 <li>See <code>SCATTER.pdf</code> and roughly note the RMSS and RMSD values of CSMs of interest.</li>
-<li>Identify the corresponding <code>csm_id</code> values for these CSMs in <code>SUMMARY.csv</code>, e.g., <code>0</code>, <code>7</code>, <code>112</code>.</li>
-<li>Read and visualize these CSMs from <code>CSMLIST.npz</code> using the following command:</li>
-</ol>
-<div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz 0 7 112 --interact
+<li>Identify the corresponding <code>csm_id</code> values for these CSMs in <code>SUMMARY.csv</code>, e.g., <code>1</code>, <code>14</code>, <code>514</code>.</li>
+<li>
+<p>Read these CSMs from <code>CSMLIST.npz</code> using <code>--read CSMLIST [IND1 IND2 ...]</code>, e.g., run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz 1 14 514 --interact
 </code></pre></div>
+</li>
+</ol>
 <div class="admonition note">
 <p class="admonition-title">Suggestion</p>
 <p>You can enumerate CSMs on a remote server or WSL, and then download the <code>CSMLIST.npz</code> file to your local machine so that the CSMs can be visualized interactively using <code>--interact</code>.</p>
@@ -756,13 +758,13 @@ and update it by running:
 <div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz 7 10 --poscar
 </code></pre></div>
 <p>Two folders will be created in <code>./EXPORT-read/</code>, each containing a pair of POSCAR files representing the CSM:</p>
-<div class="highlight"><pre><span></span><code>./EXPORT-read/
-├── CSM_7/
-│   ├── POSCAR_I
-│   └── POSCAR_F
-└── CSM_10/
-    ├── POSCAR_I
-    └── POSCAR_F
+<div class="highlight"><pre><span></span><code><span class="p">./</span><span class="nb">EXPORT-read</span><span class="p">/</span>
+<span class="err">├──</span> <span class="n">CSM_7</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">├──</span> <span class="n">POSCAR_I</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR_F</span>
+<span class="err">└──</span> <span class="n">CSM_10</span><span class="p">/</span>
+    <span class="err">├──</span> <span class="n">POSCAR_I</span>
+    <span class="err">└──</span> <span class="n">POSCAR_F</span>
 </code></pre></div>
 <p>You can also export CSMs as XDATCAR files using the <code>--xdatcar</code> option. Both <code>--poscar</code> and <code>--xdatcar</code> are also available in <code>--enumerate</code> and <code>--direct</code> modes.</p>
 <h3 id="identifying-csm-from-a-pair-of-poscar-files">Identifying CSM from a pair of POSCAR files</h3>
