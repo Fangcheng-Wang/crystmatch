@@ -13,11 +13,13 @@ __description__ = 'Enumerating and analyzing crystal-structure matches for solid
 __url__ = 'https://fangcheng-wang.github.io/crystmatch/'
 __epilog__ = 'The current version is v' + __version__ + '. To get the latest version, please run:\
 \n\n\t$ pip3 install --upgrade crystmatch\n\nWe also recommend you to see the documentation at:\
-\n\n\t' + __url__ + '\n\nIf you use crystmatch in your research, please cite the following paper: \n\n\t\
-[1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\n\n\
-You are also welcome to contact us at ' + __email__ + ' for any questions, feedbacks or comments.'
+\n\n\t' + __url__ + '\n\nIf you use crystmatch in your research, please cite one of the following paper:\
+\n\n\t[1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\
+\n\t[2] FC Wang, QJ Ye, YC Zhu, and XZ Li, Under review (2025) (https://arxiv.org/abs/2506.05105)\
+\n\nYou are also welcome to contact us at ' + __email__ + ' for any questions, feedbacks or comments.'
 
 def main():
+
     time0 = perf_counter()
     sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
     sys.stderr = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
@@ -123,11 +125,11 @@ def main():
             slmlist, slm_ind, pct_arrs, mulist, strainlist, dlist = enumerate_all_csm(crystA, crystB, max_mu, max_strain, max_d, strain=strain, weight_func=weight_func, tol=tol)
         
         if strain == rmss:
-            header = "# csm_id,  slm_id,      mu,  period,    rmss,  rmsd/Å"
+            header = ['csm_id', 'slm_id', 'mu', 'period', 'rmss', 'd']
             data = np.array([np.arange(len(slm_ind)), slm_ind, mulist, zlcm * mulist, strainlist, dlist]).T
         else:
             rmsslist = rmss(deformation_gradient(crystA, crystB, slmlist))[slm_ind]
-            header = "# csm_id,  slm_id,      mu,  period,       w,    rmss,  rmsd/Å"
+            header = ['csm_id', 'slm_id', 'mu', 'period', 'w', 'rmss', 'd']
             data = np.array([np.arange(len(slm_ind)), slm_ind, mulist, zlcm * mulist, strainlist, rmsslist, dlist]).T
 
     elif mode == 'read':
@@ -143,23 +145,27 @@ def main():
         data = table.data
         
         if len(args.read) > 1:
-            indices = [int(i) for i in args.read[1:]]
+            indices = np.array([int(i) for i in args.read[1:]], dtype=int)
+            valid = np.nonzero(indices < len(slm_ind))[0]
+            if not valid.all():
+                print(f"Warning: Indices out of range (> {len(slm_ind)-1:d}) will be ignored.")
+                indices = indices[valid]
             print(f"\tReading CSMs with indices:", end='')
             max_mu = imt_multiplicity(crystA, crystB, slmlist[slm_ind[indices]]).max()
-            slmlist_temp = np.array([], dtype=ind).reshape(0,3,3,3)
+            slmlist_temp = np.array([], dtype=int).reshape(0,3,3,3)
             slm_ind_temp = []
-            pct_arrs_temp = [NPZ_ARR_COMMENT] + [[] for _ in range(max_mu)]
+            pct_arrs_temp = [NPZ_ARR_COMMENT] + [np.array([], dtype=int).reshape(0, mu * zlcm, 4) for mu in range(1, max_mu + 1)]
             for i in indices:
                 print(f" {i:4d}", end='')
                 slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
-                where = np.nonzero((slm == slmlist).all(axis=(1,2,3)).any())[0]
+                where = np.nonzero((slm == slmlist_temp).all(axis=(1,2,3)).any())[0]
                 if where.shape[0] == 0:
                     slm_ind_temp.append(slmlist_temp.shape[0])
-                    slmlist_temp = np.concatenate((slmlist_temp, slm.reshape(-1,3,3,3)), axis=0)
+                    slmlist_temp = np.concatenate([slmlist_temp, slm.reshape(1,3,3,3)], axis=0)
                 else:
                     slm_ind_temp.append(where[0])
                 mu = imt_multiplicity(crystA, crystB, slm)
-                pct_arrs_temp[mu].append(zip_pct(p, ks))
+                pct_arrs_temp[mu] = np.concatenate([pct_arrs_temp[mu], zip_pct(p, ks).reshape(1,-1,4)], axis=0)
             print('\n', end='')
             slmlist = slmlist_temp
             slm_ind = slm_ind_temp
@@ -201,12 +207,14 @@ def main():
             strainlist = strain(deformation_gradient(crystA, crystB, slmlist))[slm_ind]
 
             if strain == rmss:
-                header = "# csm_id,  slm_id,      mu,  period,    rmss,  rmsd/Å"
+                header = ['csm_id', 'slm_id', 'mu', 'period', 'rmss', 'd']
                 data = np.array([np.arange(len(slm_ind)), slm_ind, mulist, zlcm * mulist, strainlist, dlist]).T
             else:
                 rmsslist = rmss(deformation_gradient(crystA, crystB, slmlist))[slm_ind]
-                header = "# csm_id,  slm_id,      mu,  period,       w,    rmss,  rmsd/Å"
+                header = ['csm_id', 'slm_id', 'mu', 'period', 'w', 'rmss', 'd']
                 data = np.array([np.arange(len(slm_ind)), slm_ind, mulist, zlcm * mulist, strainlist, rmsslist, dlist]).T
+        
+        else: strain = 'w' if 'w' in header else rmss
 
     elif mode == 'direct':
 
@@ -246,14 +254,9 @@ def main():
         print(f"\tperiod: {zlcm * mu:2d}")
         print(f"\trmss: {100 * rms_strain:.1f} %")
         print(f"\trmsd: {d:.2f} Å")
-        
-        if strain == rmss:
-            header = "# csm_id,  slm_id,      mu,  period,    rmss,  rmsd/Å"
-            data = np.array([[0], [0], [mu], [zlcm * mu], [rms_strain], [d]]).T
-        else:
+        if not strain == rmss:
             w = strain(deformation_gradient(crystA, crystB, slm))
-            header = "# csm_id,  slm_id,      mu,  period,       w,    rmss,  rmsd/Å"
-            data = np.array([[0], [0], [mu], [zlcm * mu], [w], [rms_strain], [d]]).T
+            print(f"\testimated strain energy: {w:.4f} (same unit as in CSMCAR)")
         
         print("Using the primitive cells above, the SLM has the following IMT representation:")
         print("H_A =")
@@ -265,99 +268,130 @@ def main():
         mu0 = imt_multiplicity(crystA, crystB, slm0)
         if mu0 == mu: print(f"The input POSCAR files are already smallest supercells required to describe the CSM, with:")
         else: print(f"The input POSCAR files are {mu0/mu:d}-fold larger than the smallest supercells required to describe the CSM, with:")
-        _, mA = decompose_cryst(crystA_sup, cryst_prim=crystA, tol=tol)
-        _, mB = decompose_cryst(crystB_sup, cryst_prim=crystB, tol=tol)
         print("M_A =")
-        print(mA)
+        print(decompose_cryst(crystA_sup, cryst_prim=crystA, tol=tol)[1])
         print("M_B =")
-        print(mB)
+        print(decompose_cryst(crystB_sup, cryst_prim=crystB, tol=tol)[1])
         
         print(f"\nTo produce a list of CSMs that contains this CSM, run:\n"
                 + f"\n\t$ crystmatch --enumerate '{fileA}' '{fileB}' {mu} {0.01 + rms_strain:.2f} --all {d:.2f}")
         print(f"\nIf you are not using a remote server and want to visualize this CSM, run:\n"
                 + f"\n\t$ crystmatch --direct '{fileA}' '{fileB}'{' --literal' if args.literal else ''} --interact")
         
-        if args.all is not None:
+        if args.all is None:
+            dlist = [d]
+            mulist = [mu]
+            slmlist = [slm]
+            slm_ind = [0]
+            pct_arrs = [NPZ_ARR_COMMENT] + [np.array([], dtype=int).reshape(0, m * zlcm, 4) for m in range(1, mu)]
+            pct_arrs.append(zip_pct(p, ks).reshape(1, -1, 4))
+        else:
             max_d = args.all
             jobname += f"-d{max_d:.2f}"
             if max_d > 2.0: print(f"Warning: Current MAX_D = {max_d:.2f} may result in a large number of CSMs, which may take a very long time to enumerate.")
             if zlcm * mu0 >= 12: print(f"Warning: Current period {zlcm * mu0:d} may result in a large number of CSMs, which may take a very long time to enumerate.")
             print(f"\nEnumerating all CSMs with the same SLM as the input POSCAR files (mu = {mu0:d}) and MAX_D = {max_d:.2f} ...")
             pctlist, dlist = enumerate_pct(crystA, crystB, slm0, max_d, weight_func=weight_func, verbose=False, warning_threshold=100000)
-            pct_arrs = [NPZ_ARR_COMMENT] + [np.array([], dtype=int).reshape(0, mu * zlcm, 4) for mu in range(1, mu0)]
-            pct_arrs.append(pctlist)
+            mulist = []
+            slmlist = np.array([], dtype=int).reshape(0,3,3,3)
+            slm_ind = []
+            pct_arrs = [NPZ_ARR_COMMENT] + [np.array([], dtype=int).reshape(0, mu * zlcm, 4) for mu in range(1, mu0 + 1)]
+            for pct in pctlist:
+                p_tmp, ks_tmp = unzip_pct(pct)
+                slm1, p1, ks1 = primitive_shuffle(crystA, crystB, slm0, p_tmp, ks_tmp)
+                mu1 = imt_multiplicity(crystA, crystB, slm1)
+                mulist.append(mu1)
+                where = np.nonzero((slm1 == slmlist).all(axis=(1,2,3)).any())[0]
+                if where.shape[0] == 0:
+                    slm_ind.append(slmlist.shape[0])
+                    slmlist = np.concatenate((slmlist, slm1.reshape(-1,3,3,3)), axis=0)
+                else:
+                    slm_ind.append(where[0])
+                pct_arrs[mu1] = np.concatenate([pct_arrs[mu1], zip_pct(p1, ks1).reshape(1,-1,4)], axis=0)
+
+        if strain == rmss:
+            header = ['csm_id', 'slm_id', 'mu', 'period', 'rmss', 'd']
+            data = np.array([np.arange(len(dlist)), slm_ind, mulist, zlcm * np.array(mulist), [rms_strain] * len(dlist), dlist]).T
+        else:
+            header = ['csm_id', 'slm_id', 'mu', 'period', 'w', 'rmss', 'd']
+            data = np.array([np.arange(len(dlist)), slm_ind, mulist, zlcm * np.array(mulist), [w] * len(dlist), [rms_strain] * len(dlist), dlist]).T
 
     print('\n', end='')   # simply a line break
 
     # orientation analysis
     
-    if args.orientation != None:
-        vix, viy, viz, vfx, vfy, vfz, wix, wiy, wiz, wfx, wfy, wfz = args.orientation
-        print(f"Comparing each CSM with the given OR:\n\t[{vix},{viy},{viz}] || [{vfx},{vfy},{vfz}]"
-                + f"\n\t[{wix},{wiy},{wiz}] || [{wfx},{wfy},{wfz}]")
-        r = orient_matrix([vix,viy,viz], [vfx,vfy,vfz], [wix,wiy,wiz], [wfx,wfy,wfz])
-        anglelist = deviation_angle(crystA, crystB, slmlist, r, uspfix=args.uspfix)
-        table = np.hstack((table, anglelist.reshape(-1,1)))
-        if args.direct is not None: print(f"The deviation angle is {anglelist[0]:.6f} = {anglelist[0]*180/np.pi:.4f}°\n")
-
-    # saving NPZ and POSCAR files
-    
-    if args.enumerate is not None:
-        # saving enumeration results in NPZ format
-        metadata = np.array([jobname, crystA, crystB, max_mu, max_strain, tol], dtype=object)
-        np.savez(unique_filename("Saving CSMs to", f"CSM_LIST-{jobname}.npz"), *csm_bins, metadata=metadata, slmlist=slmlist, table=table)
-    
-    if args.direct is not None:
-        # saving primitive cells
-        dirname = unique_filename(f"Saving optimized final structure (rotation-free, translated to minimize RMSD) to", "CSM_single")
-        makedirs(dirname)
-        save_poscar(f"{dirname}{sep}{args.initial.split(sep)[-1]}", crystA_sup)
-        save_poscar(f"{dirname}{sep}{splitext(args.final)[0].split(sep)[-1]}-optimized{splitext(args.final)[1]}", (cB_sup_final.T, crystB_sup[1], pB_sup_final.T))
-    
-    if args.poscar is not None:
-        if mode == 'direct': pass
-        
-        print(f"\nExporting CSMs with indices {', '.join(map(str, args.export))} in {args.read} ...")
-        for i in args.export:
-            if i >= table.shape[0]:
-                print(f"\nIndexWarning: Index {i} is out of range (there are only {table.shape[0]} CSMs).")
-                continue
-            slm = data['slmlist'][table[i,1].round().astype(int)]
-            mu = table[i,2].round().astype(int)
-            ind = np.sum(table[:i,2].round().astype(int) == mu)
-            p = data[f'arr_{mu:d}'][ind,:,0]
-            ks = data[f'arr_{mu:d}'][ind,:,1:].T
-            crystA_sup, crystB_sup = csm_to_cryst(crystA, crystB, slm, p, ks)
-            dirname = unique_filename(f"Saving the CSM with index {i:d} to", f"CSM_{i:d}")
-            makedirs(dirname)
-            save_poscar(f"{dirname}{sep}POSCAR_I", crystA_sup, crystname=f"CSM_{i:d} initial")
-            save_poscar(f"{dirname}{sep}POSCAR_F", crystB_sup, crystname=f"CSM_{i:d} final")
-            if args.interpolate is not None:
-                print(f"Creating XDATCAR file with {args.interpolate} additional images ...")
-                save_interpolation(f"{dirname}{sep}XDATCAR", crystA_sup, crystB_sup, args.interpolate, crystname=f"CSM_{i:d}")
-    
-    # saving CSV file and plotting
-
-    if args.csv:
-        if args.orientation is None:
-            np.savetxt(unique_filename("Saving results to", f"TABLE-{jobname}.csv"), table * np.array([1,1,1,100,1]), fmt='%8d,%8d,%8d,%8.4f,%8.4f',
-                        header=' index,  slm_id,      mu,    rmss,  rmsd/Å')
+    if args.orientation is not None:
+        if ori_rel is None:
+            print("Warning: Orientation relationship is not provided. Skipping orientation analysis.")
         else:
-            np.savetxt(unique_filename("Saving results to", f"TABLE-OR-{jobname}.csv"), table * np.array([1,1,1,100,1,180/np.pi]), fmt='%8d,%8d,%8d,%8.4f,%8.4f,%8.4f',
-                        header=' index,  slm_id,      mu,    rmss,  rmsd/Å, theta/°')
+            print("Comparing each CSM with the given OR ...")
+            hkl_i1, hkl_f1 = ori_rel[0]
+            hkl_i2, hkl_f2 = ori_rel[1]
+            vi = miller_to_vec(crystA, hkl_i1, tol=tol)
+            vf = miller_to_vec(crystB, hkl_f1, tol=tol)
+            wi = miller_to_vec(crystA, hkl_i2, tol=tol)
+            wf = miller_to_vec(crystB, hkl_f2, tol=tol)
+            r = orient_matrix(vi, vf, wi, wf)
+            anglelist = deviation_angle(crystA, crystB, slmlist, r, orientation=args.orientation)
+            header = header + ['angle']
+            data = np.hstack((data, anglelist.reshape(-1,1)))
+
+    # save NPZ, CSV, POSCAR, and XDATCAR files
     
-    if args.plot:
-        zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
-        visualize_slmlist(unique_filename("Creating scatter plot in", f"PLOT-{jobname}.pdf"), table[:,3], table[:,4], table[:,2].round().astype(int),
-                    cbarlabel=f"Multiplicity (× {zlcm:.0f} atom{'s' if zlcm>1 else ''})")
-        if args.orientation is not None:
-            visualize_slmlist(unique_filename("Creating scatter plot in", f"OR-{jobname}.pdf"),
-                        table[:,3], table[:,4], table[:,5]*180/np.pi, cbarlabel="Deviation (°)", cmap=plt.cm.get_cmap('jet'))
+    table = Table(data, header)
+    save_npz(unique_filename("Saving SLMs and CSMs to", f"CSMLIST-{jobname}.npz"), crystA, crystB, slmlist, slm_ind, pct_arrs, table)
+    if args.csv: save_csv(unique_filename("Saving summary table to", f"SUMMARY-{jobname}.csv"), table)
     
+    if args.poscar is not None or args.xdatcar is not None:
+        direxport = unique_filename(f"Saving POSCAR and/or XDATCAR files to", f"EXPORT-{jobname}")
+        makedirs(direxport)
+        for i in range(len(slm_ind)):
+            slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
+            makedirs(f"{direxport}{sep}CSM_{i:d}")
+            if args.poscar == 'norot' or args.xdatcar == 'norot':
+                crystA_csm, crystB_csm_norot = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol,
+                                                        orientation='norot', min_t0=True, weight_func=weight_func)
+                if args.poscar == 'norot':
+                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{i:d} initial")
+                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_F", crystB_csm_norot, crystname=f"CSM_{i:d} final (no rotation)")
+                if args.xdatcar == 'norot':
+                    save_xdatcar(f"{direxport}{sep}CSM_{i:d}{sep}XDATCAR", crystA_csm, crystB_csm_norot, images=50, crystname=f"CSM_{i:d} (no rotation)")
+            if args.poscar == 'uspfixed' or args.xdatcar == 'uspfixed':
+                crystA_csm, crystB_csm_usp1, crystB_csm_usp2 = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol,
+                                                        orientation='uspfixed', min_t0=True, weight_func=weight_func)
+                if args.poscar == 'uspfixed':
+                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{i:d} initial")
+                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_F1", crystB_csm_usp1, crystname=f"CSM_{i:d} final (USP1 fixed)")
+                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_F2", crystB_csm_usp2, crystname=f"CSM_{i:d} final (USP2 fixed)")
+                if args.xdatcar == 'uspfixed':
+                    save_xdatcar(f"{direxport}{sep}CSM_{i:d}{sep}XDATCAR1", crystA_csm, crystB_csm_usp1, images=50, crystname=f"CSM_{i:d} (USP1 fixed)")
+                    save_xdatcar(f"{direxport}{sep}CSM_{i:d}{sep}XDATCAR2", crystA_csm, crystB_csm_usp2, images=50, crystname=f"CSM_{i:d} (USP2 fixed)")
+    
+    # create scatter plot
+
+    if args.scatter:
+        visualize_slmlist(unique_filename("Creating scatter plot in", f"SCATTER-{jobname}.pdf"), data[:,header.index('rmss' if strain == rmss else 'w')],
+                            data[:,header.index('d')], data[:,header.index('mu')].round().astype(int),
+                            cbarlabel=f"Multiplicity (× {zlcm:.0f} atoms)")
+        if 'angle' in header:
+            visualize_slmlist(unique_filename("Creating scatter plot in", f"ANGLE-{jobname}.pdf"), data[:,header.index('rmss' if strain == rmss else 'w')],
+                            data[:,header.index('d')], data[:,header.index('angle')],
+                            cbarlabel="Deviation angle (rad)", cmap=plt.cm.get_cmap('Spectral'))
+        print(f"\tThe horizontal axis 'Strain' represents {'rmss' if strain == rmss else 'estimated strain energy (with the same unit as in CSMCAR)'}")
+    
+    # interactive visualization
+    
+    if args.interactive:
+        for i in range(len(slm_ind)):
+            slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
+            print("Displaying the CSM with csm_id = {i} ...")
+            visualize_csm(crystA, crystB, slm, p, ks, weight_func=weight_func, cluster_size=args.interactive, tol=tol)
+
     print(f"\nTotal time spent: {perf_counter()-time0:.2f} seconds")
+    return
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"\n\nError: {e} Use '--help' for usage information, or see the documentation at \n\n\t" + __url__)
+        print(f"\nError: {e} Use '--help' for usage information, or see the documentation at \n\n\t" + __url__)

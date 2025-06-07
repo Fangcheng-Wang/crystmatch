@@ -5,8 +5,8 @@ Save, load, analyze and visualize CSMs.
 from .utilities import *
 
 __all__ = ["decompose_cryst", "conventional_cryst", "csm_to_cryst", "cryst_to_csm", "csm_distance", "primitive_shuffle",
-            "orient_matrix", "rot_usp", "deviation_angle", "visualize_slmlist", "visualize_pctlist", "visualize_csm", 
-            "save_npz", "load_npz", "unzip_csm", "save_poscar", "save_xdatcar"]
+            "orient_matrix", "rot_usp", "miller_to_vec", "deviation_angle", "visualize_slmlist", "visualize_pctlist",
+            "visualize_csm", "save_csv", "save_npz", "load_npz", "unzip_csm", "save_poscar", "save_xdatcar"]
 
 np.set_printoptions(suppress=True)
 
@@ -225,14 +225,35 @@ def rot_usp(s):
     """The rotation that the uniformly scaled plane undergoes.
     """
     _, sigma, vT = la.svd(s, compute_uv=True)
-    eps = np.array([[[0,0,0],[0,0,-1],[0,1,0]],[[0,0,1],[0,0,0],[-1,0,0]],[[0,-1,0],[1,0,0],[0,0,0]]])
-    v_cross = np.tensordot(vT[:,1,:], eps, axes=(1,0))
+    levi_civita = np.array([[[0,0,0],[0,0,-1],[0,1,0]],[[0,0,1],[0,0,0],[-1,0,0]],[[0,-1,0],[1,0,0],[0,0,0]]])
+    v_cross = np.tensordot(vT[:,1,:], levi_civita, axes=(1,0))
     s1 = sigma[:,0]
     s2 = sigma[:,1]
     s3 = sigma[:,2]
     theta = np.arctan(np.sqrt((s1**2 - s2**2) * (s2**2 - s3**2)) / (s1 * s3 + s2**2))
     r = np.eye(3).reshape(1,3,3) + np.sin(theta).reshape(-1,1,1) * v_cross + (1 - np.cos(theta)).reshape(-1,1,1) * (v_cross @ v_cross)
     return r
+
+def miller_to_vec(cryst, hkl, tol=1e-3):
+    """Convert Miller indices to cartesian coordinates.
+
+    Parameters
+    ----------
+    cryst : cryst
+        The crystal structure, usually obtained by `load_poscar`.
+    hkl : (3,) array_like
+        Miller indices.
+    tol : float, optional
+        Tolerance for determining the symmetry of the crystal. Default is 1e-3.
+
+    Returns
+    -------
+    vec : (3,) array
+        Cartesian coordinates of the Miller index.
+    """
+    sym = get_symmetry_dataset(cryst_to_spglib(cryst), symprec=tol)
+    c_conv = sym.std_rotation_matrix.T @ sym.std_lattice.T
+    return c_conv @ np.array(hkl).reshape(1,3)
 
 def deviation_angle(
     crystA: Cryst,
@@ -284,7 +305,7 @@ def deviation_angle(
 def visualize_slmlist(
     filename : Union[str, None],
     strainlist: ArrayLike,
-    d0list: ArrayLike,
+    dlist: ArrayLike,
     colorlist: ArrayLike = None,
     cmap : colors.Colormap = plt.get_cmap('viridis'),
     cbarlabel: str = None
@@ -292,7 +313,7 @@ def visualize_slmlist(
     """Scatter plot of the CSMs with colorbar.
     """
     strainlist = np.array(strainlist)
-    d0list = np.array(d0list)
+    dlist = np.array(dlist)
     if colorlist is None:
         colorlist = np.zeros_like(strainlist)
         n0 = 0
@@ -303,14 +324,14 @@ def visualize_slmlist(
     plt.figure()
     ax = plt.subplot()
     ind = np.argsort(colorlist)[::-1]
-    sc = plt.scatter(strainlist[ind], d0list[ind], marker='d', c=colorlist[ind], cmap=cmap, s=20)
+    sc = plt.scatter(strainlist[ind], dlist[ind], marker='+', c=colorlist[ind], cmap=cmap, s=20)
     if n0 >= 1:
         print(f"\nThere are {n0:d} CSMs (indices: {', '.join(np.nonzero(ind0)[0].astype(str).tolist())}) with {cbarlabel}=0, emphasized by pink stars in the plot.")
-        plt.scatter(strainlist[ind0], d0list[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
-    plt.xlabel("w (same units as input)", fontsize=13)
+        plt.scatter(strainlist[ind0], dlist[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
+    plt.xlabel("Strain", fontsize=13)
     plt.ylabel("Shuffle distance (Å)", fontsize=13)
     plt.xlim(0, np.amax(strainlist) * 1.05)
-    plt.ylim(min(0, np.amin(d0list) - 0.1), np.amax(d0list) + 0.1)
+    plt.ylim(min(0, np.amin(dlist) - 0.1), np.amax(dlist) + 0.1)
     if (colorlist == 0).all(): pass
     elif colorlist.dtype == int: cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
     else: cbar = plt.colorbar(sc, aspect=40)
@@ -319,6 +340,7 @@ def visualize_slmlist(
     ax.tick_params(axis='both', which='minor', labelsize=8)
     if filename: plt.savefig(f"{filename}", bbox_inches='tight')
     else: plt.show()
+    return
 
 def visualize_pctlist(filename, pctlist, dlist):
     _, ind = np.unique([pct[:,0] for pct in pctlist], axis=0, return_inverse=True)
@@ -337,6 +359,7 @@ def visualize_pctlist(filename, pctlist, dlist):
     ax.grid(True, linestyle=':')
     if filename: plt.savefig(f"{filename}", bbox_inches='tight')
     else: plt.show()
+    return
 
 def cell_lines(c):
     line1 = c @ np.array([[0,0,0,0,0,1,1,0], [0,1,1,0,0,0,1,1], [0,0,1,1,0,0,0,0]])
@@ -377,12 +400,12 @@ def colors_light(i):
     if i > 8: raise ValueError('i must be between 0 and 8')
     return plt.get_cmap('Pastel1')(0.1 * i + 0.05)
 
-def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, cluster_size=1.5, show_conventional=True, tol=1e-3):
+def visualize_csm(crystA, crystB, slm, p, ks, weight_func=None, l=2, cluster_size=1.5, show_conventional=True, tol=1e-3):
     """Use with `%matplotlib widget` in Jupyter notebook (need to install `ipympl`) to interactively visualize the shuffling process.
     """
-    z = len(p)
     crystA_sup, crystB_sup, c_half, _, _ = create_common_supercell(crystA, crystB, slm)
-    species, numbers, counts = np.unique(crystA_sup[1], return_inverse=True, return_counts=True)
+    weights = [weight_func[s] for s in crystA_sup[1]] if weight_func else None
+    species_unique, numbers, counts = np.unique(crystA_sup[1], return_inverse=True, return_counts=True)
     if numbers.max() > 8: raise ValueError("Too many (>8) atoms species to visualize.")
     cA = crystA_sup[0].T
     cB = crystB_sup[0].T
@@ -449,17 +472,27 @@ def visualize_csm(crystA, crystB, slm, p, ks, weights=None, l=2, cluster_size=1.
             ax.text2D(0.653, 0.91, "b", color='#888888', fontsize=10, transform=ax.transAxes)
             ax.text2D(0.689, 0.91, "c", color='#aaaaaa', fontsize=10, transform=ax.transAxes)
         ax.text2D(0.05, 0.10, "Light arrows represent the shuffle, whose period has:", fontsize=8, transform=ax.transAxes)
-        for i, s in enumerate(species):
+        for i, s in enumerate(species_unique):
             ax.text2D(0.05 + 0.1 * i, 0.05, f"{counts[i]:d}{s}", color=colors_dark(i), fontsize=9, transform=ax.transAxes)
 
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.show()
+    return
 
 def _species_to_poscar(species: NDArray[np.str_]) -> Tuple[NDArray[np.str_], NDArray[np.int32]]:
     _, sp_idx, sp_inv, sp_counts = np.unique(species, return_index=True, return_inverse=True, return_counts=True)
     if np.sum(np.diff(sp_inv) != 0) != sp_idx.shape[0] - 1:
         raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
     return species[np.sort(sp_idx)], sp_counts
+
+def save_csv(filename, table):
+    data, header = table
+    if header[0] != 'csm_id': raise ValueError("The first column of the table must be 'csm_id'.")
+    unit = {'csm_id': 1, 'slm_id': 1, 'mu': 1, 'period': 1, 'w': 1, 'rmss': 0.01, 'd': 1, 'angle': np.pi / 180}
+    text = {'csm_id': ' csm_id', 'slm_id': '  slm_id', 'mu': '      mu', 'period': '  period', 'w': '       w', 'rmss': '  rmss/%', 'd': '  rmsd/Å', 'angle': ' angle/°'}
+    formatting = {'csm_id': '%8d', 'slm_id': '%8d', 'mu': '%8d', 'period': '%8d', 'w': '%8.1f', 'rmss': '%8.2f', 'd': '%8.4f', 'angle': '%8.3f'}
+    np.savetxt(filename, data * np.array([unit[h] for h in header]).reshape(1,-1), fmt=''.join(formatting[h] for h in header), header=','.join(text[h] for h in header))
+    return
 
 def save_npz(filename, crystA, crystB, slmlist, slm_ind, pct_arrs, table):
     metadata = np.array([table.header, crystA, crystB], dtype=object)

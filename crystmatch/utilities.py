@@ -1,22 +1,22 @@
 """
-Load/save crystal structures and CSMs from/to files.
+Common functions used in crystmatch.
 """
 
 from __future__ import annotations
 from os import makedirs, environ
 from os.path import sep, exists, splitext
-import numpy as np
-import numba as nb
-import numpy.linalg as la
 from collections import namedtuple
+from scipy.spatial.transform import Rotation
+from scipy.optimize import linear_sum_assignment, minimize, basinhopping
+from scipy.stats.qmc import Sobol
 from spglib import get_spacegroup, get_symmetry, standardize_cell, refine_cell, get_symmetry_dataset
 from tqdm import tqdm
 from typing import Union, Tuple, List, Dict, Callable, Literal
 from numpy.typing import NDArray, ArrayLike
-from scipy.spatial.transform import Rotation
-from scipy.optimize import linear_sum_assignment, minimize, basinhopping
-from scipy.stats.qmc import Sobol
 from matplotlib import rcParams, colors
+import numpy as np
+import numba as nb
+import scipy.linalg as la
 import matplotlib.pyplot as plt
 rcParams.update({
     'font.family': 'serif',
@@ -147,16 +147,17 @@ def load_csmcar(filename: str, verbose: bool = True):
                 weight_func = {s: w for s, w in zip(species, weights)}
                 if verbose: print(f"Atomic weights used to define the shuffle distance:\n{nl.join([tab + key + tab + str(value) for key, value in weight_func.items()])}")
             elif info.startswith(('O', 'o')):
-                vs = f.readline().split("||")
-                vix, viy, viz = [float(x) for x in vs[0].strip().split()]
-                vfx, vfy, vfz = [float(x) for x in vs[1].strip().split()]
-                ws = f.readline().split("||")
-                wix, wiy, wiz = [float(x) for x in ws[0].strip().split()]
-                wfx, wfy, wfz = [float(x) for x in ws[1].strip().split()]
-                ori_rel = np.array([[[vix, viy, viz], [vfx, vfy, vfz]], [[wix, wiy, wiz], [wfx, wfy, wfz]]])
+                para1 = f.readline().split("||")
+                h_i1, k_i1, l_i1 = [float(x) for x in para1[0].strip().split()]
+                h_f1, k_f1, l_f1 = [float(x) for x in para1[1].strip().split()]
+                para2 = f.readline().split("||")
+                h_i2, k_i2, l_i2 = [float(x) for x in para2[0].strip().split()]
+                h_f2, k_f2, l_f2 = [float(x) for x in para2[1].strip().split()]
+                ori_rel = (((h_i1, k_i1, l_i1), (h_f1, k_f1, l_f1)), ((h_i2, k_i2, l_i2), (h_f2, k_f2, l_f2)))
                 if verbose:
-                    print(f"Orientation relationship:\n\t({vix:.3f}, {viy:.3f}, {viz:.3f}) || ({vfx:.3f}, {vfy:.3f}, {vfz:.3f})")
-                    print(f"\t({wix:.3f}, {wiy:.3f}, {wiz:.3f}) || ({wfx:.3f}, {wfy:.3f}, {wfz:.3f})")
+                    print("Orientation relationship:")
+                    print(f"\t({h_i1:.3f}, {k_i1:.3f}, {l_i1:.3f}) || ({h_f1:.3f}, {k_f1:.3f}, {l_f1:.3f})")
+                    print(f"\t({h_i2:.3f}, {k_i2:.3f}, {l_i2:.3f}) || ({h_f2:.3f}, {k_f2:.3f}, {l_f2:.3f})")
             info = f.readline()
     return voigtA, voigtB, weight_func, ori_rel
 
@@ -292,15 +293,6 @@ def imt_multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM]
     else:
         return la.det(slmlist[:,0,:,:]).round().astype(int) // dA
 
-def cube_to_so3(vec):
-    """Map `vec` in [0,1)^3 to SO(3), preserving the uniformity of distribution.
-    """
-    q0 = np.sqrt(1 - vec[0]) * np.sin(2 * np.pi * vec[1])
-    q1 = np.sqrt(1 - vec[0]) * np.cos(2 * np.pi * vec[1])
-    q2 = np.sqrt(vec[0]) * np.sin(2 * np.pi * vec[2])
-    q3 = np.sqrt(vec[0]) * np.cos(2 * np.pi * vec[2])
-    return Rotation.from_quat([q0,q1,q2,q3]).as_matrix()
-
 def deformation_gradient(crystA: Cryst, crystB: Cryst, slmlist: List[SLM]) -> NDArray[np.float64]:
     """Compute the deformation gradient matrices of given IMTs.
     
@@ -340,13 +332,9 @@ def rmss(slist: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.sqrt(np.mean((la.svd(slist, compute_uv=False) - 1) ** 2, axis=-1))
 
 def zip_pct(p, ks):
-    """
-    """
     return np.hstack((p.reshape(-1,1), ks.T), dtype=int)
 
 def unzip_pct(pct):
-    """
-    """
     return pct[:,0], pct[:,1:].T
 
 def get_pure_rotation(cryst: Cryst, tol: float = 1e-3) -> NDArray[np.int32]:

@@ -36,6 +36,15 @@ def strain_energy_func(elasticA, elasticB):
                         + np.einsum('ijkl,...im,...jm,...kn,...ln,...m,...n->...', elasticB, u, u, u, u, sigma**-0.5 - 1, sigma**-0.5 - 1))
     return w
 
+def _cube_to_so3(vec):
+    """Map `vec` in [0,1)^3 to SO(3), preserving the uniformity of distribution.
+    """
+    q0 = np.sqrt(1 - vec[0]) * np.sin(2 * np.pi * vec[1])
+    q1 = np.sqrt(1 - vec[0]) * np.cos(2 * np.pi * vec[1])
+    q2 = np.sqrt(vec[0]) * np.sin(2 * np.pi * vec[2])
+    q3 = np.sqrt(vec[0]) * np.cos(2 * np.pi * vec[2])
+    return Rotation.from_quat([q0,q1,q2,q3]).as_matrix()
+
 def enumerate_imt(
     crystA: Cryst, crystB: Cryst, mu: int, max_strain: float,
     strain: Callable = rmss, tol: float = 1e-3,
@@ -87,8 +96,8 @@ def enumerate_imt(
     while iter < max_iter:
         # generate a random `s0`
         rand6 = sobol6.random(1)
-        u = cube_to_so3(rand6[0,0:3])
-        vt = cube_to_so3(rand6[0,3:6])
+        u = _cube_to_so3(rand6[0,0:3])
+        vt = _cube_to_so3(rand6[0,3:6])
         if strain == rmss: quad_form = np.eye(3) / (3 * max_strain**2)
         else: quad_form = strain(None, return_quadratic_form=True, u=u, vt=vt) / (max_strain * 1.0)
         # sampling `sigma - 1` in {x|quad_form(x,x)<1}
