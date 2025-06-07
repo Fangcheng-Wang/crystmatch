@@ -686,12 +686,12 @@ and update it by running:
 </code></pre></div>
 <h2 id="examples">Examples</h2>
 <h3 id="enumerating-representative-csms">Enumerating representative CSMs</h3>
-<p>To enumerate a list of representative CSMs (<em>each having the minimal shuffle distance among all CSMs with the same deformation</em>) between two crystal structures given by POSCAR files <code>Graphite</code> and <code>Diamond</code>, with upper bounds <code>MAX_MU = 2</code> for multiplicity and <code>MAX_STRAIN = 0.4</code> for RMSS, run:</p>
+<p>To enumerate a list of representative CSMs (<em>each representing a unique deformation</em>) between two crystal structures given by POSCAR files <code>Graphite</code> and <code>Diamond</code>, with upper bounds <code>MAX_MU = 2</code> for multiplicity and <code>MAX_STRAIN = 0.4</code> for RMSS, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --enumerate Graphite Diamond 2 0.4
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Caveat</p>
-<p>We recommend you to try <code>MAX_MU = 2</code> and <code>MAX_W = 0.4</code> first, and then gradually adjust these upper bounds, usually by increasing <code>MAX_MU</code> and decreasing <code>MAX_W</code>, to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
+<p>We recommend you to try <code>MAX_MU = 2</code> and <code>MAX_STRAIN = 0.4</code> first, and then gradually adjust these upper bounds, usually by increasing <code>MAX_MU</code> and decreasing <code>MAX_STRAIN</code>, to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Suggestion</p>
