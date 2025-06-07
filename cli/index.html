@@ -252,6 +252,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Command-line interface
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -261,6 +272,85 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#flowchart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flowchart
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#csmcar" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSMCAR
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CSMCAR">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#elastic-tensors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Elastic tensors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atomic-weights" class="md-nav__link">
+    <span class="md-ellipsis">
+      Atomic weights
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orientation-relationship" class="md-nav__link">
+    <span class="md-ellipsis">
+      Orientation relationship
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#all-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      All options
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -326,6 +416,74 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#flowchart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flowchart
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#csmcar" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSMCAR
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CSMCAR">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#elastic-tensors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Elastic tensors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atomic-weights" class="md-nav__link">
+    <span class="md-ellipsis">
+      Atomic weights
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orientation-relationship" class="md-nav__link">
+    <span class="md-ellipsis">
+      Orientation relationship
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#all-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      All options
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -343,98 +501,198 @@
 
 
 <h1 id="command-line-interface">Command-line interface</h1>
+<h2 id="flowchart">Flowchart</h2>
 <pre class="mermaid"><code>flowchart TB
-  A{mode?} --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--enumeration&lt;/code&gt;"| B[enumerate a list of&lt;br&gt;representative CSMs];
-  B --&gt; E[save CSMs to NPZ file];
-  E --&gt; F;
-  A --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--read&lt;/code&gt;"| C["read CSMs from NPZ file&lt;br&gt;(after &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--enumeration&lt;/code&gt;)"];
-  C --&gt; G["export CSM to POSCAR&lt;br&gt;files if &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--export&lt;/code&gt;"];
-  G --&gt; F;
-  A --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--single&lt;/code&gt;"| D["read a single CSM from&lt;br&gt;&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;-I&lt;/code&gt; and &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;-F&lt;/code&gt; POSCAR files"];
-  D --&gt; F["analyze orientation&lt;br&gt;if &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--orientation&lt;/code&gt;"];
-  F --&gt; I["generate reports according&lt;br&gt;to &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--csv&lt;/code&gt; and &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; word-break: break-word;'&gt;--plot&lt;/code&gt;"];</code></pre>
-<p>The <code>crystmatch</code> command-line interface is already introduced in <a href="https://fangcheng-wang.github.io/crystmatch/">Tutorial</a>. Here, we provide a table of all available options:</p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Mode</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-h</code>, <code>--help</code></td>
-<td>Show help message and exit.</td>
-<td><em>none</em></td>
-</tr>
-<tr>
-<td><code>-V</code>, <code>-v</code>, <code>--version</code></td>
-<td>Show program's version number and exit.</td>
-<td><em>none</em></td>
-</tr>
-<tr>
-<td><code>-E MAX_MU MAX_RMSS</code><br><code>--enumeration MAX_MU MAX_RMSS</code></td>
-<td>Use 'enumeration' mode, with <code>MAX_MU</code> and <code>MAX_RMSS</code> as the multiplicity and RMSS upper bounds.</td>
-<td>'enumeration'</td>
-</tr>
-<tr>
-<td><code>-R CSM_LIST</code><br><code>--read CSM_LIST</code></td>
-<td>Use 'read' mode, with CSMs loaded from an existing NPZ file <code>CSM_LIST</code>.</td>
-<td>'read'</td>
-</tr>
-<tr>
-<td><code>-S</code><br><code>--single</code></td>
-<td>Use 'single-CSM' mode, with the CSM uniquely determined by <code>-I</code> and <code>-F</code>.</td>
-<td>'single-CSM'</td>
-</tr>
-<tr>
-<td><code>-I POSCAR_I</code><br><code>--initial POSCAR_I</code></td>
-<td>POSCAR file of the initial crystal structure.</td>
-<td>'enumeration', 'single-CSM'</td>
-</tr>
-<tr>
-<td><code>-F POSCAR_F</code><br><code>--final POSCAR_F</code></td>
-<td>POSCAR file of the final crystal structure.</td>
-<td>'enumeration', 'single-CSM'</td>
-</tr>
-<tr>
-<td><code>-e INDEX1 [INDEX2 ...]</code><br><code>--export INDEX1 [INDEX2 ...]</code></td>
-<td>Export CSMs from NPZ file with the given indices.</td>
-<td>'read'</td>
-</tr>
-<tr>
-<td><code>-i [IMAGES]</code><br><code>--interpolate [IMAGES]</code></td>
-<td>Create XDATCAR files when <code>-e</code> or <code>--export</code> is used. <code>IMAGES</code> is the number of images to be added; default is 10.</td>
-<td>'read'</td>
-</tr>
-<tr>
-<td><code>-t TOL</code><br><code>--tolerance TOL</code></td>
-<td>Tolerance for determining crystal symmetry; default is 1e-3.</td>
-<td>'enumeration', 'single-CSM'</td>
-</tr>
-<tr>
-<td><code>-o vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz</code><br><code>--orientation vix viy viz vfx vfy vfz wix wiy wiz wfx wfy wfz</code></td>
-<td>Benchmark CSMs by their deviation angles from the orientation relationship: "<span class="arithmatex">\(\mathbf{v}_\text{i}\parallel\mathbf{v}_\text{f}\)</span> and <span class="arithmatex">\(\mathbf{w}_\text{i}\parallel\mathbf{w}_\text{f}\)</span>".<br>Note: arguments must be given in <strong>Cartesian</strong> coordinates.</td>
-<td><em>all</em></td>
-</tr>
-<tr>
-<td><code>-c</code>, <code>--csv</code></td>
-<td>Create CSV file.</td>
-<td><em>all</em></td>
-</tr>
-<tr>
-<td><code>-p</code>, <code>--plot</code></td>
-<td>Create scatter plot.</td>
-<td><em>all</em></td>
-</tr>
-<tr>
-<td><code>-u</code>, <code>--uspfix</code></td>
-<td>Use USP-fixed manner in <code>--orientation</code>.</td>
-<td><em>all</em></td>
-</tr>
-</tbody>
-</table>
+  config[/"if &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--extra&lt;/code&gt;,&lt;br&gt;read **CSMCAR** file"/] --&gt; mode;
+  mode{how to&lt;br&gt;**get CSMs**} --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--enumerate&lt;/code&gt;"| modeE[enumerate a list of&lt;br&gt;**representative** CSMs];
+  modeE --&gt; all;
+  mode --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--read&lt;/code&gt;"| modeR["read a list of CSMs&lt;br&gt;from an **NPZ** file&lt;br&gt;"];
+  modeR --&gt; all;
+  mode --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--direct&lt;/code&gt;"| modeD["read a single CSM from&lt;br&gt;a pair of **POSCAR** files"];
+  modeD --&gt; all["if &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--all&lt;/code&gt;, enumerate&lt;br&gt;**all** CSMs for each SLM"];
+  all --&gt; export["**export** individual CSMs as&lt;br&gt;&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--poscar --xdatcar&lt;/code&gt;"];
+  export --&gt; visualize["**visualize** CSMs using&lt;br&gt;&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--scatter --interact&lt;/code&gt;"]</code></pre>
+<h2 id="csmcar">CSMCAR</h2>
+<p>CSMCAR is a plain text file that provides extra information for generating and analyzing CSMs. <code>crystmatch</code> will <strong>not</strong> read a CSMCAR file unless it is specified in the <code>--extra</code> option, as:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --enumerate graphite.poscar diamond.poscar 2 0.3 --extra CSMCAR.txt
+</code></pre></div>
+<p>CSMCAR may contain at most three fields:</p>
+<ul>
+<li>The elastic tensors</li>
+<li>The atomic weights used to defined the shuffle distance</li>
+<li>The orientation relationship used to benchmark CSMs</li>
+</ul>
+<h3 id="elastic-tensors">Elastic tensors</h3>
+<p>If you want to use the strain energy density <span class="arithmatex">\(w\)</span>, instead of the root-mean-square strain <span class="arithmatex">\(\bar\varepsilon\)</span>, as the pruning criterion, the CSMCAR file should contain elastic tensors of the initial and final structures. They must be specified as <span class="arithmatex">\(6\times 6\)</span> symmetric matrices (<a href="https://en.wikipedia.org/wiki/Voigt_notation">Voigt notation</a>) as:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ./CSMCAR.txt</span>
+
+<span class="n">initial</span> <span class="n">elastic</span> <span class="n">tensor</span><span class="p">:</span>
+    <span class="n">XX</span>    <span class="mf">268.6236</span>     <span class="mf">46.1585</span>     <span class="mf">47.5328</span>      <span class="mf">0.6739</span>      <span class="mf">0.9388</span>     <span class="o">-</span><span class="mf">1.8586</span>
+    <span class="n">YY</span>     <span class="mf">46.1585</span>    <span class="mf">268.5367</span>     <span class="mf">48.5034</span>      <span class="mf">0.1023</span>      <span class="mf">1.8528</span>     <span class="o">-</span><span class="mf">3.2724</span>
+    <span class="n">ZZ</span>     <span class="mf">47.5328</span>     <span class="mf">48.5034</span>    <span class="mf">268.7187</span>     <span class="o">-</span><span class="mf">0.0438</span>      <span class="mf">0.8634</span>     <span class="o">-</span><span class="mf">1.6993</span>
+    <span class="n">XY</span>      <span class="mf">0.6739</span>      <span class="mf">0.1023</span>     <span class="o">-</span><span class="mf">0.0438</span>     <span class="mf">44.0620</span>     <span class="o">-</span><span class="mf">1.7433</span>      <span class="mf">1.4076</span>
+    <span class="n">YZ</span>      <span class="mf">0.9388</span>      <span class="mf">1.8528</span>      <span class="mf">0.8634</span>     <span class="o">-</span><span class="mf">1.7433</span>     <span class="mf">42.5860</span>     <span class="o">-</span><span class="mf">0.5327</span>
+    <span class="n">ZX</span>     <span class="o">-</span><span class="mf">1.8586</span>     <span class="o">-</span><span class="mf">3.2724</span>     <span class="o">-</span><span class="mf">1.6993</span>      <span class="mf">1.4076</span>     <span class="o">-</span><span class="mf">0.5327</span>     <span class="mf">42.2492</span>
+
+<span class="n">final</span> <span class="n">elastic</span> <span class="n">tensor</span><span class="p">:</span>
+    <span class="n">XX</span>    <span class="mf">262.9004</span>    <span class="mf">128.7075</span>    <span class="mf">102.3784</span>    <span class="o">-</span><span class="mf">22.5882</span>      <span class="mf">5.6997</span>      <span class="mf">7.9351</span>
+    <span class="n">YY</span>    <span class="mf">128.7075</span>    <span class="mf">262.8757</span>    <span class="mf">102.3694</span>    <span class="o">-</span><span class="mf">21.7608</span>      <span class="mf">8.0470</span>      <span class="mf">5.6492</span>
+    <span class="n">ZZ</span>    <span class="mf">102.3784</span>    <span class="mf">102.3694</span>    <span class="mf">295.9447</span>     <span class="mf">32.4762</span>    <span class="o">-</span><span class="mf">19.2804</span>    <span class="o">-</span><span class="mf">19.2551</span>
+    <span class="n">XY</span>    <span class="o">-</span><span class="mf">22.5882</span>    <span class="o">-</span><span class="mf">21.7608</span>     <span class="mf">32.4762</span>    <span class="mf">138.7953</span>      <span class="mf">5.1622</span>      <span class="mf">5.4153</span>
+    <span class="n">YZ</span>      <span class="mf">5.6997</span>      <span class="mf">8.0470</span>    <span class="o">-</span><span class="mf">19.2804</span>      <span class="mf">5.1622</span>    <span class="mf">104.6801</span>     <span class="mf">34.9596</span>
+    <span class="n">ZX</span>      <span class="mf">7.9351</span>      <span class="mf">5.6492</span>    <span class="o">-</span><span class="mf">19.2551</span>      <span class="mf">5.4153</span>     <span class="mf">34.9596</span>    <span class="mf">104.6258</span>
+</code></pre></div>
+<p>The axis name must be given in each row. The above CSMCAR is in the order of <code>XX</code>, <code>YY</code>, <code>ZZ</code>, <code>XY</code>, <code>YZ</code>, <code>ZX</code>, which is the same as <a href="https://www.vasp.at/wiki/index.php/Phonons_from_finite_differences">VASP</a>. However, the elastic tensors provided by <a href="https://docs.materialsproject.org/methodology/materials-methodology/elasticity">Materials Project</a> are in the order of <code>XX</code>, <code>YY</code>, <code>ZZ</code>, <code>YZ</code>, <code>ZX</code>, <code>XY</code>, in which case you should write the axis name in the same order.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Once you use <code>--extra</code> or <code>-e</code> and provide the elastic tensors, the <code>--enumerate</code> mode will interpret its last parameter <code>MAX_STRAIN</code> as the maximum strain energy density, not the maximum root-mean-square strain (RMSS). The unit of <code>MAX_STRAIN</code> is the same as the unit of the elastic tensors in the CSMCAR file.</p>
+<p>If you want to use the RMSS as the pruning criterion, and then calculate the strain energy density <span class="arithmatex">\(w\)</span> for each CSM, please use <code>crystmatch</code> as a <a href="https://fangcheng-wang.github.io/crystmatch/api/">Python module</a>.</p>
+</div>
+<h3 id="atomic-weights">Atomic weights</h3>
+<p>If the initial and final structures involve more than one atomic species, you can specifie their atomic weights in the CSMCAR file as:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ./CSMCAR.txt</span>
+
+<span class="n">atomic</span> <span class="n">weights</span><span class="p">:</span>
+    <span class="n">Cs</span>      <span class="n">Cl</span>
+    <span class="mf">132.9</span>   <span class="mf">35.45</span>
+</code></pre></div>
+<p><code>crystmatch</code> will normalize these weights and use them to define the shuffle distance</p>
+<div class="arithmatex">\[
+d(\mathcal{J})=\min_{\mathbf{t}_0 \in \mathbb{R}^{3}}\sqrt{\sum_{i=1}^{\tilde Z}\theta_i\left|\tilde{\mathcal{J}}(\tilde{\mathbf{a}}_i)+\mathbf{t}_0-\tilde{\mathbf{a}}_i\right|^2},
+\]</div>
+<p>where <span class="arithmatex">\(\mathcal{J}\colon\mathcal{A}\to\mathcal{B}\)</span> is a CSM, <span class="arithmatex">\(\tilde{\mathcal{J}}\colon\tilde{\mathcal{A}}\to\tilde{\mathcal{B}}\)</span> its standard shuffle, <span class="arithmatex">\(\tilde Z\)</span> its period, <span class="arithmatex">\(\tilde{\mathbf{a}}_i\in\tilde{\mathcal{A}}\)</span> the position of the <span class="arithmatex">\(i\)</span>-th atom, and <span class="arithmatex">\(\theta_i\)</span> the normalized weight of the <span class="arithmatex">\(i\)</span>-th atom. See <a href="https://arxiv.org/abs/2506.05105">this paper</a> for more details.</p>
+<h3 id="orientation-relationship">Orientation relationship</h3>
+<p>To benchmark CSMs with a given orientation relationship, two parameters must be specified:</p>
+<ol>
+<li>
+<p>The orientation relationship, provided in the CSMCAR file as:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ./CSMCAR.txt</span>
+
+<span class="n">orientation</span> <span class="n">relationship</span><span class="p">:</span>
+    <span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span> <span class="o">||</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">0</span> <span class="mi">0</span>
+    <span class="mi">0</span> <span class="mi">1</span> <span class="mi">0</span> <span class="o">||</span> <span class="mi">0</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">0</span>
+</code></pre></div>
+<p>Here, exactly two rows after <code>orientation relationship</code> will be read. Each row specifies a parallelism between two <strong>crystal directions</strong> of the initial and final structures. These crystal directions are denoted as <a href="https://en.wikipedia.org/wiki/Miller_index">Miller indices</a></p>
+<div class="arithmatex">\[
+[hk\ell]=h\mathbf{a}+k\mathbf{b}+\ell\mathbf{c},
+\]</div>
+<p>where <span class="arithmatex">\(\mathbf{a}, \mathbf{b}, \mathbf{c}\)</span> are the lattice vectors of the <strong>conventional cell</strong>. They are determined by <strong><a href="https://spglib.readthedocs.io/en/stable/definition.html#def-idealize-cell">Spglib</a></strong> and depend only on the crystal systems of the initial and final structures.</p>
+<div class="admonition warning">
+<p class="admonition-title">Caveat</p>
+<p><strong>The conventional cell is not the primitive cell if the <a href="https://en.wikipedia.org/wiki/Bravais_lattice">Bravais lattice</a> is base-centered, face-centered, or body-centered.</strong> We recommend using</p>
+<div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz 0 --interact
+</code></pre></div>
+<p>to check if the conventional cell is the same as you expect.</p>
+</div>
+</li>
+<li>
+<p>The assumption used to determine the orientation of the final structure, must be one of the following:</p>
+<ul>
+<li>
+<p><code>'norot'</code>: The final lattice is deformed from the initial one <strong>without rotation</strong>.</p>
+</li>
+<li>
+<p><code>'uspfixed'</code>: One of the two <strong>uniformly-scaled planes (USPs)</strong> is fixed.</p>
+</li>
+</ul>
+<p>For more details, see the supplemental material of <a href="https://arxiv.org/abs/2305.05278">this paper</a>.</p>
+</li>
+</ol>
+<p>If you have a <code>CSMLIST.npz</code> file and a <code>CSMCAR.txt</code> file containing an orientation relationship, you can run:</p>
+<p><div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz --extra CSMCAR.txt --orientation &#39;norot&#39;
+</code></pre></div>
+or</p>
+<div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz --extra CSMCAR.txt --orientation &#39;uspfixed&#39;
+</code></pre></div>
+<h2 id="all-options">All options</h2>
+<div class="highlight"><pre><span></span><code>crystmatch<span class="w"> </span><span class="o">[</span>--help<span class="o">]</span><span class="w"> </span><span class="o">[</span>--version<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">                              </span><span class="c1"># package information</span>
+<span class="w">           </span><span class="o">[</span>--extra<span class="w"> </span>CSMCAR<span class="o">]</span><span class="w"> </span><span class="o">[</span>--tol<span class="w"> </span>TOL<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">                </span><span class="c1"># global settings</span>
+<span class="w">           </span><span class="o">[</span>--enumerate<span class="w"> </span>POSCAR_I<span class="w"> </span>POSCAR_F<span class="w"> </span>MAX_MU<span class="w"> </span>MAX_STRAIN<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># enumerate rep. CSMs</span>
+<span class="w">           </span><span class="o">[</span>--read<span class="w"> </span>CSMLIST<span class="w"> </span><span class="o">[</span>IND1<span class="w"> </span>IND2<span class="w"> </span>...<span class="o">]]</span><span class="w"> </span><span class="se">\ </span><span class="w">                  </span><span class="c1"># read CSMs from NPZ</span>
+<span class="w">           </span><span class="o">[</span>--direct<span class="w"> </span>POSCAR_I<span class="w"> </span>POSCAR_F<span class="o">]</span><span class="w"> </span><span class="o">[</span>--literal<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">          </span><span class="c1"># single CSM analysis</span>
+<span class="w">           </span><span class="o">[</span>--all<span class="w"> </span>MAX_D<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">                                     </span><span class="c1"># exhaustive enumeration</span>
+<span class="w">           </span><span class="o">[</span>--orientation<span class="w"> </span>ASSUM<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">                             </span><span class="c1"># orientation benchmarking</span>
+<span class="w">           </span><span class="o">[</span>--poscar<span class="w"> </span><span class="o">[</span>ASSUM<span class="o">]]</span><span class="w"> </span><span class="o">[</span>--xdatcar<span class="w"> </span><span class="o">[</span>ASSUM<span class="o">]]</span><span class="w"> </span><span class="se">\ </span><span class="w">            </span><span class="c1"># export individual CSMs</span>
+<span class="w">           </span><span class="o">[</span>--csv<span class="o">]</span><span class="w"> </span><span class="o">[</span>--scatter<span class="o">]</span><span class="w"> </span><span class="o">[</span>--interact<span class="w"> </span><span class="o">[</span>SIZE<span class="o">]]</span><span class="w">              </span><span class="c1"># summarize and visualize</span>
+</code></pre></div>
+<p>If you are not familiar with <code>crystmatch</code>, we recommend you first read the <a href="https://fangcheng-wang.github.io/crystmatch/">tutorial</a> and then come back to this page for a detailed explanation of the options.</p>
+<ul>
+<li>
+<p><code>-h</code>, <code>--help</code></p>
+<p>Show help message and exit.</p>
+</li>
+<li>
+<p><code>-V</code>, <code>-v</code>, <code>--version</code></p>
+<p>Show program's version number and exit.</p>
+</li>
+<li>
+<p><code>-E POSCAR_I POSCAR_F MAX_MU MAX_STRAIN</code>, <code>--enumerate POSCAR_I POSCAR_F MAX_MU MAX_STRAIN</code></p>
+<p>Enumerate representative CSMs (those with the minimal shuffle distance among all CSMs that share the same deformation gradient) between the initial and final structures defined in <code>POSCAR_I</code> and <code>POSCAR_F</code>, with <code>MAX_MU</code> and <code>MAX_STRAIN</code> as upper bounds for the multiplicity and RMSS. If elastic tensors are provided, <code>MAX_STRAIN</code> is instead interpreted as the maximum strain energy density (with the same unit as in the <a href="#elastic-tensors">CSMCAR</a> file).</p>
+</li>
+<li>
+<p><code>-R CSMLIST [IND1 IND2 ...]</code>, <code>--read CSMLIST [IND1 IND2 ...]</code></p>
+<p>Read CSMs from an existing NPZ file <code>CSMLIST</code>. If the indices <code>IND1 IND2 ...</code> are provided, only load the CSMs with the given indices.</p>
+</li>
+<li>
+<p><code>-D POSCAR_I POSCAR_F</code>, <code>--direct POSCAR_I POSCAR_F</code></p>
+<p>Directly read a single CSM from a pair of POSCAR files <code>POSCAR_I</code> and <code>POSCAR_F</code>. The CSM is determined such that each cell vector or atomic position in <code>POSCAR_I</code> is mapped to the corresponding one (with the same row index) in <code>POSCAR_F</code>. <strong>Make sure that the cell vectors and atomic positions in <code>POSCAR_I</code> and <code>POSCAR_F</code> are ordered as you expect.</strong></p>
+<div class="admonition warning">
+<p class="admonition-title">Caveat</p>
+<p>When writing the POSCAR, some softwares may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. To avoid this issue, <code>crystmatch</code> will automatically add integers to the fractional coordinates to minimize the shuffle distance. However, if you are confident that the fractional coordinates represent the true initial and final atomic positions, use <code>--literal</code> to keep the original fractional coordinates.</p>
+</div>
+</li>
+<li>
+<p><code>-l</code>, <code>--literal</code></p>
+<p>Keep the original fractional coordinates in the POSCAR files when using <code>--direct</code>.</p>
+</li>
+<li>
+<p><code>-e CSMCAR</code>, <code>--extra CSMCAR</code></p>
+<p>Load extra parameters from a <a href="#csmcar">CSMCAR</a> file, including the <a href="#elastic-tensors">elastic tensors</a>, the <a href="#atomic-weights">atomic weights</a>, and the <a href="#orientation-relationship">orientation relationship</a> used to benchmark CSMs.</p>
+</li>
+<li>
+<p><code>-a MAX_D</code>, <code>--all MAX_D</code></p>
+<p>Additionally enumerate all CSMs (instead of only the representative or read ones) for each SLM, with <code>MAX_D</code> as the upper bound for the shuffle distance.</p>
+</li>
+<li>
+<p><code>-t TOL</code>, <code>--tol TOL</code></p>
+<p>Tolerance in angstroms for detecting symmetry. Default is <code>1e-3</code>.</p>
+</li>
+<li>
+<p><code>-i [SIZE]</code>, <code>--interact [SIZE]</code></p>
+<p>Interactively visualize each CSM using a 3D plot. <code>SIZE</code> specifies the radius of the cluster to display, which we recommend to be smaller than <code>2.0</code>. Use <code>SIZE = 0</code> to display the cell contents only. Default is <code>1.2</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Caveat</p>
+<p>The interactive plot may not work properly in some environments, such as Windows Subsystem for Linux (WSL) or remote servers.</p>
+</div>
+</li>
+<li>
+<p><code>-o ASSUM</code>, <code>--orientation ASSUM</code></p>
+<p>Calculate the deviation angle from the given <a href="#orientation-relationship">orientation relationship</a> for each CSM. Only works when the orientation relationship is provided by <code>--extra</code>. The <a href="#orientation-relationship">orientation of the final structure</a> is determined by <code>ASSUM</code>, which must be specified as <code>'norot'</code> or <code>'uspfixed'</code>.</p>
+</li>
+<li>
+<p><code>-p [ASSUM]</code>, <code>--poscar [ASSUM]</code></p>
+<p>Export each enumerated/read CSM as a pair of POSCAR files. <code>ASSUM</code> must be <code>'norot'</code> or <code>'uspfixed'</code>. Default is <code>'norot'</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <code>ASSUM = 'uspfixed'</code>, two final structures (instead of one) are created since there are two USPs.</p>
+</div>
+</li>
+<li>
+<p><code>-x [ASSUM]</code>, <code>--xdatcar [ASSUM]</code></p>
+<p>Export each CSM as an XDATCAR file with 100 frames, similar to <code>--poscar</code>.</p>
+</li>
+</ul>
+<p><strong>These options are automatically enabled when using <code>--enumerate</code>, <code>--all</code> or <code>--orientation</code>:</strong></p>
+<ul>
+<li>
+<p><code>-c</code>, <code>--csv</code></p>
+<p>Create CSV file containing the multiplicities, RMSS, shuffle distances, estimated strain energy densities (if elastic tensors are provided) and deviation angles (if <code>--orientation</code> is used) of the enumerated/read CSMs. </p>
+</li>
+<li>
+<p><code>-s</code>, <code>--scatter</code></p>
+<p>Create scatter plot in PDF format containing all enumerated/read CSMs.</p>
+</li>
+</ul>
 
 
 

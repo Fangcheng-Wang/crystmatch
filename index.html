@@ -276,6 +276,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-to-cite" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to cite
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       Usage
@@ -295,18 +304,45 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#enumerating-csms" class="md-nav__link">
+  <a href="#enumerating-representative-csms" class="md-nav__link">
     <span class="md-ellipsis">
-      Enumerating CSMs
+      Enumerating representative CSMs
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#exporting-csms-from-an-npz-file" class="md-nav__link">
+  <a href="#enumerating-all-csms" class="md-nav__link">
     <span class="md-ellipsis">
-      Exporting CSMs from an NPZ file
+      Enumerating all CSMs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualizing-csms-in-a-3d-interactive-plot" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visualizing CSMs in a 3D interactive plot
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-csms-as-poscar-or-xdatcar-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exporting CSMs as POSCAR or XDATCAR files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identifying-csm-from-a-pair-of-poscar-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Identifying CSM from a pair of POSCAR files
     </span>
   </a>
   
@@ -315,16 +351,16 @@
           <li class="md-nav__item">
   <a href="#orientation-relationship-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Orientation relationship analysis
+      Orientation-relationship analysis
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#single-csm-analysis" class="md-nav__link">
+  <a href="#computing-estimated-strain-energy-density" class="md-nav__link">
     <span class="md-ellipsis">
-      Single-CSM analysis
+      Computing estimated strain energy density
     </span>
   </a>
   
@@ -439,6 +475,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-to-cite" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to cite
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       Usage
@@ -458,18 +503,45 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#enumerating-csms" class="md-nav__link">
+  <a href="#enumerating-representative-csms" class="md-nav__link">
     <span class="md-ellipsis">
-      Enumerating CSMs
+      Enumerating representative CSMs
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#exporting-csms-from-an-npz-file" class="md-nav__link">
+  <a href="#enumerating-all-csms" class="md-nav__link">
     <span class="md-ellipsis">
-      Exporting CSMs from an NPZ file
+      Enumerating all CSMs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualizing-csms-in-a-3d-interactive-plot" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visualizing CSMs in a 3D interactive plot
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-csms-as-poscar-or-xdatcar-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exporting CSMs as POSCAR or XDATCAR files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identifying-csm-from-a-pair-of-poscar-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Identifying CSM from a pair of POSCAR files
     </span>
   </a>
   
@@ -478,16 +550,16 @@
           <li class="md-nav__item">
   <a href="#orientation-relationship-analysis" class="md-nav__link">
     <span class="md-ellipsis">
-      Orientation relationship analysis
+      Orientation-relationship analysis
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#single-csm-analysis" class="md-nav__link">
+  <a href="#computing-estimated-strain-energy-density" class="md-nav__link">
     <span class="md-ellipsis">
-      Single-CSM analysis
+      Computing estimated strain energy density
     </span>
   </a>
   
@@ -519,26 +591,28 @@
 <h1 id="tutorial">Tutorial</h1>
 <div class="admonition abstract">
 <p class="admonition-title">Abstract</p>
-<p>A solid-solid phase transition establishes an <em>atom-to-atom correspondence</em> between the initial and final crystal structures <span class="arithmatex">\(\mathcal A\)</span> and <span class="arithmatex">\(\mathcal B\)</span>. Such correspondence is called a <em>crystal-structure match</em> (CSM)<sup id="fnref3:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. A CSM can be described by a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, which specifies how the lattice deforms from <span class="arithmatex">\(\mathcal A\)</span> to <span class="arithmatex">\(\mathcal B\)</span> and the correspondence between atoms in a supercell of <span class="arithmatex">\(\mathcal A\)</span> and those in <span class="arithmatex">\(\mathcal B\)</span>.</p>
+<p>A solid-solid phase transition establishes an <strong>atom-to-atom correspondence</strong> between the initial and final crystal structures <span class="arithmatex">\(\mathcal A\)</span> and <span class="arithmatex">\(\mathcal B\)</span>. Such correspondence is called a <strong>crystal-structure match (CSM)</strong>. A CSM can be described by a pair of <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files, which specifies how the lattice deforms from <span class="arithmatex">\(\mathcal A\)</span> to <span class="arithmatex">\(\mathcal B\)</span> and the correspondence between atoms in a supercell of <span class="arithmatex">\(\mathcal A\)</span> and those in <span class="arithmatex">\(\mathcal B\)</span>.</p>
 <p>The main functions of <code>crystmatch</code> are as follows:</p>
 <ul>
 <li>
 <p><strong>Enumeration</strong>:</p>
 <ul>
-<li>Provide a complete list of <em>representative</em><sup id="fnref4:1"><a class="footnote-ref" href="#fn:1">1</a></sup> CSMs between two given crystal structures, with user-specified upper bounds on the <em>multiplicity</em><sup id="fnref5:1"><a class="footnote-ref" href="#fn:1">1</a></sup> and root-mean-square strain (RMSS).</li>
-<li>(In progress) Provide a complete list of CSMs with user-specified upper bounds on the multiplicity, RMSS, and root-mean-square displacement (RMSD).</li>
+<li>Provide a complete list of <strong>representative</strong> CSMs between <span class="arithmatex">\(\mathcal A\)</span> and <span class="arithmatex">\(\mathcal B\)</span>, with user-specified upper bounds on the <strong>multiplicity</strong> and <strong>strain</strong>.</li>
+<li>Provide a complete list of CSMs with user-specified upper bounds on the <strong>multiplicity</strong>, <strong>strain</strong>, and <strong>shuffle distance</strong>.</li>
 </ul>
 </li>
 <li>
 <p><strong>Analysis</strong>:</p>
 <ul>
 <li>Read a CSM from a pair of POSCAR files, and save CSMs in the same format.</li>
-<li>Score CSMs by RMSS and RMSD.</li>
-<li>Benchmark a CSM by its deviation angle from an orientation relationship (OR).</li>
+<li>Calculate the root-mean-squared strain (RMSS), estimated strain energy density, and shuffle distance (RMSD) for each CSM.</li>
+<li>Benchmark each CSM by its deviation angle from a given orientation relationship.</li>
+<li>Visualize the distribution of strain, shuffle distance, and multiplicity of CSMs in a 2D scatter plot.</li>
+<li>Visualize a CSM in a 3D interactive plot.</li>
 </ul>
 </li>
 </ul>
-<p>Congruent CSMs (those differ only by a space-group transformation) are identified and excluded from the enumeration using the <code>spglib</code> library by <a href="https://www.tandfonline.com/doi/full/10.1080/27660400.2024.2384822">Atsushi Togo <em>et al.</em></a></p>
+<p>Congruent CSMs (those differ only by a space-group transformation) are identified and excluded from the enumeration using the <strong><a href="https://spglib.readthedocs.io/en/stable/python-interface.html">Spglib</a></strong> library by <a href="https://www.tandfonline.com/doi/full/10.1080/27660400.2024.2384822">Atsushi Togo <em>et al.</em></a></p>
 </div>
 <h2 id="installation">Installation</h2>
 <p>Make sure you have <strong>Python 3.9 or later</strong> installed. You can check it by running:</p>
@@ -547,41 +621,141 @@
 <p>To install the latest version of <code>crystmatch</code>, run:</p>
 <div class="highlight"><pre><span></span><code>pip3 install --upgrade crystmatch
 </code></pre></div>
-<p>or use <code>conda install -c conda-forge crystmatch</code> to install and <code>conda update -c conda-forge crystmatch</code> to update, if you prefer using <code>conda</code>.</p>
 <p>Check whether <code>crystmatch</code> is successfully installed:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --version
 </code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you prefer using <code>conda</code>, you can install <code>crystmatch</code> by running:
+<div class="highlight"><pre><span></span><code>conda install -c conda-forge crystmatch
+</code></pre></div>
+and update it by running:
+<div class="highlight"><pre><span></span><code>conda update -c conda-forge crystmatch
+</code></pre></div></p>
+</div>
+<h2 id="how-to-cite">How to cite</h2>
+<p>If you use <code>crystmatch</code> in your research, please cite one of the following paper:</p>
+<ul>
+<li>
+<p><strong><a href="https://arxiv.org/abs/2305.05278">Crystal-Structure Matches in Solid-Solid Phase Transitions</a></strong></p>
+<p><em>Physical Review Letters</em> <strong>132</strong>, 086101 (2024)</p>
+<div class="highlight"><pre><span></span><code>@article{wang2024crystal,
+    title={Crystal-Structure Matches in Solid-Solid Phase Transitions},
+    author={Wang, Fang-Cheng and Ye, Qi-Jun and Zhu, Yu-Cheng and Li, Xin-Zheng},
+    journal={Phys. Rev. Lett.},
+    volume={132},
+    number={8},
+    pages={086101},
+    year={2024},
+    publisher={APS},
+    doi={10.1103/PhysRevLett.132.086101}
+}
+</code></pre></div>
+</li>
+<li>
+<p><strong><a href="https://arxiv.org/abs/2506.05105">Classification and Enumeration of Solid-Solid Phase Transition Mechanisms</a></strong></p>
+<p><em>Under review</em> (2025)</p>
+<div class="highlight"><pre><span></span><code>@article{wang2025classification,
+    title={Classification and Enumeration of Solid-Solid Phase Transition Mechanisms},
+    author={Wang, Fang-Cheng and Ye, Qi-Jun and Zhu, Yu-Cheng and Li, Xin-Zheng},
+    journal={arXiv:2506.05105},
+    year={2025},
+    doi={10.48550/arXiv.2506.05105}
+}
+</code></pre></div>
+</li>
+</ul>
 <h2 id="usage">Usage</h2>
 <p>To run <code>crystmatch</code>, one of the following modes must be selected:</p>
 <ol>
-<li><strong>Enumeration mode</strong>: Generate a list of CSMs, save them to a <code>CSM_LIST.npz</code> file, and perform preliminary analysis. The initial and final crystal structures must be specified in the form of POSCAR files.</li>
-<li><strong>Read mode</strong>: Read CSMs from a <code>CSM_LIST.npz</code> file. You can export specific CSMs to POSCARs, perform OR analysis, generate CSV tables of CSM properties, and visualize the RMSD-RMSS-multiplicity distribution in a 2D scatter plot.</li>
-<li><strong>Single-CSM mode</strong>: Directly determine a single CSM by two POSCAR files (must have the same number and species of atoms) and perform detailed analysis.</li>
+<li>
+<p><strong><code>--enumerate</code></strong></p>
+<p>Enumerate a list of representative CSMs, save them to a <code>CSMLIST.npz</code> file, and perform preliminary analysis. The initial and final crystal structures must be specified in two separate <a href="https://www.vasp.at/wiki/index.php/POSCAR">POSCAR</a> files.</p>
+</li>
+<li>
+<p><strong><code>--read</code></strong></p>
+<p>Read CSMs from a <code>CSMLIST.npz</code> file. You can export specific CSMs to POSCARs or XDATCARs, perform orientation-relationship analysis, and visualize them interactively.</p>
+</li>
+<li>
+<p><strong><code>--direct</code></strong></p>
+<p>Directly determine a single CSM by two POSCAR files (must have the same number of atoms) and perform detailed analysis.</p>
+</li>
 </ol>
-<p><strong>We strongly recommend starting with the <a href="#examples">examples</a> provided below.</strong> If you are still confused, run <code>crystmatch</code> directly in the command line without any arguments for an interactive calculation. To <a href="https://fangcheng-wang.github.io/crystmatch/cli/">see all available options</a>, run:</p>
+<p><strong>We strongly recommend starting with the <a href="#examples">examples</a> provided below, and then see <a href="https://fangcheng-wang.github.io/crystmatch/cli/">all available options</a>.</strong> To see the help message, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --help
 </code></pre></div>
 <h2 id="examples">Examples</h2>
-<h3 id="enumerating-csms">Enumerating CSMs</h3>
-<p>To generate a list of representative <a href="https://arxiv.org/abs/2305.05278">[1]</a> CSMs between two crystal structures stored in <code>./fcc</code> and <code>./bcc</code>, with multiplicity upper bound <code>MAX_MU = 2</code> and RMSS upper bound <code>MAX_RMSS = 0.4</code>, run:</p>
-<div class="highlight"><pre><span></span><code>crystmatch --initial fcc --final bcc --enumeration 2 0.4
+<h3 id="enumerating-representative-csms">Enumerating representative CSMs</h3>
+<p>To enumerate a list of representative CSMs (<em>each having the minimal shuffle distance among all CSMs with the same deformation</em>) between two crystal structures given by POSCAR files <code>Graphite</code> and <code>Diamond</code>, with upper bounds <code>MAX_MU = 2</code> for multiplicity and <code>MAX_STRAIN = 0.4</code> for RMSS, run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --enumerate Graphite Diamond 2 0.4
 </code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Caveat</p>
+<p>We recommend you to try <code>MAX_MU = 2</code> and <code>MAX_W = 0.4</code> first, and then gradually adjust these upper bounds, usually by increasing <code>MAX_MU</code> and decreasing <code>MAX_W</code>, to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
+</div>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>We recommend you to try <code>MAX_MU &lt;= 2</code> and <code>MAX_RMSS = 0.4</code> first, and then gradually adjust these upper bounds (usually by increasing <code>MAX_MU</code> and decreasing <code>MAX_RMSS</code>) to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.</p>
+<p class="admonition-title">Suggestion</p>
+<p>If you are using a job scheduling system such as SLURM on a remote server, you can redirect the output of <code>crystmatch</code> to a log file and monitor the progress in real time using:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --enumerate Graphite Diamond 2 0.4 &gt; log
+</code></pre></div>
 </div>
 <p>The following files will be created in the current directory:</p>
-<div class="highlight"><pre><span></span><code>./
-├── CSM_LIST-m2s0.40.npz       # stores the enumerated CSMs and metadata.
-├── PLOT-m2s0.40.pdf           # shows the RMSD-RMSS distribution of the CSMs.
-└── TABLE-m2s0.40.csv          # shows the multiplicity, RMSS, and RMSD of each CSM.
+<div class="highlight"><pre><span></span><code><span class="p">./</span>
+<span class="err">├──</span> <span class="n">CSMLIST-m2s0</span><span class="p">.</span><span class="n">4</span><span class="p">.</span><span class="n">npz</span>       <span class="c"># stores the enumerated CSMs and metadata</span>
+<span class="err">├──</span> <span class="n">SUMMARY-m2s0</span><span class="p">.</span><span class="n">4</span><span class="p">.</span><span class="n">csv</span>       <span class="c"># lists the multiplicity, RMSS, and RMSD</span>
+<span class="err">└──</span> <span class="n">SCATTER-m2s0</span><span class="p">.</span><span class="n">4</span><span class="p">.</span><span class="n">pdf</span>       <span class="c"># shows the RMSD-RMSS distribution of the CSMs</span>
 </code></pre></div>
-<h3 id="exporting-csms-from-an-npz-file">Exporting CSMs from an NPZ file</h3>
-<p>After enumeration, you can see the properties of CSMs in the CSV file, which also contains their indices in the NPZ file. If you want to export the CSMs with indices <code>7</code> and <code>10</code> in <code>CSM_LIST-foo.npz</code>, run:</p>
-<div class="highlight"><pre><span></span><code>crystmatch --read CSM_LIST-foo.npz --export 7 10
+<p>Here, <code>CSMLIST-m2s0.4.npz</code> contains all information of the enumerated CSMs and SLMs, but is not intended to be human-readable. <code>SUMMARY-m2s0.4.csv</code> look like this:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ./SUMMARY-m2s0.4.csv</span>
+
+<span class="c1"># csm_id,  slm_id,      mu,  period,  rmss/%,  rmsd/Å</span>
+       <span class="mi">0</span><span class="p">,</span>       <span class="mi">0</span><span class="p">,</span>       <span class="mi">1</span><span class="p">,</span>       <span class="mi">4</span><span class="p">,</span>   <span class="mf">21.28</span><span class="p">,</span>  <span class="mf">0.4788</span>
+       <span class="mi">1</span><span class="p">,</span>       <span class="mi">1</span><span class="p">,</span>       <span class="mi">1</span><span class="p">,</span>       <span class="mi">4</span><span class="p">,</span>   <span class="mf">26.20</span><span class="p">,</span>  <span class="mf">0.6833</span>
+       <span class="mi">2</span><span class="p">,</span>       <span class="mi">2</span><span class="p">,</span>       <span class="mi">1</span><span class="p">,</span>       <span class="mi">4</span><span class="p">,</span>   <span class="mf">30.47</span><span class="p">,</span>  <span class="mf">0.4884</span>
+       <span class="mi">3</span><span class="p">,</span>       <span class="mi">3</span><span class="p">,</span>       <span class="mi">1</span><span class="p">,</span>       <span class="mi">4</span><span class="p">,</span>   <span class="mf">36.85</span><span class="p">,</span>  <span class="mf">0.7826</span>
+       <span class="mi">4</span><span class="p">,</span>       <span class="mi">4</span><span class="p">,</span>       <span class="mi">1</span><span class="p">,</span>       <span class="mi">4</span><span class="p">,</span>   <span class="mf">37.89</span><span class="p">,</span>  <span class="mf">0.5036</span>
+       <span class="mi">5</span><span class="p">,</span>       <span class="mi">5</span><span class="p">,</span>       <span class="mi">1</span><span class="p">,</span>       <span class="mi">4</span><span class="p">,</span>   <span class="mf">39.79</span><span class="p">,</span>  <span class="mf">0.7856</span>
+       <span class="mi">6</span><span class="p">,</span>       <span class="mi">6</span><span class="p">,</span>       <span class="mi">2</span><span class="p">,</span>       <span class="mi">8</span><span class="p">,</span>   <span class="mf">14.34</span><span class="p">,</span>  <span class="mf">0.9107</span>
+       <span class="mi">7</span><span class="p">,</span>       <span class="mi">7</span><span class="p">,</span>       <span class="mi">2</span><span class="p">,</span>       <span class="mi">8</span><span class="p">,</span>   <span class="mf">19.50</span><span class="p">,</span>  <span class="mf">0.8152</span>
 </code></pre></div>
-<p>Two folders will be created in the current directory, each containing a pair of POSCAR files representing the CSM. The current directory will look like this:</p>
-<div class="highlight"><pre><span></span><code>./
+<p><code>SCATTER-m2s0.4.pdf</code> visualizes the RMSD-RMSS-multiplicity distribution of the CSMs.</p>
+<h3 id="enumerating-all-csms">Enumerating all CSMs</h3>
+<p>To enumerate all CSMs (<em>representative and nonrepresentative</em>) between two crystal structures given by POSCAR files <code>Graphite</code> and <code>Diamond</code>, with upper bounds <code>MAX_MU = 2</code> for multiplicity, <code>MAX_STRAIN = 0.4</code> for RMSS, and <code>MAX_D = 1.8</code> for RMSD, run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --enumerate Graphite Diamond 2 0.4 --all 1.8
+</code></pre></div>
+<p>The following files will be created in the current directory:</p>
+<div class="highlight"><pre><span></span><code><span class="p">./</span>
+<span class="err">├──</span> <span class="n">CSMLIST-m2s0</span><span class="p">.</span><span class="n">4d1</span><span class="p">.</span><span class="n">8</span><span class="p">.</span><span class="n">npz</span>     <span class="c"># stores the enumerated CSMs and metadata</span>
+<span class="err">├──</span> <span class="n">SUMMARY-m2s0</span><span class="p">.</span><span class="n">4d1</span><span class="p">.</span><span class="n">8</span><span class="p">.</span><span class="n">csv</span>     <span class="c"># lists the multiplicity, RMSS, and RMSD</span>
+<span class="err">└──</span> <span class="n">SCATTER-m2s0</span><span class="p">.</span><span class="n">4d1</span><span class="p">.</span><span class="n">8</span><span class="p">.</span><span class="n">pdf</span>     <span class="c"># shows the RMSD-RMSS distribution of the CSMs</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Caveat</p>
+<p>Using <code>--all MAX_D</code> with large <code>MAX_MU</code> may result in a very large number of CSMs. We recommend you to try <code>MAX_D = 1.2</code> first, and then gradually increase it to obtain desired results.</p>
+</div>
+<p>If you wish to apply weighting to atomic species when calculating RMSD, prepare a CSMCAR file and use the <code>--extra</code> option. See <a href="https://fangcheng-wang.github.io/crystmatch/cli/#atomic-weights">CSMCAR</a> for details.</p>
+<h3 id="visualizing-csms-in-a-3d-interactive-plot">Visualizing CSMs in a 3D interactive plot</h3>
+<p>If you are using <code>crystmatch</code> in a local terminal, you can visualize the CSMs in a <strong>3D interactive plot</strong> by adding the <code>--interact</code> option, as shown below. You can rotate and zoom the plot using your mouse or touchpad.</p>
+<p><img alt="3D interactive plot" src="src/interact.jpg" /></p>
+<p>However, using <code>--interact</code> in <code>--enumerate</code> mode might be unwise, as you would have to visually inspect numerous CSMs one by one. The recommended workflow is:</p>
+<ol>
+<li>Perform <a href="#enumerating-representative-csms">enumeration</a>, generating <code>SCATTER.pdf</code>, <code>SUMMARY.csv</code>, and <code>CSMLIST.npz</code>.</li>
+<li>See <code>SCATTER.pdf</code> and roughly note the RMSS and RMSD values of CSMs of interest.</li>
+<li>Identify the corresponding <code>csm_id</code> values for these CSMs in <code>SUMMARY.csv</code>, e.g., <code>0</code>, <code>7</code>, <code>112</code>.</li>
+<li>Read and visualize these CSMs from <code>CSMLIST.npz</code> using the following command:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz 0 7 112 --interact
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Suggestion</p>
+<p>You can enumerate CSMs on a remote server or WSL, and then download the <code>CSMLIST.npz</code> file to your local machine so that the CSMs can be visualized interactively using <code>--interact</code>.</p>
+</div>
+<h3 id="exporting-csms-as-poscar-or-xdatcar-files">Exporting CSMs as POSCAR or XDATCAR files</h3>
+<p>To export CSMs with <code>csm_id</code> values <code>7</code> and <code>10</code> from <code>CSMLIST.npz</code> as POSCAR files, run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz 7 10 --poscar
+</code></pre></div>
+<p>Two folders will be created in <code>./EXPORT-read/</code>, each containing a pair of POSCAR files representing the CSM:</p>
+<div class="highlight"><pre><span></span><code>./EXPORT-read/
 ├── CSM_7/
 │   ├── POSCAR_I
 │   └── POSCAR_F
@@ -589,30 +763,19 @@
     ├── POSCAR_I
     └── POSCAR_F
 </code></pre></div>
-<h3 id="orientation-relationship-analysis">Orientation relationship analysis</h3>
-<p>To benchmark CSMs in <code>CSM_LIST-foo.npz</code> by their deviation angles from the OR <span class="arithmatex">\((111)_A\parallel(110)_B,[1\bar{1}0]_A\parallel[001]_B\)</span>, run:</p>
-<div class="highlight"><pre><span></span><code>crystmatch --read CSM_LIST-foo.npz --orientation 1 1 1 1 1 0 1 -1 0 0 0 1
+<p>You can also export CSMs as XDATCAR files using the <code>--xdatcar</code> option. Both <code>--poscar</code> and <code>--xdatcar</code> are also available in <code>--enumerate</code> and <code>--direct</code> modes.</p>
+<h3 id="identifying-csm-from-a-pair-of-poscar-files">Identifying CSM from a pair of POSCAR files</h3>
+<p>To identify and analyze the CSM defined by a pair of POSCAR files <code>POSCAR_I</code> and <code>POSCAR_F</code>, run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --direct POSCAR_I POSCAR_F
 </code></pre></div>
-<p>Note that the arguments after <code>--orientation</code> must be <strong>Cartesian coordinates</strong>.</p>
-<p>The ORs are determined via the <em>rotation-free</em><sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup> manner by default, and you can also use <code>--uspfix</code> to determine ORs via the <em>USF-fixed</em><sup id="fnref2:1"><a class="footnote-ref" href="#fn:1">1</a></sup> manner.</p>
-<h3 id="single-csm-analysis">Single-CSM analysis</h3>
-<p>To analyze a single CSM defined by two POSCAR files, run:</p>
-<div class="highlight"><pre><span></span><code>crystmatch --initial POSCAR1 --final POSCAR2 --single
+<p>To enumerate all CSMs with identical initial and final supercells as <code>POSCAR_I</code> and <code>POSCAR_F</code>, but different atomic correspondences, run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --direct POSCAR_I POSCAR_F --all MAX_D
 </code></pre></div>
-<p><code>crystmatch</code> will also save the rigid-transformation optimized (with rotation-free orientation and RMSD-minimized overall position) CSM in the current directory like this:</p>
-<div class="highlight"><pre><span></span><code>./
-└── CSM_single/
-    ├── POSCAR1
-    └── POSCAR2-optimized
-</code></pre></div>
-<div class="footnote">
-<hr />
-<ol>
-<li id="fn:1">
-<p><a href="https://arxiv.org/abs/2305.05278">FC Wang, QJ Ye, YC Zhu, and XZ Li, <em>Physical Review Letters</em> <strong>132</strong>, 086101 (2024)</a>&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref4:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref5:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
-</li>
-</ol>
-</div>
+<p>Here, <code>MAX_D</code> should be set to a smaller value if the supercells contain many atoms.</p>
+<h3 id="orientation-relationship-analysis">Orientation-relationship analysis</h3>
+<p>In <code>--enumerate</code>, <code>--read</code>, and even <code>--direct</code> modes, you can perform orientation-relationship analysis by using <code>--orientation ASSUM</code> and <code>--extra CSMCAR</code>. See <a href="https://fangcheng-wang.github.io/crystmatch/cli/#orientation-relationship">CSMCAR</a> for details.</p>
+<h3 id="computing-estimated-strain-energy-density">Computing estimated strain energy density</h3>
+<p>If you want to use the estimated strain energy density, rather than the RMSS, to quantify the strain, you should provide the elastic tensors of the initial and final structures in the <a href="https://fangcheng-wang.github.io/crystmatch/cli/#elastic-tensors">CSMCAR</a> file.</p>
 
 
 
