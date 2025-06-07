@@ -30,9 +30,9 @@ python3 --version
 To install the latest version of `crystmatch`, run:
 
 ```
+pip3 install --upgrade numpy scipy spglib numba matplotlib
 pip3 install --upgrade crystmatch
 ```
-
 
 Check whether `crystmatch` is successfully installed:
 

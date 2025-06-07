@@ -30,9 +30,9 @@ python3 --version
 To install the latest version of `crystmatch`, run:
 
 ```
+pip3 install --upgrade numpy scipy spglib numba matplotlib
 pip3 install --upgrade crystmatch
 ```
-
 
 Check whether `crystmatch` is successfully installed:
 
@@ -112,14 +112,14 @@ crystmatch --help
 
 ### Enumerating representative CSMs
 
-To enumerate a list of representative CSMs (*each having the minimal shuffle distance among all CSMs with the same deformation*) between two crystal structures given by POSCAR files `Graphite` and `Diamond`, with upper bounds `MAX_MU = 2` for multiplicity and `MAX_STRAIN = 0.4` for RMSS, run:
+To enumerate a list of representative CSMs (*each representing a unique deformation*) between two crystal structures given by POSCAR files `Graphite` and `Diamond`, with upper bounds `MAX_MU = 2` for multiplicity and `MAX_STRAIN = 0.4` for RMSS, run:
 
 ```
 crystmatch --enumerate Graphite Diamond 2 0.4
 ```
 
 !!! warning "Caveat"
-    We recommend you to try `MAX_MU = 2` and `MAX_W = 0.4` first, and then gradually adjust these upper bounds, usually by increasing `MAX_MU` and decreasing `MAX_W`, to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
+    We recommend you to try `MAX_MU = 2` and `MAX_STRAIN = 0.4` first, and then gradually adjust these upper bounds, usually by increasing `MAX_MU` and decreasing `MAX_STRAIN`, to obtain desired results. Otherwise, the enumeration may take a very long time, or find no CSMs at all.
 
 !!! note "Suggestion"
     If you are using a job scheduling system such as SLURM on a remote server, you can redirect the output of `crystmatch` to a log file and monitor the progress in real time using:
