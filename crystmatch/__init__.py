@@ -47,8 +47,8 @@ def main():
                         help="enumerate all CSMs for each SLM, with MAX_D as the upper bound for the shuffle distance")
     parser.add_argument("-t", "--tol", type=float, default=1e-3, metavar='TOL',
                         help="tolerance in angstroms for detecting symmetry (default is 1e-3)")
-    parser.add_argument("-i", "--interact", nargs='?', type=float, default=None, const=1.5, metavar='SIZE',
-                        help="interactively visualize each CSM using a 3D plot, with SIZE controlling the radius of the cluster to display (default is 1.5)")
+    parser.add_argument("-i", "--interact", nargs='?', type=float, default=None, const=1.2, metavar='SIZE',
+                        help="interactively visualize each CSM using a 3D plot, with SIZE controlling the radius of the cluster to display (default is 1.2)")
     parser.add_argument("-o", "--orientation", type=str, choices=['norot', 'uspfixed'], metavar='ASSUM',
                         help="calculate the deviation angle from the given orientation relationship for each CSM (must be used with --extra)")
     parser.add_argument("-p", "--poscar", nargs='?', type=str, default=None, const='norot', choices=['norot', 'uspfixed'], metavar='ASSUM',
@@ -383,21 +383,22 @@ def main():
             visualize_slmlist(unique_filename("Creating scatter plot in", f"ANGLE-{jobname}.pdf"), data[:,header.index('rmss' if strain == rmss else 'w')],
                             data[:,header.index('d')], data[:,header.index('angle')],
                             cbarlabel="Deviation angle (rad)", cmap=plt.cm.get_cmap('magma'))
-        print(f"\tThe horizontal axis 'Strain' represents {'rmss' if strain == rmss else 'estimated strain energy (with the same unit as in CSMCAR)'}")
+        print(f"\tThe horizontal axis 'Strain' represents {'RMSS' if strain == rmss else 'estimated strain energy (with the same unit as in CSMCAR)'}.")
     
     # interactive visualization
     
     if args.interact is not None:
         for i in range(len(slm_ind)):
             slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
-            print(f"Displaying the CSM with csm_id = {i} ...")
-            visualize_csm(crystA, crystB, slm, p, ks, weight_func=weight_func, cluster_size=args.interact, tol=tol)
+            print(f"Displaying the CSM with csm_id = {indices[i] if (mode == 'read' and len(args.read) > 1) else i} ...")
+            visualize_csm(crystA, crystB, slm, p, ks, weight_func=weight_func, tol=tol, cluster_size=args.interact,
+                            label = f"csm_id = {indices[i] if (mode == 'read' and len(args.read) > 1) else i}, "
+                            + f"mu = {imt_multiplicity(crystA, crystB, slm):d}, "
+                            + f"RMSS = {100 * rmss(deformation_gradient(crystA, crystB, slm)):.2f}%, "
+                            + f"RMSD = {csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func):.3f}Å")
 
-    print(f"\nTotal time spent: {perf_counter()-time0:.2f} seconds")
+    print(f"\nTotal time spent: {perf_counter()-time0:.2f} s")
     return
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"\nError: {e} Use '--help' for usage information, or see the documentation at \n\n\t" + __url__)
+    main()

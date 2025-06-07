@@ -94,7 +94,7 @@ To benchmark CSMs with a given orientation relationship, two parameters must be 
         0 1 0 || 0 -1 0
     ```
 
-    Here, exactly two rows after `orientation relationship:` will be read. Each row specifies a parallelism between two **crystal directions** of the initial and final structures. These crystal directions are denoted as [Miller indices](https://en.wikipedia.org/wiki/Miller_index)
+    Here, exactly two rows after `orientation relationship` will be read. Each row specifies a parallelism between two **crystal directions** of the initial and final structures. These crystal directions are denoted as [Miller indices](https://en.wikipedia.org/wiki/Miller_index)
 
     $$
     [hk\ell]=h\mathbf{a}+k\mathbf{b}+\ell\mathbf{c},
@@ -187,7 +187,7 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
 
 - `-i [SIZE]`, `--interact [SIZE]`
 
-    Interactively visualize each CSM using a 3D plot. `SIZE` specifies the radius of the cluster to display, which should not be larger than `4.0`. Use `SIZE = 0` to display the cell contents only. Default is `1.5`.
+    Interactively visualize each CSM using a 3D plot. `SIZE` specifies the radius of the cluster to display, which we recommend to be smaller than `2.0`. Use `SIZE = 0` to display the cell contents only. Default is `1.2`.
 
     !!! warning "Caveat"
         The interactive plot may not work properly in some environments, such as Windows Subsystem for Linux (WSL) or remote servers.

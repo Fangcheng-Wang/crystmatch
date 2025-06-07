@@ -400,7 +400,10 @@ def colors_light(i):
     if i > 8: raise ValueError('i must be between 0 and 8')
     return plt.get_cmap('Pastel1')(0.1 * i + 0.05)
 
-def visualize_csm(crystA, crystB, slm, p, ks, weight_func=None, l=2, cluster_size=1.5, show_conventional=True, tol=1e-3):
+def visualize_csm(
+    crystA, crystB, slm, p, ks, weight_func=None, l=2, tol=1e-3,
+    cluster_size=1.2, show_conventional=True, label=None
+):
     """Use with `%matplotlib widget` in Jupyter notebook (need to install `ipympl`) to interactively visualize the shuffling process.
     """
     crystA_sup, crystB_sup, c_half, _, _ = create_common_supercell(crystA, crystB, slm)
@@ -471,9 +474,12 @@ def visualize_csm(crystA, crystB, slm, p, ks, weight_func=None, l=2, cluster_siz
             ax.text2D(0.620, 0.91, "a", color='#666666', fontsize=10, transform=ax.transAxes)
             ax.text2D(0.653, 0.91, "b", color='#888888', fontsize=10, transform=ax.transAxes)
             ax.text2D(0.689, 0.91, "c", color='#aaaaaa', fontsize=10, transform=ax.transAxes)
-        ax.text2D(0.05, 0.10, "Light arrows represent the shuffle, whose period has:", fontsize=8, transform=ax.transAxes)
-        for i, s in enumerate(species_unique):
-            ax.text2D(0.05 + 0.1 * i, 0.05, f"{counts[i]:d}{s}", color=colors_dark(i), fontsize=9, transform=ax.transAxes)
+        if left:
+            if label is not None: ax.text2D(0.05, 0.10, label, fontsize=8, transform=ax.transAxes)
+            ax.text2D(0.05, 0.05, f"Light arrows represent the shuffle, whose period contains {len(p)} atoms:", fontsize=8, transform=ax.transAxes)
+        else:
+            for i, s in enumerate(species_unique):
+                ax.text2D(0.05 + 0.1 * i, 0.05, f"{counts[i]:d}{s}", color=colors_dark(i), fontsize=8, transform=ax.transAxes)
 
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.show()
