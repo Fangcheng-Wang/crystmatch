@@ -134,7 +134,7 @@ crystmatch --read CSMLIST.npz --extra CSMCAR.txt --orientation 'uspfixed'
 
 ```bash
 crystmatch [--help] [--version] \                               # package information
-           [--extra CSMCAR] [--tolerance TOL] \                 # global settings
+           [--extra CSMCAR] [--tol TOL] \                 # global settings
            [--enumerate POSCAR_I POSCAR_F MAX_MU MAX_STRAIN] \  # enumerate rep. CSMs
            [--read CSMLIST [IND1 IND2 ...]] \                   # read CSMs from NPZ
            [--direct POSCAR_I POSCAR_F] [--literal] \           # single CSM analysis
@@ -181,7 +181,7 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
 
     Additionally enumerate all CSMs (instead of only the representative or read ones) for each SLM, with `MAX_D` as the upper bound for the shuffle distance.
 
-- `-t TOL`, `--tolerance TOL`
+- `-t TOL`, `--tol TOL`
 
     Tolerance in angstroms for detecting symmetry. Default is `1e-3`.
 

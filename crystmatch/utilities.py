@@ -16,7 +16,7 @@ from numpy.typing import NDArray, ArrayLike
 from matplotlib import rcParams, colors
 import numpy as np
 import numba as nb
-import scipy.linalg as la
+import numpy.linalg as la
 import matplotlib.pyplot as plt
 rcParams.update({
     'font.family': 'serif',
@@ -126,7 +126,8 @@ def load_csmcar(filename: str, verbose: bool = True):
                 axis_xy = 'XY' if 'XY' in axes else 'YX'
                 ind = [axes.index('XX'), axes.index('YY'), axes.index('ZZ'), axes.index(axis_yz), axes.index(axis_zx), axes.index(axis_xy)]
                 voigtA = voigtA[np.ix_(ind, ind)]
-                if verbose: print(f"Initial elastic tensor:\t{tab.join(standard_axes)}\n{nl.join([tab + standard_axes[i] + tab + tab.join(row.astype(str)) for i, row in enumerate(voigtA)])}")
+                if verbose: print(f"initial elastic tensor:\t{tab.join(standard_axes)}\n"
+                                    + f"{nl.join([tab + tab + standard_axes[i] + tab + tab.join(row.round(2).astype(str)) for i, row in enumerate(voigtA)])}")
             elif info.startswith(('F', 'f')):
                 if voigtB: print("Warning: Final elastic tensor is defined multiple times! The last definition will be used.")
                 voigtB = np.zeros((6, 6))
@@ -140,12 +141,13 @@ def load_csmcar(filename: str, verbose: bool = True):
                 axis_xy = 'XY' if 'XY' in axes else 'YX'
                 ind = [axes.index('XX'), axes.index('YY'), axes.index('ZZ'), axes.index(axis_yz), axes.index(axis_zx), axes.index(axis_xy)]
                 voigtB = voigtB[np.ix_(ind, ind)]
-                if verbose: print(f"Final elastic tensor:\t{tab.join(standard_axes)}\n{nl.join([tab + standard_axes[i] + tab + tab.join(row.astype(str)) for i, row in enumerate(voigtB)])}")
+                if verbose: print(f"final elastic tensor:\t{tab.join(standard_axes)}\n"
+                                    + f"{nl.join([tab + tab + standard_axes[i] + tab + tab.join(row.round(2).astype(str)) for i, row in enumerate(voigtB)])}")
             elif info.startswith(('A', 'a', 'W', 'w', 'S', 's', 'D', 'd')):
                 species = f.readline().strip().split()
                 weights = np.array(f.readline().strip().split(), dtype=float)
                 weight_func = {s: w for s, w in zip(species, weights)}
-                if verbose: print(f"Atomic weights used to define the shuffle distance:\n{nl.join([tab + key + tab + str(value) for key, value in weight_func.items()])}")
+                if verbose: print(f"atomic weights used to define the shuffle distance:\n{nl.join([tab + key + tab + str(value) for key, value in weight_func.items()])}")
             elif info.startswith(('O', 'o')):
                 para1 = f.readline().split("||")
                 h_i1, k_i1, l_i1 = [float(x) for x in para1[0].strip().split()]
@@ -155,18 +157,18 @@ def load_csmcar(filename: str, verbose: bool = True):
                 h_f2, k_f2, l_f2 = [float(x) for x in para2[1].strip().split()]
                 ori_rel = (((h_i1, k_i1, l_i1), (h_f1, k_f1, l_f1)), ((h_i2, k_i2, l_i2), (h_f2, k_f2, l_f2)))
                 if verbose:
-                    print("Orientation relationship:")
+                    print("orientation relationship:")
                     print(f"\t({h_i1:.3f}, {k_i1:.3f}, {l_i1:.3f}) || ({h_f1:.3f}, {k_f1:.3f}, {l_f1:.3f})")
                     print(f"\t({h_i2:.3f}, {k_i2:.3f}, {l_i2:.3f}) || ({h_f2:.3f}, {k_f2:.3f}, {l_f2:.3f})")
             info = f.readline()
     return voigtA, voigtB, weight_func, ori_rel
 
-def unique_filename(message: Union[str, None], filename: str) -> str:
-    base, ext = splitext(filename)
+def unique_filename(message: Union[str, None], filename: str, ext: bool = True) -> str:
+    if ext: base, ext = splitext(filename)
     counter = 1
     new_filename = filename
     while exists(new_filename):
-        new_filename = f"{base}-{counter}{ext}"
+        new_filename = f"{base}-{counter}{ext}" if ext else f"{filename}-{counter}"
         counter += 1
     if message != None: print(f"{message} '{new_filename}' ...")
     return new_filename
@@ -288,10 +290,8 @@ def imt_multiplicity(crystA: Cryst, crystB: Cryst, slmlist: Union[SLM, List[SLM]
     zA = crystA[2].shape[0]
     zB = crystB[2].shape[0]
     dA = np.lcm(zA,zB) // zA
-    if len(slmlist.shape) == 3:
-        return la.det(slmlist[0]).round().astype(int) // dA
-    else:
-        return la.det(slmlist[:,0,:,:]).round().astype(int) // dA
+    if slmlist.ndim == 3: return la.det(slmlist[0]).round().astype(int) // dA
+    else: return la.det(slmlist[:,0,:,:]).round().astype(int) // dA
 
 def deformation_gradient(crystA: Cryst, crystB: Cryst, slmlist: List[SLM]) -> NDArray[np.float64]:
     """Compute the deformation gradient matrices of given IMTs.

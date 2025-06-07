@@ -100,7 +100,7 @@ To run `crystmatch`, one of the following modes must be selected:
     
     Directly determine a single CSM by two POSCAR files (must have the same number of atoms) and perform detailed analysis.
 
-**We strongly recommend starting with the [examples](#examples) provided below.** If you are still confused, run `crystmatch` directly in the command line without any arguments for an interactive calculation. To [see all available options](https://fangcheng-wang.github.io/crystmatch/cli/), run:
+**We strongly recommend starting with the [examples](#examples) provided below.** To see [all available options](https://fangcheng-wang.github.io/crystmatch/cli/), run:
 
 ```
 crystmatch --help

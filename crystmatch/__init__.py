@@ -45,7 +45,7 @@ def main():
                         help="load extra parameters from CSMCAR, including the elastic tensors, atomic weights, and orientation relationship used to benchmark CSMs")
     parser.add_argument("-a", "--all", type=float, metavar='MAX_D',
                         help="enumerate all CSMs for each SLM, with MAX_D as the upper bound for the shuffle distance")
-    parser.add_argument("-t", "--tolerance", type=float, default=1e-3, metavar='TOL',
+    parser.add_argument("-t", "--tol", type=float, default=1e-3, metavar='TOL',
                         help="tolerance in angstroms for detecting symmetry (default is 1e-3)")
     parser.add_argument("-i", "--interact", nargs='?', type=float, default=None, const=1.5, metavar='SIZE',
                         help="interactively visualize each CSM using a 3D plot, with SIZE controlling the radius of the cluster to display (default is 1.5)")
@@ -79,7 +79,7 @@ def main():
     # load global settings
     voigtA, voigtB, weight_func, ori_rel = None, None, None, None
     if args.extra is not None: voigtA, voigtB, weight_func, ori_rel = load_csmcar(args.extra)
-    tol = args.tolerance
+    tol = args.tol
     
     # get CSMs
     
@@ -139,6 +139,7 @@ def main():
         crystA, crystB, slmlist, slm_ind, pct_arrs, table = load_npz(filenpz, verbose=True)
         print(save_poscar(None, crystA, crystname="\nPrimitive cell of the initial structure (in POSCAR format):"))
         print(save_poscar(None, crystB, crystname="\nPrimitive cell of the final structure (in POSCAR format):"))
+        print('\n', end='')
         max_mu = imt_multiplicity(crystA, crystB, slmlist[slm_ind]).max()
         zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
         header = table.header
@@ -146,11 +147,11 @@ def main():
         
         if len(args.read) > 1:
             indices = np.array([int(i) for i in args.read[1:]], dtype=int)
-            valid = np.nonzero(indices < len(slm_ind))[0]
+            valid = indices < len(slm_ind)
             if not valid.all():
                 print(f"Warning: Indices out of range (> {len(slm_ind)-1:d}) will be ignored.")
                 indices = indices[valid]
-            print(f"\tReading CSMs with indices:", end='')
+            print(f"Reading CSMs with indices:", end='')
             max_mu = imt_multiplicity(crystA, crystB, slmlist[slm_ind[indices]]).max()
             slmlist_temp = np.array([], dtype=int).reshape(0,3,3,3)
             slm_ind_temp = []
@@ -221,8 +222,8 @@ def main():
         jobname = 'direct'
         fileA = args.direct[0]
         fileB = args.direct[1]
-        crystA_sup = load_poscar(args.initial, tol=tol, to_primitive=False)
-        crystB_sup = load_poscar(args.final, tol=tol, to_primitive=False)
+        crystA_sup = load_poscar(fileA, tol=tol, to_primitive=False)
+        crystB_sup = load_poscar(fileB, tol=tol, to_primitive=False)
         if not crystA_sup[1].shape[0] == crystB_sup[1].shape[0]: raise ValueError("The numbers of atoms in two POSCAR files are not equal!")
         check_stoichiometry(crystA_sup[1], crystB_sup[1])
         crystA, crystB, slm0, p0, ks0 = cryst_to_csm(crystA_sup, crystB_sup, tol=tol)
@@ -249,16 +250,18 @@ def main():
         
         print("\nCSM properties:")
         mu = imt_multiplicity(crystA, crystB, slm)
+        ps = la.svd(deformation_gradient(crystA, crystB, slm), compute_uv=False) - 1
         rms_strain = rmss(deformation_gradient(crystA, crystB, slm))
-        print(f"\tmultiplicity: {mu:2d}")
-        print(f"\tperiod: {zlcm * mu:2d}")
-        print(f"\trmss: {100 * rms_strain:.1f} %")
-        print(f"\trmsd: {d:.2f} Å")
+        print(f"\tmultiplicity (mu): {mu:d}")
+        print(f"\tperiod: {zlcm * mu:d}")
+        print(f"\tprincipal strains: {100 * ps[0]:.2f} %, {100 * ps[1]:.2f} %, {100 * ps[2]:.2f} %")
+        print(f"\troot-mean-squared strain (rmss): {100 * rms_strain:.2f} %")
+        print(f"\tshuffle distance (rmsd): {d:.4f} Å")
         if not strain == rmss:
             w = strain(deformation_gradient(crystA, crystB, slm))
-            print(f"\testimated strain energy: {w:.4f} (same unit as in CSMCAR)")
+            print(f"\testimated strain energy: {w:.3f} (same unit as in CSMCAR)")
         
-        print("Using the primitive cells above, the SLM has the following IMT representation:")
+        print("\nUsing the primitive cells above, the SLM has the following IMT representation:")
         print("H_A =")
         print(slm[0])
         print("H_B =")
@@ -266,15 +269,15 @@ def main():
         print("Q =")
         print(slm[2])
         mu0 = imt_multiplicity(crystA, crystB, slm0)
-        if mu0 == mu: print(f"The input POSCAR files are already smallest supercells required to describe the CSM, with:")
-        else: print(f"The input POSCAR files are {mu0/mu:d}-fold larger than the smallest supercells required to describe the CSM, with:")
+        if mu0 == mu: print(f"\nThe input POSCAR files are already smallest supercells required to describe the CSM, with:")
+        else: print(f"\nThe input POSCAR files are {mu0//mu:d}-fold larger than the smallest supercells required to describe the CSM, with:")
         print("M_A =")
         print(decompose_cryst(crystA_sup, cryst_prim=crystA, tol=tol)[1])
         print("M_B =")
         print(decompose_cryst(crystB_sup, cryst_prim=crystB, tol=tol)[1])
         
         print(f"\nTo produce a list of CSMs that contains this CSM, run:\n"
-                + f"\n\t$ crystmatch --enumerate '{fileA}' '{fileB}' {mu} {0.01 + rms_strain:.2f} --all {d:.2f}")
+                + f"\n\t$ crystmatch --enumerate '{fileA}' '{fileB}' {mu} {0.01 + rms_strain:.2f} --all {0.01 + d:.2f}")
         print(f"\nIf you are not using a remote server and want to visualize this CSM, run:\n"
                 + f"\n\t$ crystmatch --direct '{fileA}' '{fileB}'{' --literal' if args.literal else ''} --interact")
         
@@ -332,40 +335,43 @@ def main():
             wi = miller_to_vec(crystA, hkl_i2, tol=tol)
             wf = miller_to_vec(crystB, hkl_f2, tol=tol)
             r = orient_matrix(vi, vf, wi, wf)
-            anglelist = deviation_angle(crystA, crystB, slmlist, r, orientation=args.orientation)
+            anglelist = deviation_angle(crystA, crystB, slmlist, r, orientation=args.orientation)[slm_ind]
             header = header + ['angle']
-            data = np.hstack((data, anglelist.reshape(-1,1)))
+            data = np.hstack([data, anglelist.reshape(-1,1)])
 
     # save NPZ, CSV, POSCAR, and XDATCAR files
     
     table = Table(data, header)
-    save_npz(unique_filename("Saving SLMs and CSMs to", f"CSMLIST-{jobname}.npz"), crystA, crystB, slmlist, slm_ind, pct_arrs, table)
+    if mode == 'enumerate' or args.all is not None:
+        save_npz(unique_filename("Saving SLMs and CSMs to", f"CSMLIST-{jobname}.npz"), crystA, crystB, slmlist, slm_ind, pct_arrs, table)
     if args.csv: save_csv(unique_filename("Saving summary table to", f"SUMMARY-{jobname}.csv"), table)
     
     if args.poscar is not None or args.xdatcar is not None:
-        direxport = unique_filename(f"Saving POSCAR and/or XDATCAR files to", f"EXPORT-{jobname}")
+        direxport = unique_filename(f"Saving POSCAR and/or XDATCAR files to", f"EXPORT-{jobname}", ext=False)
         makedirs(direxport)
         for i in range(len(slm_ind)):
             slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
-            makedirs(f"{direxport}{sep}CSM_{i:d}")
+            if mode == 'read' and len(args.read) > 1: ind = indices[i]
+            else: ind = i
+            makedirs(f"{direxport}{sep}CSM_{ind:d}")
             if args.poscar == 'norot' or args.xdatcar == 'norot':
                 crystA_csm, crystB_csm_norot = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol,
                                                         orientation='norot', min_t0=True, weight_func=weight_func)
                 if args.poscar == 'norot':
-                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{i:d} initial")
-                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_F", crystB_csm_norot, crystname=f"CSM_{i:d} final (no rotation)")
+                    save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{ind:d} initial")
+                    save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_F", crystB_csm_norot, crystname=f"CSM_{ind:d} final (no rotation)")
                 if args.xdatcar == 'norot':
-                    save_xdatcar(f"{direxport}{sep}CSM_{i:d}{sep}XDATCAR", crystA_csm, crystB_csm_norot, images=50, crystname=f"CSM_{i:d} (no rotation)")
+                    save_xdatcar(f"{direxport}{sep}CSM_{ind:d}{sep}XDATCAR", crystA_csm, crystB_csm_norot, images=50, crystname=f"CSM_{ind:d} (no rotation)")
             if args.poscar == 'uspfixed' or args.xdatcar == 'uspfixed':
                 crystA_csm, crystB_csm_usp1, crystB_csm_usp2 = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol,
                                                         orientation='uspfixed', min_t0=True, weight_func=weight_func)
                 if args.poscar == 'uspfixed':
-                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{i:d} initial")
-                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_F1", crystB_csm_usp1, crystname=f"CSM_{i:d} final (USP1 fixed)")
-                    save_poscar(f"{direxport}{sep}CSM_{i:d}{sep}POSCAR_F2", crystB_csm_usp2, crystname=f"CSM_{i:d} final (USP2 fixed)")
+                    save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{ind:d} initial")
+                    save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_F1", crystB_csm_usp1, crystname=f"CSM_{ind:d} final (USP1 fixed)")
+                    save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_F2", crystB_csm_usp2, crystname=f"CSM_{ind:d} final (USP2 fixed)")
                 if args.xdatcar == 'uspfixed':
-                    save_xdatcar(f"{direxport}{sep}CSM_{i:d}{sep}XDATCAR1", crystA_csm, crystB_csm_usp1, images=50, crystname=f"CSM_{i:d} (USP1 fixed)")
-                    save_xdatcar(f"{direxport}{sep}CSM_{i:d}{sep}XDATCAR2", crystA_csm, crystB_csm_usp2, images=50, crystname=f"CSM_{i:d} (USP2 fixed)")
+                    save_xdatcar(f"{direxport}{sep}CSM_{ind:d}{sep}XDATCAR1", crystA_csm, crystB_csm_usp1, images=50, crystname=f"CSM_{ind:d} (USP1 fixed)")
+                    save_xdatcar(f"{direxport}{sep}CSM_{ind:d}{sep}XDATCAR2", crystA_csm, crystB_csm_usp2, images=50, crystname=f"CSM_{ind:d} (USP2 fixed)")
     
     # create scatter plot
 
@@ -376,16 +382,16 @@ def main():
         if 'angle' in header:
             visualize_slmlist(unique_filename("Creating scatter plot in", f"ANGLE-{jobname}.pdf"), data[:,header.index('rmss' if strain == rmss else 'w')],
                             data[:,header.index('d')], data[:,header.index('angle')],
-                            cbarlabel="Deviation angle (rad)", cmap=plt.cm.get_cmap('Spectral'))
+                            cbarlabel="Deviation angle (rad)", cmap=plt.cm.get_cmap('magma'))
         print(f"\tThe horizontal axis 'Strain' represents {'rmss' if strain == rmss else 'estimated strain energy (with the same unit as in CSMCAR)'}")
     
     # interactive visualization
     
-    if args.interactive:
+    if args.interact is not None:
         for i in range(len(slm_ind)):
             slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
-            print("Displaying the CSM with csm_id = {i} ...")
-            visualize_csm(crystA, crystB, slm, p, ks, weight_func=weight_func, cluster_size=args.interactive, tol=tol)
+            print(f"Displaying the CSM with csm_id = {i} ...")
+            visualize_csm(crystA, crystB, slm, p, ks, weight_func=weight_func, cluster_size=args.interact, tol=tol)
 
     print(f"\nTotal time spent: {perf_counter()-time0:.2f} seconds")
     return

@@ -121,11 +121,9 @@ def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
     hA, qA = hnf(mA0, return_q=True)
     hB, qB = hnf(mB0, return_q=True)
     q = (qB @ la.inv(qA)).round().astype(int)
-    gA = get_pure_rotation(crystA, tol=tol)
-    gB = get_pure_rotation(crystB, tol=tol)
-    slm = np.array(standardize_imt((hA, hB, q), gA, gB), dtype=int)
+    slm = np.array([hA, hB, q], dtype=int)
 
-    crystA_sup_lll, crystB_sup_lll, _, mA, mB = create_common_supercell(crystA, crystB, slm)
+    crystA_sup_lll, crystB_sup_lll, _, _, _ = create_common_supercell(crystA, crystB, slm)
     pA = crystA_sup_lll[2].T
     pB = crystB_sup_lll[2].T
     pA0 = crystA_sup[2].T
@@ -133,6 +131,7 @@ def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
     # since pA0 -> pB0, we expect pA == pA0[:,p0] + ks0 -> pB[:,p] + ks == pB0[:,p0] + ks0
     p0 = np.nonzero(((pA.reshape(3,-1,1) - pA0.reshape(3,1,-1) + tol) % 1.0 < 2 * tol).all(axis=0))[1]
     p = np.nonzero(((pB.reshape(3,1,-1) - pB0[:,p0].reshape(3,-1,1) + tol) % 1.0 < 2 * tol).all(axis=0))[1]
+    if not len(p) == len(p0): raise ValueError("Failed to find the PCT representation. Please consider using a larger tolerance.")
     ks = (pB0[:,p0] - pA0[:,p0] + pA - pB[:,p]).round().astype(int)
     return crystA, crystB, slm, p, ks
 
@@ -226,13 +225,13 @@ def rot_usp(s):
     """
     _, sigma, vT = la.svd(s, compute_uv=True)
     levi_civita = np.array([[[0,0,0],[0,0,-1],[0,1,0]],[[0,0,1],[0,0,0],[-1,0,0]],[[0,-1,0],[1,0,0],[0,0,0]]])
-    v_cross = np.tensordot(vT[:,1,:], levi_civita, axes=(1,0))
-    s1 = sigma[:,0]
-    s2 = sigma[:,1]
-    s3 = sigma[:,2]
+    v_cross = np.tensordot(vT[...,1,:], levi_civita, axes=(vT.ndim-2,0))
+    s1 = sigma[...,0]
+    s2 = sigma[...,1]
+    s3 = sigma[...,2]
     theta = np.arctan(np.sqrt((s1**2 - s2**2) * (s2**2 - s3**2)) / (s1 * s3 + s2**2))
-    r = np.eye(3).reshape(1,3,3) + np.sin(theta).reshape(-1,1,1) * v_cross + (1 - np.cos(theta)).reshape(-1,1,1) * (v_cross @ v_cross)
-    return r
+    if s.ndim == 2: return np.eye(3) + np.sin(theta) * v_cross + (1 - np.cos(theta)) * (v_cross @ v_cross)
+    else: return np.eye(3).reshape(1,3,3) + np.sin(theta).reshape(-1,1,1) * v_cross + (1 - np.cos(theta)).reshape(-1,1,1) * (v_cross @ v_cross)
 
 def miller_to_vec(cryst, hkl, tol=1e-3):
     """Convert Miller indices to cartesian coordinates.
@@ -253,7 +252,7 @@ def miller_to_vec(cryst, hkl, tol=1e-3):
     """
     sym = get_symmetry_dataset(cryst_to_spglib(cryst), symprec=tol)
     c_conv = sym.std_rotation_matrix.T @ sym.std_lattice.T
-    return c_conv @ np.array(hkl).reshape(1,3)
+    return c_conv @ np.array(hkl)
 
 def deviation_angle(
     crystA: Cryst,
@@ -289,15 +288,14 @@ def deviation_angle(
     rA = cA @ get_pure_rotation(crystA) @ la.inv(cA)
     rB = cB @ get_pure_rotation(crystB) @ la.inv(cB)
     r_equiv = np.transpose(np.dot(np.dot(rB, r), rA), axes=(2,0,1,3)).reshape(-1,3,3)
-    hA, hB, q = zip(*slmlist)
-    s = cB @ np.array(hB) @ np.array(q) @ la.inv(cA @ np.array(hA))
+    s = deformation_gradient(crystA, crystB, slmlist)
     u, _, vT = la.svd(s, compute_uv=True)
     rS = u @ vT
     if orientation == 'norot':
         anglelist = np.arccos(np.clip(0.5 * (-1 + np.amax(np.trace(np.dot(la.inv(r_equiv), rS), axis1=1, axis2=3), axis=0)), -1, 1))
     elif orientation == 'uspfixed':
         rH = rot_usp(s)
-        rS = np.array([rS @ rH, rS @ rH.T])       # rS.shape = (2, ..., 3, 3)
+        rS = np.array([rS @ rH, rS @ rH.transpose([0,2,1])])       # rS.shape = (2, ..., 3, 3)
         anglelist = np.arccos(np.clip(0.5 * (-1 + np.amax(np.trace(np.dot(la.inv(r_equiv), rS), axis1=1, axis2=4), axis=(0,1))), -1, 1))
     else: raise ValueError("'deformation' must be 'norot' or 'uspfixed'.")
     return anglelist.round(decimals=7)
@@ -312,6 +310,8 @@ def visualize_slmlist(
 ) -> None:
     """Scatter plot of the CSMs with colorbar.
     """
+    if len(dlist) == 0:
+        raise ValueError("The CSM list is empty.")
     strainlist = np.array(strainlist)
     dlist = np.array(dlist)
     if colorlist is None:
@@ -321,17 +321,17 @@ def visualize_slmlist(
         colorlist = np.array(colorlist)
         ind0 = colorlist==0
         n0 = np.sum(ind0)
-    plt.figure()
+    plt.figure(figsize=(6.4, 4.8))
     ax = plt.subplot()
     ind = np.argsort(colorlist)[::-1]
-    sc = plt.scatter(strainlist[ind], dlist[ind], marker='+', c=colorlist[ind], cmap=cmap, s=20)
+    sc = plt.scatter(strainlist[ind], dlist[ind], marker='+', c=colorlist[ind], cmap=cmap, s=20, lw=0.8)
     if n0 >= 1:
-        print(f"\nThere are {n0:d} CSMs (indices: {', '.join(np.nonzero(ind0)[0].astype(str).tolist())}) with {cbarlabel}=0, emphasized by pink stars in the plot.")
-        plt.scatter(strainlist[ind0], dlist[ind0], marker='*', color=(1.0,0.75,0.95), s=12)
+        print(f"\nThere are {n0:d} CSMs (indices: {', '.join(np.nonzero(ind0)[0].astype(str).tolist())}) with {cbarlabel}=0, emphasized by cyan crosses in the plot.")
+        plt.scatter(strainlist[ind0], dlist[ind0], marker='x', color='#00ccff', s=12, lw=0.8)
     plt.xlabel("Strain", fontsize=13)
     plt.ylabel("Shuffle distance (Å)", fontsize=13)
-    plt.xlim(0, np.amax(strainlist) * 1.05)
-    plt.ylim(min(0, np.amin(dlist) - 0.1), np.amax(dlist) + 0.1)
+    plt.xlim(0, np.max(strainlist) * 1.01)
+    plt.ylim(min(0, np.min(dlist) - np.max(dlist)*0.01), np.max(dlist)*1.01)
     if (colorlist == 0).all(): pass
     elif colorlist.dtype == int: cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
     else: cbar = plt.colorbar(sc, aspect=40)
@@ -350,7 +350,7 @@ def visualize_pctlist(filename, pctlist, dlist):
     a = np.argsort(d_min)
     aa = np.zeros_like(a)
     aa[a] = np.arange(len(a))
-    _, ax = plt.subplots()
+    _, ax = plt.subplots(figsize=(6.4, 4.8))
     ax.scatter(aa[ind], dlist, s=20, linewidths=1, c='r', marker='x')
     ax.set_xticks(np.arange(len(a)))
     ax.set_xticklabels([str(i+1) for i in range(len(a))])
@@ -491,13 +491,13 @@ def save_csv(filename, table):
     unit = {'csm_id': 1, 'slm_id': 1, 'mu': 1, 'period': 1, 'w': 1, 'rmss': 0.01, 'd': 1, 'angle': np.pi / 180}
     text = {'csm_id': ' csm_id', 'slm_id': '  slm_id', 'mu': '      mu', 'period': '  period', 'w': '       w', 'rmss': '  rmss/%', 'd': '  rmsd/Å', 'angle': ' angle/°'}
     formatting = {'csm_id': '%8d', 'slm_id': '%8d', 'mu': '%8d', 'period': '%8d', 'w': '%8.1f', 'rmss': '%8.2f', 'd': '%8.4f', 'angle': '%8.3f'}
-    np.savetxt(filename, data * np.array([unit[h] for h in header]).reshape(1,-1), fmt=''.join(formatting[h] for h in header), header=','.join(text[h] for h in header))
+    np.savetxt(filename, data / np.array([unit[h] for h in header]).reshape(1,-1), fmt=','.join(formatting[h] for h in header), header=','.join(text[h] for h in header))
     return
 
 def save_npz(filename, crystA, crystB, slmlist, slm_ind, pct_arrs, table):
     metadata = np.array([table.header, crystA, crystB], dtype=object)
-    if not (type(pct_arrs[0]) == str or pct_arrs[0] is None): raise ValueError("The first element of 'pct_arrs' should be a placeholder.")
-    np.savez(unique_filename("Saving CSMs to", filename), *pct_arrs, metadata=metadata, slmlist=slmlist, slm_ind=slm_ind, table=table.data)
+    if not pct_arrs[0] == NPZ_ARR_COMMENT: raise ValueError("The first element of 'pct_arrs' should be a placeholder.")
+    np.savez(filename, *pct_arrs, metadata=metadata, slmlist=slmlist, slm_ind=slm_ind, table=table.data)
     return
 
 def load_npz(filename, verbose=True):
@@ -586,8 +586,6 @@ def save_xdatcar(
     pA = crystA_sup[2].T
     pB = crystB_sup[2].T
     s = cB @ la.inv(cA)
-    if not ((s.T - s).round(decimals=4) == 0).all():
-        print(f"Warning: Extra rotation detected when interpolating crystals, which is removed in {filename}.")
     _, sigma, vT = la.svd(s)
     crystlist = []
     tlist = np.linspace(0, 1, images+2)

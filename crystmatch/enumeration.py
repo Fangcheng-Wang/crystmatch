@@ -88,7 +88,7 @@ def enumerate_imt(
     
     sobol6 = Sobol(6)
     if verbose >= 1:
-        progress_bar = tqdm(total=max_iter, position=0, desc=f"\tmu={mu:-2d}", ncols=60, mininterval=0.5,
+        progress_bar = tqdm(total=max_iter, position=0, desc=f"\tmu={mu:d}", ncols=60, mininterval=0.5,
                             bar_format=f'{{desc}}: {{percentage:3.0f}}% |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
     slmlist = np.array([], dtype=int).reshape(-1,3,3,3)
     iter = 0
@@ -375,20 +375,20 @@ def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, 
         print(f"\tFound {len(bottom_pcts)} {'noncongruent bottom PCTs' if incong else 'bottom PCTs (may be congruent)'} with d <= {max_d}.")
         print(f"Filling non-bottom PCTs with d <= {max_d:.4f} ...")
 
-    pctlist = []
+    pctlist = np.array([], dtype=int).reshape(0, len(species), 4)
     dlist = []
     if verbose >= 1:
         progress_bar = tqdm(total=len(bottom_pcts), position=0, desc="\tbottom PCTs", ncols=70, mininterval=0.5,
                         bar_format=f'{{desc}}: {{n_fmt:>2s}}/{{total_fmt:>2s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
     for pct in bottom_pcts:
         for ks in pct_fill(crystA, crystB, slm, max_d, pct[:,0], ks0=pct[:,1:].T, weight_func=weight_func, l=l, warning_threshold=warning_threshold):
-            pctlist.append(zip_pct(pct[:,0], ks))
+            pctlist = np.concatenate([pctlist, [zip_pct(pct[:,0], ks)]], axis=0)
             dlist.append(pct_distance(c_sup_half, pA_sup, pB_sup, pct[:,0], ks, weights=weights, l=l))
         if verbose >= 1: progress_bar.update(1)
     if verbose >= 1:
         progress_bar.close()
         print(f"\tFound {len(pctlist)} {'noncongruent PCTs' if incong else 'PCTs (may be congruent)'} with d <= {max_d}.")
-    return np.array(pctlist, dtype=int), np.array(dlist)
+    return pctlist, np.array(dlist)
 
 def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2):
     """
@@ -480,7 +480,6 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     if verbose: print(f"A total of {len(slmlist):d} noncongruent SLMs are enumerated:")
     if len(slmlist) == 0:
         print("Warning: No SLM is found. Try larger arguments for '--enumeration' or check if the input POSCARs are correct.")
-        return None, None, None, None, None
     mulist = imt_multiplicity(crystA, crystB, slmlist)
     if verbose:
         print(f"\tmu  {' '.join(f'{i:5d}' for i in range(1,max_mu+1))}")
@@ -506,11 +505,11 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     pct_arrs = [NPZ_ARR_COMMENT]
     d0list = np.zeros(len(slmlist))
     if verbose: print(f"Computing representative CSMs (the one with the lowest d among all CSMs with the same deformation gradient):")
-    n_digit = np.floor(np.log10(np.bincount(mulist).max())).astype(int) + 1
+    n_digit = np.floor(np.log10(np.bincount(mulist).max(initial=1))).astype(int) + 1
     for mu in range(1, max_mu + 1):
         n_csm = np.sum(mulist == mu)
         if n_csm == 0:
-            pct_arrs.append(np.zeros((0, mu * np.lcm(crystA[2].shape[0], crystB[2].shape[0]), 4)), dtype=int)
+            pct_arrs.append(np.array([], dtype=int).reshape(0, mu * np.lcm(len(crystA[1]), len(crystB[1])), 4))
             continue
         pctlist = []
         if verbose: 
@@ -584,22 +583,21 @@ def enumerate_all_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     """
     
     if verbose: print(f"\nEnumerating noncongruent CSMs for mu <= {max_mu}, {'rmss' if strain == rmss else 'w'} <= {max_strain:.4f}, and d <= {max_d:.4f} ...")
-    zlcm = np.lcm(crystA[2].shape[0], crystB[2].shape[0])
+    zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
     slmlist = np.array([], dtype=int).reshape(0,3,3,3)
     slm_ind = []
-    pct_arrs = []
+    pct_arrs = [NPZ_ARR_COMMENT]
     dlist = np.array([], dtype=float)
 
     slm_count = 0
     for mu in range(1, max_mu + 1):
         slmlist_mu = enumerate_imt(crystA, crystB, mu, max_strain, strain=strain, tol=tol, max_iter=max_iter, verbose=verbose)
         slmlist = np.concatenate([slmlist, slmlist_mu], axis=0)
-        pct_arr = np.array([], dtype=int).reshape(0, mu * zlcm, 4)
+        pct_arr = np.array([], dtype=int).reshape(0, zlcm * mu, 4)
         if verbose:
             n_slm_mu = len(slmlist_mu)
-            print(f"\tFound {n_slm_mu:d} noncongruent SLMs with mu = {mu:d}, enumerating their PCTs ...")
-            progress_bar = tqdm(total=n_slm_mu, position=0, desc=f"\r\tSLMs", ncols=60, mininterval=0.5,
-                    bar_format=f'{{desc}}: {{n_fmt:>3s}}/{{total_fmt:>3s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
+            progress_bar = tqdm(total=n_slm_mu, position=0, desc=f"\r\t  SLM", ncols=63, mininterval=0.5,
+                    bar_format=f'{{desc}} {{n_fmt:>3s}}/{{total_fmt:>3s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
         for slm in slmlist_mu:
             pcts, ds = enumerate_pct(crystA, crystB, slm, max_d, weight_func=weight_func, l=l, t_grid=t_grid, verbose=0, warning_threshold=100000)
             slm_ind += [slm_count] * pcts.shape[0]
