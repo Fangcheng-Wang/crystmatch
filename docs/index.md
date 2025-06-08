@@ -185,14 +185,14 @@ If you are using `crystmatch` in a local terminal, you can visualize the CSMs in
 
 However, using `--interact` in `--enumerate` mode might be unwise, as you would have to visually inspect numerous CSMs one by one. The recommended workflow is:
 
-1. Perform [enumeration](#enumerating-representative-csms), generating `SCATTER.pdf`, `SUMMARY.csv`, and `CSMLIST.npz`.
+1. Perform [enumeration](#enumerating-representative-csms) (using `--all MAX_D` or not), generating `SCATTER.pdf`, `SUMMARY.csv`, and `CSMLIST.npz`.
 2. See `SCATTER.pdf` and roughly note the RMSS and RMSD values of CSMs of interest.
-3. Identify the corresponding `csm_id` values for these CSMs in `SUMMARY.csv`, e.g., `0`, `7`, `112`.
-4. Read and visualize these CSMs from `CSMLIST.npz` using the following command:
+3. Identify the corresponding `csm_id` values for these CSMs in `SUMMARY.csv`, e.g., `1`, `14`, `514`.
+4. Read these CSMs from `CSMLIST.npz` using `--read CSMLIST [IND1 IND2 ...]`, e.g., run:
 
-```
-crystmatch --read CSMLIST.npz 0 7 112 --interact
-```
+    ```
+    crystmatch --read CSMLIST.npz 1 14 514 --interact
+    ```
 
 !!! note "Suggestion"
     You can enumerate CSMs on a remote server or WSL, and then download the `CSMLIST.npz` file to your local machine so that the CSMs can be visualized interactively using `--interact`.
@@ -207,7 +207,7 @@ crystmatch --read CSMLIST.npz 7 10 --poscar
 
 Two folders will be created in `./EXPORT-read/`, each containing a pair of POSCAR files representing the CSM:
 
-```
+```powershell
 ./EXPORT-read/
 ├── CSM_7/
 │   ├── POSCAR_I

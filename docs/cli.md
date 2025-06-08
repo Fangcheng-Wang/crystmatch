@@ -134,14 +134,15 @@ crystmatch --read CSMLIST.npz --extra CSMCAR.txt --orientation 'uspfixed'
 
 ```bash
 crystmatch [--help] [--version] \                               # package information
-           [--extra CSMCAR] [--tol TOL] \                 # global settings
-           [--enumerate POSCAR_I POSCAR_F MAX_MU MAX_STRAIN] \  # enumerate rep. CSMs
+           [--extra CSMCAR] [--tol TOL] \                       # global settings
+           [--enumerate POSCAR_I POSCAR_F MAX_MU MAX_STRAIN] \  # enumerate CSMs
            [--read CSMLIST [IND1 IND2 ...]] \                   # read CSMs from NPZ
            [--direct POSCAR_I POSCAR_F] [--literal] \           # single CSM analysis
            [--all MAX_D] \                                      # exhaustive enumeration
-           [--orientation ASSUM] \                              # orientation benchmarking
+           [--interact [SIZE]] \                                # 3D interactive plot
            [--poscar [ASSUM]] [--xdatcar [ASSUM]] \             # export individual CSMs
-           [--csv] [--scatter] [--interact [SIZE]]              # summarize and visualize
+           [--orientation ASSUM] \                              # orientation analysis
+           [--csv] [--scatter]                                  # summarize and visualize
 ```
 
 If you are not familiar with `crystmatch`, we recommend you first read the [tutorial](https://fangcheng-wang.github.io/crystmatch/) and then come back to this page for a detailed explanation of the options.

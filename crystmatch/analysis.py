@@ -1,6 +1,21 @@
-"""
-Save, load, analyze and visualize CSMs.
-"""
+# Copyright (C) 2024 Fangcheng Wang
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""Save, load, analyze and visualize CSMs."""
 
 from .utilities import *
 
@@ -495,7 +510,7 @@ def save_csv(filename, table):
     data, header = table
     if header[0] != 'csm_id': raise ValueError("The first column of the table must be 'csm_id'.")
     unit = {'csm_id': 1, 'slm_id': 1, 'mu': 1, 'period': 1, 'w': 1, 'rmss': 0.01, 'd': 1, 'angle': np.pi / 180}
-    text = {'csm_id': ' csm_id', 'slm_id': '  slm_id', 'mu': '      mu', 'period': '  period', 'w': '       w', 'rmss': '  rmss/%', 'd': '  rmsd/Å', 'angle': ' angle/°'}
+    text = {'csm_id': 'csm_id', 'slm_id': '  slm_id', 'mu': '      mu', 'period': '  period', 'w': '       w', 'rmss': '  rmss/%', 'd': '  rmsd/Å', 'angle': ' angle/°'}
     formatting = {'csm_id': '%8d', 'slm_id': '%8d', 'mu': '%8d', 'period': '%8d', 'w': '%8.1f', 'rmss': '%8.2f', 'd': '%8.4f', 'angle': '%8.3f'}
     np.savetxt(filename, data / np.array([unit[h] for h in header]).reshape(1,-1), fmt=','.join(formatting[h] for h in header), header=','.join(text[h] for h in header))
     return
