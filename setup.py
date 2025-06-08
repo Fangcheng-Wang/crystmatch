@@ -28,6 +28,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url=metadata["url"],
+    license_files=["COPYING", "THIRD_PARTY_LICENSES"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

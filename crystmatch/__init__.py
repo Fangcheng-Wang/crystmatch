@@ -25,7 +25,7 @@ import sys
 import argparse
 
 __name__ = "crystmatch"
-__version__ = "1.2.0"
+__version__ = "2.0.0"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
