@@ -109,7 +109,7 @@ To benchmark CSMs with a given orientation relationship, two parameters must be 
         crystmatch --read CSMLIST.npz 0 --interact
         ```
 
-        to check if the conventional cell is the same as you expect.
+        to check if the conventional $\mathbf{a}, \mathbf{b}, \mathbf{c}$ is the same as you expect.
 
 2. The assumption used to determine the orientation of the final structure, must be one of the following:
 
@@ -206,7 +206,7 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
 
 - `-x [ASSUM]`, `--xdatcar [ASSUM]`
 
-    Export each CSM as an XDATCAR file with 100 frames, similar to `--poscar`.
+    Export each CSM as an XDATCAR file with 50 frames, similar to `--poscar`.
     
 **These options are automatically enabled when using `--enumerate`, `--all` or `--orientation`:**
 

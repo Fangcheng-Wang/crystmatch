@@ -25,7 +25,7 @@ import sys
 import argparse
 
 __name__ = "crystmatch"
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
@@ -34,7 +34,7 @@ __epilog__ = 'The current version is v' + __version__ + '. To get the latest ver
 \n\n\t$ pip3 install --upgrade crystmatch\n\nWe also recommend you to see the documentation at:\
 \n\n\t' + __url__ + '\n\nIf you use crystmatch in your research, please cite one of the following paper:\
 \n\n\t[1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\
-\n\t[2] FC Wang, QJ Ye, YC Zhu, and XZ Li, Under review (2025) (https://arxiv.org/abs/2506.05105)\
+\n\t[2] FC Wang, QJ Ye, YC Zhu, and XZ Li, arXiv:2506.05105 (2025) (https://arxiv.org/abs/2506.05105)\
 \n\nYou are also welcome to contact us at ' + __email__ + ' for any questions, feedbacks or comments.'
 
 def main():
@@ -301,10 +301,10 @@ def main():
                 + f"\n\t$ crystmatch --direct '{fileA}' '{fileB}'{' --literal' if args.literal else ''} --interact")
         
         if args.all is None:
-            dlist = [d]
-            mulist = [mu]
-            slmlist = [slm]
-            slm_ind = [0]
+            dlist = np.array([d])
+            mulist = np.array([mu], dtype=int)
+            slmlist = np.array([slm], dtype=int)
+            slm_ind = np.array([0], dtype=int)
             pct_arrs = [NPZ_ARR_COMMENT] + [np.array([], dtype=int).reshape(0, m * zlcm, 4) for m in range(1, mu)]
             pct_arrs.append(zip_pct(p, ks).reshape(1, -1, 4))
         else:
@@ -330,13 +330,15 @@ def main():
                 else:
                     slm_ind.append(where[0])
                 pct_arrs[mu1] = np.concatenate([pct_arrs[mu1], zip_pct(p1, ks1).reshape(1,-1,4)], axis=0)
+            mulist = np.array(mulist, dtype=int)
+            slm_ind = np.array(slm_ind, dtype=int)
 
         if strain == rmss:
             header = ['csm_id', 'slm_id', 'mu', 'period', 'rmss', 'd']
-            data = np.array([np.arange(len(dlist)), slm_ind, mulist, zlcm * np.array(mulist), [rms_strain] * len(dlist), dlist]).T
+            data = np.array([np.arange(len(dlist)), slm_ind, mulist, zlcm * mulist, [rms_strain] * len(dlist), dlist]).T
         else:
             header = ['csm_id', 'slm_id', 'mu', 'period', 'w', 'rmss', 'd']
-            data = np.array([np.arange(len(dlist)), slm_ind, mulist, zlcm * np.array(mulist), [w] * len(dlist), [rms_strain] * len(dlist), dlist]).T
+            data = np.array([np.arange(len(dlist)), slm_ind, mulist, zlcm * mulist, [w] * len(dlist), [rms_strain] * len(dlist), dlist]).T
 
     print('\n', end='')   # simply a line break
 
