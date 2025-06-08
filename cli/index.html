@@ -582,7 +582,7 @@ d(\mathcal{J})=\min_{\mathbf{t}_0 \in \mathbb{R}^{3}}\sqrt{\sum_{i=1}^{\tilde Z}
 <p><strong>The conventional cell is not the primitive cell if the <a href="https://en.wikipedia.org/wiki/Bravais_lattice">Bravais lattice</a> is base-centered, face-centered, or body-centered.</strong> We recommend using</p>
 <div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz 0 --interact
 </code></pre></div>
-<p>to check if the conventional cell is the same as you expect.</p>
+<p>to check if the conventional <span class="arithmatex">\(\mathbf{a}, \mathbf{b}, \mathbf{c}\)</span> is the same as you expect.</p>
 </div>
 </li>
 <li>
@@ -680,7 +680,7 @@ or</p>
 </li>
 <li>
 <p><code>-x [ASSUM]</code>, <code>--xdatcar [ASSUM]</code></p>
-<p>Export each CSM as an XDATCAR file with 100 frames, similar to <code>--poscar</code>.</p>
+<p>Export each CSM as an XDATCAR file with 50 frames, similar to <code>--poscar</code>.</p>
 </li>
 </ul>
 <p><strong>These options are automatically enabled when using <code>--enumerate</code>, <code>--all</code> or <code>--orientation</code>:</strong></p>
