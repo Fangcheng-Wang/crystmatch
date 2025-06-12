@@ -87,6 +87,9 @@ def main():
     elif n_modes == 0: raise ValueError("No mode is specified.")
     mode = 'enumerate' if args.enumerate is not None else ('read' if args.read is not None else 'direct')
     
+    # check if --read has dupliate indices
+    if len(args.read) > 1 and len(set([int(i) for i in args.read[1:]])) != len(args.read[1:]): raise ValueError("Duplicate indices in --read.")
+    
     # check if --literal is used with --direct
     if args.literal and mode != 'direct': raise ValueError("'--literal' can only be used with '--direct'.")
     
@@ -178,7 +181,7 @@ def main():
             for i in indices:
                 print(f" {i:4d}", end='')
                 slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
-                where = np.nonzero((slm == slmlist_temp).all(axis=(1,2,3)).any())[0]
+                where = np.nonzero((slm == slmlist_temp).all(axis=(1,2,3)))[0]
                 if where.shape[0] == 0:
                     slm_ind_temp.append(slmlist_temp.shape[0])
                     slmlist_temp = np.concatenate([slmlist_temp, slm.reshape(1,3,3,3)], axis=0)

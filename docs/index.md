@@ -34,7 +34,7 @@ pip3 install --upgrade numpy scipy spglib numba matplotlib
 pip3 install --upgrade crystmatch
 ```
 
-Check whether `crystmatch` is successfully installed:
+Check whether `crystmatch` is successfully installed (the first run may take a few minutes to compile the required modules):
 
 ```
 crystmatch --version

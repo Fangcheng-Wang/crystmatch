@@ -1,7 +1,7 @@
 # Python API
 
 !!! warning "In progress"
-    **The API reference for `crystmatch` v2.0.0 is still under development. Please do not rely on it yet.**
+    **The API reference for `crystmatch` v2.0.x is still under development. Please do not rely on it yet.**
 
 
 | Data type | Structure | Description |

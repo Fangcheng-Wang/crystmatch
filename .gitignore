@@ -1,6 +1,7 @@
 .DS_Store
-profile.pyspy
 .pytest_cache/
+.venv/
+profile.pyspy
 build/
 crystmatch.egg-info/
 crystmatch/__pycache__
