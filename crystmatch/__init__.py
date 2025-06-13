@@ -28,14 +28,14 @@ __name__ = "crystmatch"
 __version__ = "2.0.1"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
-__description__ = 'Enumerating and analyzing crystal-structure matches for solid-solid phase transitions.'
-__url__ = 'https://fangcheng-wang.github.io/crystmatch/'
-__epilog__ = 'The current version is v' + __version__ + '. To get the latest version, please run:\
+__description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
+__url__ = "https://fangcheng-wang.github.io/crystmatch/"
+__epilog__ = "The current version is v" + __version__ + ". To get the latest version, please run:\
 \n\n\t$ pip3 install --upgrade crystmatch\n\nWe also recommend you to see the documentation at:\
-\n\n\t' + __url__ + '\n\nIf you use crystmatch in your research, please cite one of the following paper:\
+\n\n\t" + __url__ + "\n\nIf you use crystmatch in your research, please cite one of the following paper:\
 \n\n\t[1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\
 \n\t[2] FC Wang, QJ Ye, YC Zhu, and XZ Li, arXiv:2506.05105 (2025) (https://arxiv.org/abs/2506.05105)\
-\n\nYou are also welcome to contact us at ' + __email__ + ' for any questions, feedbacks or comments.'
+\n\nYou are also welcome to contact us at " + __email__ + " for any questions, feedbacks or comments."
 
 def main():
 
@@ -87,8 +87,8 @@ def main():
     elif n_modes == 0: raise ValueError("No mode is specified.")
     mode = 'enumerate' if args.enumerate is not None else ('read' if args.read is not None else 'direct')
     
-    # check if --read has dupliate indices
-    if len(args.read) > 1 and len(set([int(i) for i in args.read[1:]])) != len(args.read[1:]): raise ValueError("Duplicate indices in --read.")
+    # check if --read has duplicate indices
+    if args.read is not None and len(set([int(i) for i in args.read[1:]])) != len(args.read[1:]): raise ValueError("Duplicate indices in --read.")
     
     # check if --literal is used with --direct
     if args.literal and mode != 'direct': raise ValueError("'--literal' can only be used with '--direct'.")
@@ -133,8 +133,7 @@ def main():
         if max_mu < 1: raise ValueError("Multiplicity should be a positive integer.")
         elif max_strain <= 0: raise ValueError("Root-mean-squared strain should be a positive float.")
         if max_mu >= 8 or (strain==rmss and max_strain > 0.4):
-            print(f"Warning: Current MAX_MU = {max_mu:d} and MAX_STRAIN = {max_strain:.2f} may result in a large number of SLMs, which may take "
-                    + "a very long time to enumerate.")
+            print(f"Warning: Current MAX_MU = {max_mu:d} and MAX_STRAIN = {max_strain:.2f} may result in a large number of SLMs, which may take a very long time to enumerate.")
         
         if args.all is None:
             slmlist, pct_arrs, mulist, strainlist, dlist = enumerate_rep_csm(crystA, crystB, max_mu, max_strain, strain=strain, weight_func=weight_func, tol=tol)
@@ -379,16 +378,14 @@ def main():
             else: ind = i
             makedirs(f"{direxport}{sep}CSM_{ind:d}")
             if args.poscar == 'norot' or args.xdatcar == 'norot':
-                crystA_csm, crystB_csm_norot = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol,
-                                                        orientation='norot', min_t0=True, weight_func=weight_func)
+                crystA_csm, crystB_csm_norot = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol, orientation='norot', min_t0=True, weight_func=weight_func)
                 if args.poscar == 'norot':
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{ind:d} initial")
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_F", crystB_csm_norot, crystname=f"CSM_{ind:d} final (no rotation)")
                 if args.xdatcar == 'norot':
                     save_xdatcar(f"{direxport}{sep}CSM_{ind:d}{sep}XDATCAR", crystA_csm, crystB_csm_norot, images=50, crystname=f"CSM_{ind:d} (no rotation)")
             if args.poscar == 'uspfixed' or args.xdatcar == 'uspfixed':
-                crystA_csm, crystB_csm_usp1, crystB_csm_usp2 = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol,
-                                                        orientation='uspfixed', min_t0=True, weight_func=weight_func)
+                crystA_csm, crystB_csm_usp1, crystB_csm_usp2 = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol, orientation='uspfixed', min_t0=True, weight_func=weight_func)
                 if args.poscar == 'uspfixed':
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{ind:d} initial")
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_F1", crystB_csm_usp1, crystname=f"CSM_{ind:d} final (USP1 fixed)")
@@ -415,8 +412,8 @@ def main():
         for i in range(len(slm_ind)):
             slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
             print(f"Displaying the CSM with csm_id = {indices[i] if (mode == 'read' and len(args.read) > 1) else i} ...")
-            visualize_csm(crystA, crystB, slm, p, ks, weight_func=weight_func, tol=tol, cluster_size=args.interact,
-                            label = f"csm_id = {indices[i] if (mode == 'read' and len(args.read) > 1) else i}, "
+            visualize_csm(crystA, crystB, slm, p, ks, weight_func=weight_func, tol=tol, cluster_size=args.interact, label = 
+                            f"csm_id = {indices[i] if (mode == 'read' and len(args.read) > 1) else i}, "
                             + f"mu = {imt_multiplicity(crystA, crystB, slm):d}, "
                             + f"RMSS = {100 * rmss(deformation_gradient(crystA, crystB, slm)):.2f}%, "
                             + f"RMSD = {csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func):.3f}Å")
