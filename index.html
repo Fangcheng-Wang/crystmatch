@@ -322,9 +322,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#visualizing-csms-in-a-3d-interactive-plot" class="md-nav__link">
+  <a href="#visualizing-csms-in-3d-interactive-plots" class="md-nav__link">
     <span class="md-ellipsis">
-      Visualizing CSMs in a 3D interactive plot
+      Visualizing CSMs in 3D interactive plots
     </span>
   </a>
   
@@ -340,9 +340,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#identifying-csm-from-a-pair-of-poscar-files" class="md-nav__link">
+  <a href="#interpolating-between-two-poscar-files-nebmake" class="md-nav__link">
     <span class="md-ellipsis">
-      Identifying CSM from a pair of POSCAR files
+      Interpolating between two POSCAR files (nebmake)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enumerating-csms-within-given-supercells" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enumerating CSMs within given supercells
     </span>
   </a>
   
@@ -521,9 +530,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#visualizing-csms-in-a-3d-interactive-plot" class="md-nav__link">
+  <a href="#visualizing-csms-in-3d-interactive-plots" class="md-nav__link">
     <span class="md-ellipsis">
-      Visualizing CSMs in a 3D interactive plot
+      Visualizing CSMs in 3D interactive plots
     </span>
   </a>
   
@@ -539,9 +548,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#identifying-csm-from-a-pair-of-poscar-files" class="md-nav__link">
+  <a href="#interpolating-between-two-poscar-files-nebmake" class="md-nav__link">
     <span class="md-ellipsis">
-      Identifying CSM from a pair of POSCAR files
+      Interpolating between two POSCAR files (nebmake)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enumerating-csms-within-given-supercells" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enumerating CSMs within given supercells
     </span>
   </a>
   
@@ -625,7 +643,7 @@ pip3 install --upgrade crystmatch
 <p>Check whether <code>crystmatch</code> is successfully installed (the first run may take a few minutes to compile the required modules):</p>
 <div class="highlight"><pre><span></span><code>crystmatch --version
 </code></pre></div>
-<p><strong>The current version of <code>crystmatch</code> is <code>2.0.3</code>.</strong></p>
+<p><strong>The current version of <code>crystmatch</code> is <code>2.0.5</code>.</strong></p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>If you prefer using <code>conda</code>, you can install <code>crystmatch</code> by running:
@@ -677,13 +695,23 @@ pip3 install --upgrade crystmatch
 </li>
 <li>
 <p><strong><code>--direct</code></strong></p>
-<p>Directly determine a single CSM by two POSCAR files (must have the same number of atoms) and perform detailed analysis.</p>
+<p>Directly determine a single CSM by two POSCAR files (must have the same number of atoms), perform detailed CSM analysis, and interpolate between the initial and final structures.</p>
 </li>
 </ol>
 <p><strong>We strongly recommend starting with the <a href="#examples">examples</a> provided below, and then see <a href="https://fangcheng-wang.github.io/crystmatch/cli/">all available options</a>.</strong> To see the help message, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --help
 </code></pre></div>
 <h2 id="examples">Examples</h2>
+<ul>
+<li><a href="#enumerating-representative-csms">Enumerating representative CSMs</a></li>
+<li><a href="#enumerating-all-csms">Enumerating all CSMs</a></li>
+<li><a href="#visualizing-csms-in-3d-interactive-plots">Visualizing CSMs in 3D interactive plots</a></li>
+<li><a href="#exporting-csms-as-poscar-or-xdatcar-files">Exporting CSMs as POSCAR or XDATCAR files</a></li>
+<li><a href="#interpolating-between-two-poscar-files-nebmake">Interpolating between two POSCAR files (nebmake)</a></li>
+<li><a href="#enumerating-csms-within-given-supercells">Enumerating CSMs within given supercells</a></li>
+<li><a href="#orientation-relationship-analysis">Orientation-relationship analysis</a></li>
+<li><a href="#computing-estimated-strain-energy-density">Computing estimated strain energy density</a></li>
+</ul>
 <h3 id="enumerating-representative-csms">Enumerating representative CSMs</h3>
 <p>To enumerate a list of representative CSMs (<em>each representing a unique deformation</em>) between two crystal structures given by POSCAR files <code>Graphite</code> and <code>Diamond</code>, with upper bounds <code>MAX_MU = 2</code> for multiplicity and <code>MAX_STRAIN = 0.4</code> for RMSS, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --enumerate Graphite Diamond 2 0.4
@@ -733,7 +761,7 @@ pip3 install --upgrade crystmatch
 <p>Using <code>--all MAX_D</code> with large <code>MAX_MU</code> may result in a very large number of CSMs. We recommend you to try <code>MAX_D = 1.2</code> first, and then gradually increase it to obtain desired results.</p>
 </div>
 <p>If you wish to apply weighting to atomic species when calculating RMSD, prepare a CSMCAR file and use the <code>--extra</code> option. See <a href="https://fangcheng-wang.github.io/crystmatch/cli/#atomic-weights">CSMCAR</a> for details.</p>
-<h3 id="visualizing-csms-in-a-3d-interactive-plot">Visualizing CSMs in a 3D interactive plot</h3>
+<h3 id="visualizing-csms-in-3d-interactive-plots">Visualizing CSMs in 3D interactive plots</h3>
 <p>If you are using <code>crystmatch</code> in a local terminal, you can visualize the CSMs in a <strong>3D interactive plot</strong> by adding the <code>--interact</code> option, as shown below. You can rotate and zoom the plot using your mouse or touchpad.</p>
 <p><img alt="3D interactive plot" src="src/interact.jpg" /></p>
 <p>However, using <code>--interact</code> in <code>--enumerate</code> mode might be unwise, as you would have to visually inspect numerous CSMs one by one. The recommended workflow is:</p>
@@ -765,15 +793,31 @@ pip3 install --upgrade crystmatch
     <span class="err">└──</span> <span class="n">POSCAR_F</span>
 </code></pre></div>
 <p>You can also export CSMs as XDATCAR files using the <code>--xdatcar</code> option. Both <code>--poscar</code> and <code>--xdatcar</code> are also available in <code>--enumerate</code> and <code>--direct</code> modes.</p>
-<h3 id="identifying-csm-from-a-pair-of-poscar-files">Identifying CSM from a pair of POSCAR files</h3>
-<p>To identify and analyze the CSM defined by a pair of POSCAR files <code>POSCAR_I</code> and <code>POSCAR_F</code>, run:</p>
-<div class="highlight"><pre><span></span><code>crystmatch --direct POSCAR_I POSCAR_F
+<h3 id="interpolating-between-two-poscar-files-nebmake">Interpolating between two POSCAR files (nebmake)</h3>
+<p>To interpolate between two POSCAR files <code>POSCAR_I</code> and <code>POSCAR_F</code>, creating <code>3</code> new structures, run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --direct POSCAR_I POSCAR_F --nebmake 3
 </code></pre></div>
-<p>You can also <code>--interact</code> to visualize the CSM in a 3D interactive plot, or use <code>--xdatcar</code> to interpolate between <code>POSCAR_I</code> and <code>POSCAR_F</code>.</p>
+<p>Similar to <code>nebmake.pl</code> provided by <a href="https://theory.cm.utexas.edu/vtsttools/scripts.html">VTST scripts</a>, the following files will be created in the current directory:</p>
+<div class="highlight"><pre><span></span><code><span class="p">./</span>
+<span class="err">├──</span> <span class="n">00</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">├──</span> <span class="n">01</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">├──</span> <span class="n">02</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">├──</span> <span class="n">03</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">└──</span> <span class="n">04</span><span class="p">/</span>
+    <span class="err">└──</span> <span class="n">POSCAR</span>
+</code></pre></div>
+<p>They can be directly used for subsequent <a href="https://theory.cm.utexas.edu/vtsttools/neb.html">SSNEB calculations</a>.</p>
 <div class="admonition danger">
 <p class="admonition-title">Important</p>
-<p>By default, the fractional coordinates in the POSCAR files will be added and subtracted by integers to optimize the CSM. If you are reading a pair of POSCAR files generated by <code>crystmatch</code>, you should use <code>--literal</code> to disable this behavior. See <a href="http://127.0.0.1:8000/cli/#all-options">all options</a> for details.</p>
+<p>The original <code>nebmake.pl</code> does not preserve the CSM between <code>POSCAR_I</code> and <code>POSCAR_F</code>. Specifically, it will first reduce each fractional coordinate to <code>[0,1)</code> and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as energy barriers. Therefore, we always recommend generating interpolated structures using</p>
+<div class="highlight"><pre><span></span><code>crystmatch -D POSCAR_I POSCAR_F -n IMAGES
+</code></pre></div>
 </div>
+<h3 id="enumerating-csms-within-given-supercells">Enumerating CSMs within given supercells</h3>
 <p>To enumerate all CSMs with identical initial and final supercells as <code>POSCAR_I</code> and <code>POSCAR_F</code>, but different atomic correspondences, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --direct POSCAR_I POSCAR_F --all MAX_D
 </code></pre></div>

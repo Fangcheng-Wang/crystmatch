@@ -605,16 +605,16 @@ or</p>
 <div class="highlight"><pre><span></span><code>crystmatch --read CSMLIST.npz --extra CSMCAR.txt --orientation &#39;uspfixed&#39;
 </code></pre></div>
 <h2 id="all-options">All options</h2>
-<div class="highlight"><pre><span></span><code>crystmatch<span class="w"> </span><span class="o">[</span>--help<span class="o">]</span><span class="w"> </span><span class="o">[</span>--version<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">                               </span><span class="c1"># package information</span>
-<span class="w">           </span><span class="o">[</span>--extra<span class="w"> </span>CSMCAR<span class="o">]</span><span class="w"> </span><span class="o">[</span>--tol<span class="w"> </span>TOL<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">                       </span><span class="c1"># global settings</span>
-<span class="w">           </span><span class="o">[</span>--enumerate<span class="w"> </span>POSCAR_I<span class="w"> </span>POSCAR_F<span class="w"> </span>MAX_MU<span class="w"> </span>MAX_STRAIN<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># enumerate CSMs</span>
-<span class="w">           </span><span class="o">[</span>--read<span class="w"> </span>CSMLIST<span class="w"> </span><span class="o">[</span>IND1<span class="w"> </span>IND2<span class="w"> </span>...<span class="o">]]</span><span class="w"> </span><span class="se">\ </span><span class="w">                   </span><span class="c1"># read CSMs from NPZ</span>
-<span class="w">           </span><span class="o">[</span>--direct<span class="w"> </span>POSCAR_I<span class="w"> </span>POSCAR_F<span class="o">]</span><span class="w"> </span><span class="o">[</span>--literal<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">           </span><span class="c1"># single CSM analysis</span>
-<span class="w">           </span><span class="o">[</span>--all<span class="w"> </span>MAX_D<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">                                      </span><span class="c1"># exhaustive enumeration</span>
-<span class="w">           </span><span class="o">[</span>--interact<span class="w"> </span><span class="o">[</span>SIZE<span class="o">]]</span><span class="w"> </span><span class="se">\ </span><span class="w">                                </span><span class="c1"># 3D interactive plot</span>
-<span class="w">           </span><span class="o">[</span>--poscar<span class="w"> </span><span class="o">[</span>ASSUM<span class="o">]]</span><span class="w"> </span><span class="o">[</span>--xdatcar<span class="w"> </span><span class="o">[</span>ASSUM<span class="o">]]</span><span class="w"> </span><span class="o">[</span>--mediumcell<span class="o">]</span><span class="w"> </span><span class="c1"># export individual CSMs</span>
-<span class="w">           </span><span class="o">[</span>--orientation<span class="w"> </span>ASSUM<span class="o">]</span><span class="w"> </span><span class="se">\ </span><span class="w">                              </span><span class="c1"># orientation analysis</span>
-<span class="w">           </span><span class="o">[</span>--csv<span class="o">]</span><span class="w"> </span><span class="o">[</span>--scatter<span class="o">]</span><span class="w">                                   </span><span class="c1"># summarize and visualize</span>
+<div class="highlight"><pre><span></span><code>crystmatch<span class="w"> </span><span class="o">[</span>--help<span class="o">]</span><span class="w"> </span><span class="o">[</span>--version<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--extra<span class="w"> </span>CSMCAR<span class="o">]</span><span class="w"> </span><span class="o">[</span>--tol<span class="w"> </span>TOL<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--enumerate<span class="w"> </span>POSCAR_I<span class="w"> </span>POSCAR_F<span class="w"> </span>MAX_MU<span class="w"> </span>MAX_STRAIN<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--read<span class="w"> </span>CSMLIST<span class="w"> </span><span class="o">[</span>IND1<span class="w"> </span>IND2<span class="w"> </span>...<span class="o">]]</span>
+<span class="w">           </span><span class="o">[</span>--direct<span class="w"> </span>POSCAR_I<span class="w"> </span>POSCAR_F<span class="o">]</span><span class="w"> </span><span class="o">[</span>--nebmake<span class="w"> </span>IMAGES<span class="o">]</span><span class="w"> </span><span class="o">[</span>--restore<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--all<span class="w"> </span>MAX_D<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--interact<span class="w"> </span><span class="o">[</span>SIZE<span class="o">]]</span>
+<span class="w">           </span><span class="o">[</span>--poscar<span class="w"> </span><span class="o">[</span>ASSUM<span class="o">]]</span><span class="w"> </span><span class="o">[</span>--xdatcar<span class="w"> </span><span class="o">[</span>ASSUM<span class="o">]]</span><span class="w"> </span><span class="o">[</span>--mediumcell<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--orientation<span class="w"> </span>ASSUM<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--csv<span class="o">]</span><span class="w"> </span><span class="o">[</span>--scatter<span class="o">]</span>
 </code></pre></div>
 <p>If you are not familiar with <code>crystmatch</code>, we recommend you first read the <a href="https://fangcheng-wang.github.io/crystmatch/">tutorial</a> and then come back to this page for a detailed explanation of the options.</p>
 <ul>
@@ -639,15 +639,25 @@ or</p>
 <p>Directly read a single CSM from a pair of POSCAR files <code>POSCAR_I</code> and <code>POSCAR_F</code>. The CSM is determined such that each cell vector or atomic position in <code>POSCAR_I</code> is mapped to the corresponding one (with the same row index) in <code>POSCAR_F</code>. <strong>Make sure that the cell vectors and atomic positions in <code>POSCAR_I</code> and <code>POSCAR_F</code> are ordered as you expect.</strong></p>
 <div class="admonition warning">
 <p class="admonition-title">Caveat</p>
-<p>When writing the POSCAR, some softwares may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. To avoid this issue, <code>crystmatch</code> will automatically add integers to the fractional coordinates to minimize the shuffle distance. However, if you are confident that the fractional coordinates represent the true initial and final atomic positions, use <code>--literal</code> to keep the original fractional coordinates.</p>
+<p>When writing the POSCAR, some softwares may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. To avoid this issue, use the <code>--restore</code> option described below to restore the original CSM.</p>
 </div>
 </li>
 <li>
-<p><code>-l</code>, <code>--literal</code></p>
-<p>Keep the original fractional coordinates in the POSCAR files when using <code>--direct</code>.</p>
+<p><code>-n IMAGES</code>, <code>--nebmake IMAGES</code></p>
+<p>Create <code>IMAGES</code> interpolated structures between <code>POSCAR_I</code> and <code>POSCAR_F</code> when using <code>--direct</code>, similar to <code>nebmake.pl</code> provided by <a href="https://theory.cm.utexas.edu/vtsttools/scripts.html">VTST scripts</a>. The interpolated structures can be used for subsequent NEB calculations.</p>
 <div class="admonition danger">
 <p class="admonition-title">Important</p>
-<p>If you are reading a pair of POSCAR files generated by <code>crystmatch</code>, you should always use <code>--literal</code>!</p>
+<p>The original <code>nebmake.pl</code> does not preserve the CSM between <code>POSCAR_I</code> and <code>POSCAR_F</code>. Specifically, it will first reduce each fractional coordinate to <code>[0,1)</code> and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as energy barriers. Therefore, we always recommend generating interpolated structures using</p>
+<div class="highlight"><pre><span></span><code>crystmatch -D POSCAR_I POSCAR_F -n IMAGES
+</code></pre></div>
+</div>
+</li>
+<li>
+<p><code>-r</code>, <code>--restore</code></p>
+<p>Add integers to the fractional coordinates in <code>POSCAR_F</code> when using <code>--direct</code> to minimize the shuffle distance. This option is useful when you want to <strong>restore</strong> the original fractional coordinates of the final structure.</p>
+<div class="admonition warning">
+<p class="admonition-title">Caveat</p>
+<p>If you are reading a pair of POSCAR files generated by <code>crystmatch</code>, you should not use this option, as <code>--restore</code> will alter the CSM.</p>
 </div>
 </li>
 <li>
