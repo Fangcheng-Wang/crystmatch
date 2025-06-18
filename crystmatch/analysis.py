@@ -121,7 +121,7 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
     pB_sup = crystB_sup[2].T
     if min_t0:
         weights = [weight_func[s] for s in speciesA] if weight_func else None
-        pB_sup = pB_sup - pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, return_t0=True)[1]
+        pB_sup = pB_sup + pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, return_t0=True)[1]
     if use_medium_cell:
         if not orientation == 'norot': raise ValueError("The 'use_medium_cell' option is only valid when 'orientation' is 'norot'.")
         return (c_sup_half.T, speciesA, pA_sup.T), (c_sup_half.T, speciesB[p], (pB_sup[:,p] + ks).T)

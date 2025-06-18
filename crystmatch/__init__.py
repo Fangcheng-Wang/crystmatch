@@ -47,7 +47,7 @@ def main():
         prog = __name__,
         formatter_class = argparse.RawDescriptionHelpFormatter,
         usage = "%(prog)s [-h] [-V] [-E POSCAR_I POSCAR_F MAX_MU MAX_STRAIN] [-R CSMLIST [IND1 IND2 ...]] [-D POSCAR_I POSCAR_F] [-l]"\
-                + "[-e CSMCAR] [-a MAX_D] [-t TOL] [-i [SIZE]] [-o ASSUM] [-p [ASSUM]] [-x [ASSUM]] [-c] [-s]",
+                + "[-e CSMCAR] [-a MAX_D] [-t TOL] [-i [SIZE]] [-o ASSUM] [-p [ASSUM]] [-x [ASSUM]] [-m] [-c] [-s]",
         description = __description__,
         epilog = __epilog__)
     

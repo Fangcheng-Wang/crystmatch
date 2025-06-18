@@ -133,16 +133,16 @@ crystmatch --read CSMLIST.npz --extra CSMCAR.txt --orientation 'uspfixed'
 ## All options
 
 ```bash
-crystmatch [--help] [--version] \                               # package information
-           [--extra CSMCAR] [--tol TOL] \                       # global settings
-           [--enumerate POSCAR_I POSCAR_F MAX_MU MAX_STRAIN] \  # enumerate CSMs
-           [--read CSMLIST [IND1 IND2 ...]] \                   # read CSMs from NPZ
-           [--direct POSCAR_I POSCAR_F] [--literal] \           # single CSM analysis
-           [--all MAX_D] \                                      # exhaustive enumeration
-           [--interact [SIZE]] \                                # 3D interactive plot
-           [--poscar [ASSUM]] [--xdatcar [ASSUM]] \             # export individual CSMs
-           [--orientation ASSUM] \                              # orientation analysis
-           [--csv] [--scatter]                                  # summarize and visualize
+crystmatch [--help] [--version] \                                # package information
+           [--extra CSMCAR] [--tol TOL] \                        # global settings
+           [--enumerate POSCAR_I POSCAR_F MAX_MU MAX_STRAIN] \   # enumerate CSMs
+           [--read CSMLIST [IND1 IND2 ...]] \                    # read CSMs from NPZ
+           [--direct POSCAR_I POSCAR_F] [--literal] \            # single CSM analysis
+           [--all MAX_D] \                                       # exhaustive enumeration
+           [--interact [SIZE]] \                                 # 3D interactive plot
+           [--poscar [ASSUM]] [--xdatcar [ASSUM]] [--mediumcell] # export individual CSMs
+           [--orientation ASSUM] \                               # orientation analysis
+           [--csv] [--scatter]                                   # summarize and visualize
 ```
 
 If you are not familiar with `crystmatch`, we recommend you first read the [tutorial](https://fangcheng-wang.github.io/crystmatch/) and then come back to this page for a detailed explanation of the options.
@@ -210,6 +210,10 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
 - `-x [ASSUM]`, `--xdatcar [ASSUM]`
 
     Export each CSM as an XDATCAR file with 50 frames, similar to `--poscar`.
+
+- `-m`, `--mediumcell`
+
+    Output the average supercell for `POSCAR_I` and `POSCAR_F` when using `--poscar 'norot'` and `--xdatcar 'norot'`. This option is useful when subsequent calculations require the initial and final structures to be described by the same unit cell, but should only be used when the deformation is negligible.
     
 **These options are automatically enabled when using `--enumerate`, `--all` or `--orientation`:**
 
