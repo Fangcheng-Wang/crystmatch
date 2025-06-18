@@ -67,7 +67,7 @@ def conventional_cryst(cryst_sup, return_primitive=False, tol=1e-3):
         return cryst_sup_tri
 
 def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], ks: NDArray[np.int32],
-    tol: float = 1e-3, orientation: Literal['norot', 'uspfixed'] = 'norot',
+    tol: float = 1e-3, orientation: Literal['norot', 'uspfixed'] = 'norot', use_medium_cell: bool = False,
     min_t0: bool = False, weight_func: Union[Dict[str, float], None] = None, l: float = 2
 ) -> Union[Tuple[Cryst, Cryst], Tuple[Cryst, Cryst, Cryst]]:
     """Convert the IMT and PCT representation of a CSM to a pair of crysts.
@@ -88,6 +88,8 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
         The orientation of the final structure, either 'norot' or 'uspfixed', which means that the deformation is rotation-free \
             or fixing the uniformly scaled plane (USP). When 'uspfixed', two final structures are returned since there are two USPs. \
             Default is 'norot'. 
+    use_medium_cell : bool, optional
+        Whether to return the average cell of `crystA_sup` and `crystB_sup`.
     min_t0 : bool, optional
         Whether to use optimal translation of `crystB_sup_norot` to minimize the shuffle distance. Default is False.
     weight_func : dict, optional
@@ -111,13 +113,19 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
     speciesA = crystA_sup[1]
     speciesB = crystB_sup[1]
     if not (speciesA == speciesB[p]).all(): raise ValueError("The input permutation does not preserve the atomic species.")
+    cA = crystA_sup[0].T
     cB = crystB_sup[0].T
+    u, _, vT = la.svd(cB @ la.inv(cA), compute_uv=True)
+    cB = (u @ vT).T @ cB
     pA_sup = crystA_sup[2].T
     pB_sup = crystB_sup[2].T
     if min_t0:
         weights = [weight_func[s] for s in speciesA] if weight_func else None
         pB_sup = pB_sup - pct_distance(c_sup_half, pA_sup, pB_sup, p, ks, weights=weights, l=l, return_t0=True)[1]
-    if orientation == 'norot':
+    if use_medium_cell:
+        if not orientation == 'norot': raise ValueError("The 'use_medium_cell' option is only valid when 'orientation' is 'norot'.")
+        return (c_sup_half.T, speciesA, pA_sup.T), (c_sup_half.T, speciesB[p], (pB_sup[:,p] + ks).T)
+    elif orientation == 'norot':
         return crystA_sup, (cB.T, speciesB[p], (pB_sup[:,p] + ks).T)
     elif orientation == 'uspfixed':
         rH = rot_usp(deformation_gradient(crystA_sup, crystB_sup, slm))
@@ -427,6 +435,8 @@ def visualize_csm(
     if numbers.max() > 8: raise ValueError("Too many (>8) atoms species to visualize.")
     cA = crystA_sup[0].T
     cB = crystB_sup[0].T
+    u, _, vT = la.svd(cB @ la.inv(cA), compute_uv=True)
+    cB = (u @ vT).T @ cB
     pA = crystA_sup[2].T
     pB = crystB_sup[2].T
     t_cl = pA // 1.0
@@ -510,7 +520,7 @@ def save_csv(filename, table):
     data, header = table
     if header[0] != 'csm_id': raise ValueError("The first column of the table must be 'csm_id'.")
     unit = {'csm_id': 1, 'slm_id': 1, 'mu': 1, 'period': 1, 'w': 1, 'rmss': 0.01, 'd': 1, 'angle': np.pi / 180}
-    text = {'csm_id': 'csm_id', 'slm_id': '  slm_id', 'mu': '      mu', 'period': '  period', 'w': '       w', 'rmss': '  rmss/%', 'd': '  rmsd/Å', 'angle': ' angle/°'}
+    text = {'csm_id': 'csm_id', 'slm_id': '  slm_id', 'mu': '       μ', 'period': '  period', 'w': '       w', 'rmss': '  RMSS/%', 'd': '  RMSD/Å', 'angle': ' angle/°'}
     formatting = {'csm_id': '%8d', 'slm_id': '%8d', 'mu': '%8d', 'period': '%8d', 'w': '%8.1f', 'rmss': '%8.2f', 'd': '%8.4f', 'angle': '%8.3f'}
     np.savetxt(filename, data / np.array([unit[h] for h in header]).reshape(1,-1), fmt=','.join(formatting[h] for h in header), header=','.join(text[h] for h in header))
     return
@@ -531,7 +541,7 @@ def load_npz(filename, verbose=True):
     data = npz['table']
     if verbose:
         print(f"A total of {len(slmlist)} distinct SLMs and {len(slm_ind)} CSMs are loaded from {filename}.")
-        print(f"\tmu  {' '.join(f'{mu:5d}' for mu in range(1,max_mu+1))}")
+        print(f"\tμ   {' '.join(f'{mu:5d}' for mu in range(1,max_mu+1))}")
         print(f"\t#CSM{' '.join(f'{arr.shape[0]:5d}' for arr in pct_arrs[1:])}")
     return crystA, crystB, slmlist, slm_ind, pct_arrs, Table(data, header)
 

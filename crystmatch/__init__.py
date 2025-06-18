@@ -25,7 +25,7 @@ import sys
 import argparse
 
 __name__ = "crystmatch"
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
@@ -74,6 +74,8 @@ def main():
                         help="export each enumerated/read CSM as a pair of POSCAR files (default is 'norot')")
     parser.add_argument("-x", "--xdatcar", nargs='?', type=str, default=None, const='norot', choices=['norot', 'uspfixed'], metavar='ASSUM',
                         help="export each enumerated/read CSM as an XDATCAR file with 100 frames (default is 'norot')")
+    parser.add_argument("-m", "--mediumcell", action='store_true',
+                        help="when using --poscar or --xdatcar, output the average cell instead of the initial and final cells")
     parser.add_argument("-c", "--csv", action='store_true',
                         help="create CSV file containing basic properties of all enumerated/read CSMs")
     parser.add_argument("-s", "--scatter", action='store_true',
@@ -92,6 +94,11 @@ def main():
     
     # check if --literal is used with --direct
     if args.literal and mode != 'direct': raise ValueError("'--literal' can only be used with '--direct'.")
+    
+    # check if --mediumcell is used with (--poscar or --xdatcar) and ASSUM == 'norot'
+    if args.mediumcell:
+        if args.poscar is None and args.xdatcar is None: raise ValueError("'--mediumcell' can only be used with '--poscar' or '--xdatcar'.")
+        if args.poscar == 'uspfixed' or args.xdatcar == 'uspfixed': raise ValueError("'--mediumcell' can only be used with ASSUM == 'norot'.")
     
     # automatically enable --csv and --scatter
     if args.enumerate is not None or args.all is not None or args.orientation is not None:
@@ -118,6 +125,7 @@ def main():
         crystB = load_poscar(fileB, tol=tol)
         check_stoichiometry(crystA[1], crystB[1])
         zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
+        print("A CSM with multiplicity μ contains ({zlcm:d} * μ) atoms.")
 
         if voigtA is None and voigtB is None:
             strain = rmss
@@ -273,11 +281,11 @@ def main():
         mu = imt_multiplicity(crystA, crystB, slm)
         ps = la.svd(deformation_gradient(crystA, crystB, slm), compute_uv=False) - 1
         rms_strain = rmss(deformation_gradient(crystA, crystB, slm))
-        print(f"\tmultiplicity (mu): {mu:d}")
+        print(f"\tmultiplicity (μ): {mu:d}")
         print(f"\tperiod: {zlcm * mu:d}")
         print(f"\tprincipal strains: {100 * ps[0]:.2f} %, {100 * ps[1]:.2f} %, {100 * ps[2]:.2f} %")
-        print(f"\troot-mean-squared strain (rmss): {100 * rms_strain:.2f} %")
-        print(f"\tshuffle distance (rmsd): {d:.4f} Å")
+        print(f"\troot-mean-squared strain (RMSS): {100 * rms_strain:.2f} %")
+        print(f"\tshuffle distance (RMSD): {d:.4f} Å")
         if not strain == rmss:
             w = strain(deformation_gradient(crystA, crystB, slm))
             print(f"\testimated strain energy: {w:.3f} (same unit as in CSMCAR)")
@@ -314,7 +322,7 @@ def main():
             jobname += f"-d{max_d:.2f}"
             if max_d > 2.0: print(f"Warning: Current MAX_D = {max_d:.2f} may result in a large number of CSMs, which may take a very long time to enumerate.")
             if zlcm * mu0 >= 12: print(f"Warning: Current period {zlcm * mu0:d} may result in a large number of CSMs, which may take a very long time to enumerate.")
-            print(f"\nEnumerating all CSMs with the same SLM as the input POSCAR files (mu = {mu0:d}) and MAX_D = {max_d:.2f} ...")
+            print(f"\nEnumerating all CSMs with the same SLM as the input POSCAR files (μ = {mu0:d}) and MAX_D = {max_d:.2f} ...")
             pctlist, dlist = enumerate_pct(crystA, crystB, slm0, max_d, weight_func=weight_func, verbose=False, warning_threshold=100000)
             mulist = []
             slmlist = np.array([], dtype=int).reshape(0,3,3,3)
@@ -378,14 +386,16 @@ def main():
             else: ind = i
             makedirs(f"{direxport}{sep}CSM_{ind:d}")
             if args.poscar == 'norot' or args.xdatcar == 'norot':
-                crystA_csm, crystB_csm_norot = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol, orientation='norot', min_t0=True, weight_func=weight_func)
+                crystA_csm, crystB_csm_norot = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol, orientation='norot', use_medium_cell=args.mediumcell,
+                                                            min_t0=True, weight_func=weight_func)
                 if args.poscar == 'norot':
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{ind:d} initial")
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_F", crystB_csm_norot, crystname=f"CSM_{ind:d} final (no rotation)")
                 if args.xdatcar == 'norot':
                     save_xdatcar(f"{direxport}{sep}CSM_{ind:d}{sep}XDATCAR", crystA_csm, crystB_csm_norot, images=50, crystname=f"CSM_{ind:d} (no rotation)")
             if args.poscar == 'uspfixed' or args.xdatcar == 'uspfixed':
-                crystA_csm, crystB_csm_usp1, crystB_csm_usp2 = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol, orientation='uspfixed', min_t0=True, weight_func=weight_func)
+                crystA_csm, crystB_csm_usp1, crystB_csm_usp2 = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol, orientation='uspfixed',
+                                                                            min_t0=True, weight_func=weight_func)
                 if args.poscar == 'uspfixed':
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{ind:d} initial")
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_F1", crystB_csm_usp1, crystname=f"CSM_{ind:d} final (USP1 fixed)")
@@ -408,17 +418,19 @@ def main():
     
     # interactive visualization
     
+    time1 = perf_counter()
+    print(f"\nTotal time spent{' (excluding interactive visualization)' if args.interact is not None else ''}: {time1-time0:.2f} s")
+    
     if args.interact is not None:
         for i in range(len(slm_ind)):
             slm, p, ks = unzip_csm(i, crystA, crystB, slmlist, slm_ind, pct_arrs)
             print(f"Displaying the CSM with csm_id = {indices[i] if (mode == 'read' and len(args.read) > 1) else i} ...")
             visualize_csm(crystA, crystB, slm, p, ks, weight_func=weight_func, tol=tol, cluster_size=args.interact, label = 
                             f"csm_id = {indices[i] if (mode == 'read' and len(args.read) > 1) else i}, "
-                            + f"mu = {imt_multiplicity(crystA, crystB, slm):d}, "
+                            + f"μ = {imt_multiplicity(crystA, crystB, slm):d}, "
                             + f"RMSS = {100 * rmss(deformation_gradient(crystA, crystB, slm)):.2f}%, "
                             + f"RMSD = {csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func):.3f}Å")
 
-    print(f"\nTotal time spent: {perf_counter()-time0:.2f} s")
     return
 
 if __name__ == "__main__":

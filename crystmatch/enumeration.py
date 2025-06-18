@@ -103,7 +103,7 @@ def enumerate_imt(
     
     sobol6 = Sobol(6)
     if verbose >= 1:
-        progress_bar = tqdm(total=max_iter, position=0, desc=f"\tmu={mu:d}", ncols=60, mininterval=0.5,
+        progress_bar = tqdm(total=max_iter, position=0, desc=f"\tμ={mu:d}", ncols=60, mininterval=0.5,
                             bar_format=f'{{desc}}: {{percentage:3.0f}}% |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
     slmlist = np.array([], dtype=int).reshape(-1,3,3,3)
     iter = 0
@@ -487,7 +487,7 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     """
     
     # enumerate SLMs
-    if verbose: print(f"\nEnumerating noncongruent SLMs for mu <= {max_mu} and {'rmss' if strain == rmss else 'w'} <= {max_strain:.4f} ...")
+    if verbose: print(f"\nEnumerating noncongruent SLMs for μ <= {max_mu} and {'rmss' if strain == rmss else 'w'} <= {max_strain:.4f} ...")
     slmlist = np.array([], dtype=int).reshape(0,3,3,3)
     for mu in range(1,max_mu+1):
         slmlist = np.concatenate([slmlist, enumerate_imt(crystA, crystB, mu, max_strain, strain=strain, tol=tol, max_iter=max_iter, verbose=verbose)], axis=0)
@@ -497,7 +497,7 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
         print("Warning: No SLM is found. Try larger arguments for '--enumeration' or check if the input POSCARs are correct.")
     mulist = imt_multiplicity(crystA, crystB, slmlist)
     if verbose:
-        print(f"\tmu  {' '.join(f'{i:5d}' for i in range(1,max_mu+1))}")
+        print(f"\tμ   {' '.join(f'{i:5d}' for i in range(1,max_mu+1))}")
         print(f"\t#SLM{' '.join(f'{s:5d}' for s in np.bincount(mulist, minlength=max_mu+1)[1:])}")
     
     # exclude SLMs with the same deformation gradient
@@ -513,7 +513,7 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     strainlist = strainlist[ind]
     if verbose:
         print(f"Among them, there are {len(slmlist):d} distinct deformation gradients:")
-        print(f"\tmu0 {' '.join(f'{i:5d}' for i in range(1,max_mu+1))}")
+        print(f"\tμ0  {' '.join(f'{i:5d}' for i in range(1,max_mu+1))}")
         print(f"\t#S  {' '.join(f'{s:5d}' for s in np.bincount(mulist, minlength=max_mu+1)[1:])}")
 
     # computing representative CSMs
@@ -528,7 +528,7 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
             continue
         pctlist = []
         if verbose: 
-            progress_bar = tqdm(total=n_csm, position=0, desc=f"\r\tmu={mu:d}", ncols=57+2*n_digit, mininterval=0.5,
+            progress_bar = tqdm(total=n_csm, position=0, desc=f"\r\tμ={mu:d}", ncols=58+2*n_digit, mininterval=0.5,
                     bar_format=f'{{desc}}: {{n_fmt:>{n_digit}s}}/{{total_fmt:>{n_digit}s}} |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
         for i in range(n_csm):
             d, p, ks, _ = optimize_pct(crystA, crystB, slmlist[mulist == mu][i], weight_func=weight_func, l=l, t_grid=t_grid)
@@ -597,7 +597,7 @@ def enumerate_all_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
         The shuffle distances of the CSMs.
     """
     
-    if verbose: print(f"\nEnumerating noncongruent CSMs for mu <= {max_mu}, {'rmss' if strain == rmss else 'w'} <= {max_strain:.4f}, and d <= {max_d:.4f} ...")
+    if verbose: print(f"\nEnumerating noncongruent CSMs for μ <= {max_mu}, {'rmss' if strain == rmss else 'w'} <= {max_strain:.4f}, and d <= {max_d:.4f} ...")
     zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
     slmlist = np.array([], dtype=int).reshape(0,3,3,3)
     slm_ind = []
