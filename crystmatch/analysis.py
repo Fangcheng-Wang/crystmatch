@@ -21,7 +21,7 @@ from .utilities import *
 
 __all__ = ["decompose_cryst", "conventional_cryst", "csm_to_cryst", "cryst_to_csm", "csm_distance", "primitive_shuffle",
             "orient_matrix", "rot_usp", "miller_to_vec", "deviation_angle", "visualize_slmlist", "visualize_pctlist",
-            "visualize_csm", "save_csv", "save_npz", "load_npz", "unzip_csm", "save_poscar", "save_xdatcar"]
+            "visualize_csm", "save_csv", "save_npz", "load_npz", "unzip_csm", "save_poscar", "nebmake", "save_xdatcar"]
 
 np.set_printoptions(suppress=True)
 
@@ -586,11 +586,33 @@ def save_poscar(
     else:
         return content
 
+def nebmake(crystA_sup, crystB_sup, n_im):
+
+    if not (crystA_sup[1] == crystB_sup[1]).all():
+        raise ValueError("Atomic species of crystA and crystB must be the same.")
+    if type(n_im) != int or n_im < 1:
+        raise ValueError("Number of images must be a positive integer.")
+    
+    cA = crystA_sup[0].T
+    cB = crystB_sup[0].T
+    pA = crystA_sup[2].T
+    pB = crystB_sup[2].T
+    s = cB @ la.inv(cA)
+    _, sigma, vT = la.svd(s)
+
+    crystlist = []
+    tlist = np.linspace(0, 1, n_im+2)
+    for t in tlist:
+        cI = vT.T @ np.diag(sigma ** t) @ vT @ cA
+        pI = pA * (1-t) + pB * t
+        crystlist.append((cI.T, crystA_sup[1], pI.T))
+    return crystlist
+
 def save_xdatcar(
     filename: str,
     crystA_sup: Cryst,
     crystB_sup: Cryst,
-    images: int = 10,
+    n_im: int = 50,
     crystname: Union[str, None] = None
 ) -> None:
     """
@@ -602,31 +624,14 @@ def save_xdatcar(
         The name of the file to save, must not already exist in current directory.
     crystA_sup, crystB_sup : cryst
         The initial and final crystal structures with specified atomic correspondence, usually obtained by `minimize_rmsd`.
-    images : int, optional
-        Number of images to generate. Default is 10.
+    n_im : int, optional
+        Number of images to generate. Default is 50.
     crystname : str, optional
         A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
     """
-    if not (crystA_sup[1] == crystB_sup[1]).all():
-        raise ValueError("Atomic species of crystA and crystB must be the same.")
-    if type(images) != int or images < 1:
-        raise ValueError("Number of images must be a positive integer.")
-    
-    cA = crystA_sup[0].T
-    cB = crystB_sup[0].T
-    pA = crystA_sup[2].T
-    pB = crystB_sup[2].T
-    s = cB @ la.inv(cA)
-    _, sigma, vT = la.svd(s)
-    crystlist = []
-    tlist = np.linspace(0, 1, images+2)
-    for t in tlist:
-        c = vT.T @ np.diag(sigma ** t) @ vT @ cA
-        p = pA * (1-t) + pB * t
-        crystlist.append((c.T, crystA_sup[1], p.T))
-    
+    crystlist = nebmake(crystA_sup, crystB_sup, n_im)
     content = crystname
-    for i in range(images+2):
+    for i in range(n_im+2):
         if i > 0: content += '\n'
         if crystname: content += crystname
         else: content += filename.split(sep='.')[0]
@@ -637,7 +642,6 @@ def save_xdatcar(
         content += '\n' + ' '.join(str(n) for n in species_counts.tolist())
         content += f'\nDirect configuration= {i+1:.0f}\n'
         content += '\n'.join(f'{p[0]:.12f}\t{p[1]:.12f}\t{p[2]:.12f}' for p in crystlist[i][2].tolist())
-        
     f = open(filename, mode='x')
     f.write(content)
     f.close()
