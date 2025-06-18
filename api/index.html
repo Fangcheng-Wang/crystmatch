@@ -3587,7 +3587,7 @@
 
 
 <h3 id="crystmatch.csm_to_cryst" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">csm_to_cryst</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">slm</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;norot&#39;</span><span class="p">,</span> <span class="n">min_t0</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">weight_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">csm_to_cryst</span><span class="p">(</span><span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">slm</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;norot&#39;</span><span class="p">,</span> <span class="n">use_medium_cell</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">min_t0</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">weight_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></code>
 
 </h3>
 
@@ -3718,6 +3718,22 @@
             </td>
             <td>
                   <code>&#39;norot&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>use_medium_cell</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to return the average cell of <code>crystA_sup</code> and <code>crystB_sup</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
             </td>
           </tr>
           <tr class="doc-section-item">
