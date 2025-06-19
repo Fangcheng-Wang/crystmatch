@@ -639,7 +639,7 @@ or</p>
 <p>Directly read a single CSM from a pair of POSCAR files <code>POSCAR_I</code> and <code>POSCAR_F</code>. The CSM is determined such that each cell vector or atomic position in <code>POSCAR_I</code> is mapped to the corresponding one (with the same row index) in <code>POSCAR_F</code>. <strong>Make sure that the cell vectors and atomic positions in <code>POSCAR_I</code> and <code>POSCAR_F</code> are ordered as you expect.</strong></p>
 <div class="admonition warning">
 <p class="admonition-title">Caveat</p>
-<p>When writing the POSCAR, some softwares may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. To avoid this issue, use the <code>--restore</code> option described below to restore the original CSM.</p>
+<p>When writing the POSCAR, some softwares (e.g. <a href="https://www.vasp.at/">VASP</a>) may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. To avoid this issue, use the <code>--restore</code> option described below to restore the original CSM.</p>
 </div>
 </li>
 <li>
