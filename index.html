@@ -794,12 +794,12 @@ pip3 install --upgrade crystmatch
 </code></pre></div>
 <p>You can also export CSMs as XDATCAR files using the <code>--xdatcar</code> option. Both <code>--poscar</code> and <code>--xdatcar</code> are also available in <code>--enumerate</code> and <code>--direct</code> modes.</p>
 <h3 id="interpolating-between-two-poscar-files-nebmake">Interpolating between two POSCAR files (nebmake)</h3>
-<p>To interpolate between two POSCAR files <code>POSCAR_I</code> and <code>POSCAR_F</code>, creating <code>3</code> new structures, run:</p>
+<p>To interpolate between <code>POSCAR_I</code> and <code>POSCAR_F</code>, creating <code>3</code> new structures, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --direct POSCAR_I POSCAR_F --nebmake 3
 </code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Important</p>
-<p>When producing POSCAR files, some softwares (e.g. <a href="https://www.vasp.at/">VASP</a>) may add integers to the fractional coordinates to, making them all in <span class="arithmatex">\([0,1)\)</span>. In such case, <code>POSCAR_I</code> and <code>POSCAR_F</code> may not have the CSM you expect. To avoid this, add <code>--restore</code> to the above command:</p>
+<p>When producing POSCAR files, some softwares (e.g. <a href="https://www.vasp.at/">VASP</a>) may add integers to the fractional coordinates to make them in <span class="arithmatex">\([0,1)\)</span>. In such case, the CSM determined by <code>POSCAR_I</code> and <code>POSCAR_F</code> can be irrational. This is much like how <code>0.9 -&gt; 1.1</code> is inequivalent to <code>0.9 -&gt; 0.1</code>. To avoid this, add <code>--restore</code> to the above command:</p>
 <div class="highlight"><pre><span></span><code>crystmatch -D POSCAR_I POSCAR_F -n 3 --restore
 </code></pre></div>
 </div>
@@ -819,7 +819,7 @@ pip3 install --upgrade crystmatch
 <p>They can be directly used for subsequent <a href="https://theory.cm.utexas.edu/vtsttools/neb.html">SSNEB calculations</a>.</p>
 <div class="admonition danger">
 <p class="admonition-title">Important</p>
-<p><code>nebmake.pl</code> provided by VTST scripts does not preserve the CSM between <code>POSCAR_I</code> and <code>POSCAR_F</code>. Specifically, it will first reduce each fractional coordinate to <code>[0,1)</code> and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as energy barriers. Therefore, we always recommend generating interpolated structures using</p>
+<p><code>nebmake.pl</code> provided by VTST scripts does not preserve the CSM between <code>POSCAR_I</code> and <code>POSCAR_F</code>. Specifically, it will first reduce each fractional coordinate to <code>[0,1)</code> and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as their energy barriers. We always recommend interpolating structures by:</p>
 <div class="highlight"><pre><span></span><code>crystmatch -D POSCAR_I POSCAR_F -n IMAGES
 </code></pre></div>
 </div>
