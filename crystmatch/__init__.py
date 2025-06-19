@@ -271,7 +271,7 @@ def main():
         slm, p, ks = primitive_shuffle(crystA, crystB, slm0, p0, ks0)
         d = csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func)
         if args.restore and d < d0 - tol:
-            print(f"By adding integers to fractional coordinates, the shuffle distance is reduced by {d0 - d:.4f} Å.")
+            print(f"\nBy adding integers to fractional coordinates (--restore), the shuffle distance is reduced by {d0 - d:.4f} Å.")
         
         if voigtA is None and voigtB is None:
             strain = rmss

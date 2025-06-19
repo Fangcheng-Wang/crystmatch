@@ -234,6 +234,13 @@ To interpolate between two POSCAR files `POSCAR_I` and `POSCAR_F`, creating `3` 
 crystmatch --direct POSCAR_I POSCAR_F --nebmake 3
 ```
 
+!!! danger "Important"
+    When producing POSCAR files, some softwares (e.g. [VASP](https://www.vasp.at/)) may add integers to the fractional coordinates to, making them all in $[0,1)$. In such case, `POSCAR_I` and `POSCAR_F` may not have the CSM you expect. To avoid this, add `--restore` to the above command:
+
+    ```
+    crystmatch -D POSCAR_I POSCAR_F -n 3 --restore
+    ```
+
 Similar to `nebmake.pl` provided by [VTST scripts](https://theory.cm.utexas.edu/vtsttools/scripts.html), the following files will be created in the current directory:
 
 ```powershell
@@ -253,7 +260,7 @@ Similar to `nebmake.pl` provided by [VTST scripts](https://theory.cm.utexas.edu/
 They can be directly used for subsequent [SSNEB calculations](https://theory.cm.utexas.edu/vtsttools/neb.html).
 
 !!! danger "Important"
-    The original `nebmake.pl` does not preserve the CSM between `POSCAR_I` and `POSCAR_F`. Specifically, it will first reduce each fractional coordinate to `[0,1)` and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as energy barriers. Therefore, we always recommend generating interpolated structures using
+    `nebmake.pl` provided by VTST scripts does not preserve the CSM between `POSCAR_I` and `POSCAR_F`. Specifically, it will first reduce each fractional coordinate to `[0,1)` and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as energy barriers. Therefore, we always recommend generating interpolated structures using
     
     ```
     crystmatch -D POSCAR_I POSCAR_F -n IMAGES

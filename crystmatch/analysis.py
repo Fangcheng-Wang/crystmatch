@@ -107,9 +107,7 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
     crystB_sup_uspfixed_1, crystB_sup_uspfixed_2 : cryst
         The final structure, whose lattice vectors and atoms are matched to `crystA_sup` according to the CSM, with uniformly scaled plane fixed.
     """
-    gA = get_pure_rotation(crystA, tol=tol)
-    gB = get_pure_rotation(crystB, tol=tol)
-    crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, standardize_imt(slm, gA, gB))
+    crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, slm)
     speciesA = crystA_sup[1]
     speciesB = crystB_sup[1]
     if not (speciesA == speciesB[p]).all(): raise ValueError("The input permutation does not preserve the atomic species.")
@@ -145,12 +143,12 @@ def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
     hB, qB = hnf(mB0, return_q=True)
     q = (qB @ la.inv(qA)).round().astype(int)
     slm = np.array([hA, hB, q], dtype=int)
-
+    
     crystA_sup_lll, crystB_sup_lll, _, _, _ = create_common_supercell(crystA, crystB, slm)
     pA = crystA_sup_lll[2].T
     pB = crystB_sup_lll[2].T
-    pA0 = crystA_sup[2].T
-    pB0 = crystB_sup[2].T
+    pA0 = la.inv(crystA_sup_lll[0].T) @ crystA[0].T @ mA0 @ crystA_sup[2].T
+    pB0 = la.inv(crystB_sup_lll[0].T) @ crystB[0].T @ mB0 @ crystB_sup[2].T
     # since pA0 -> pB0, we expect pA == pA0[:,p0] + ks0 -> pB[:,p] + ks == pB0[:,p0] + ks0
     p0 = np.nonzero(((pA.reshape(3,-1,1) - pA0.reshape(3,1,-1) + tol) % 1.0 < 2 * tol).all(axis=0))[1]
     p = np.nonzero(((pB.reshape(3,1,-1) - pB0[:,p0].reshape(3,-1,1) + tol) % 1.0 < 2 * tol).all(axis=0))[1]

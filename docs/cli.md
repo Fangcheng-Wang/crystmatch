@@ -168,7 +168,7 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
     Directly read a single CSM from a pair of POSCAR files `POSCAR_I` and `POSCAR_F`. The CSM is determined such that each cell vector or atomic position in `POSCAR_I` is mapped to the corresponding one (with the same row index) in `POSCAR_F`. **Make sure that the cell vectors and atomic positions in `POSCAR_I` and `POSCAR_F` are ordered as you expect.**
 
     !!! warning "Caveat"
-        When writing the POSCAR, some softwares may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. To avoid this issue, use the `--restore` option described below to restore the original CSM.
+        When writing the POSCAR, some softwares (e.g. [VASP](https://www.vasp.at/)) may add or subtract integers (cell vectors) to the fractional (cartesian) coordinates of the atoms to make them within the cell, thus altering the CSM. To avoid this issue, use the `--restore` option described below to restore the original CSM.
 
 - `-n IMAGES`, `--nebmake IMAGES`
     
