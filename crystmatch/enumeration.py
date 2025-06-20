@@ -19,8 +19,8 @@
 
 from .utilities import *
 
-__all__ = ["strain_energy_func", "standardize_imt", "enumerate_imt", "optimize_pct",
-            "pct_fill", "murty_split", "cong_permutations", "enumerate_pct", "optimize_ct",
+__all__ = ["strain_energy_func", "standardize_imt", "enumerate_imt", "optimize_pct", "optimize_pct_fixed",
+            "pct_fill", "murty_split", "cong_permutations", "enumerate_pct", "optimize_ct", "optimize_ct_fixed",
             "enumerate_rep_csm", "enumerate_all_csm"]
 
 np.set_printoptions(suppress=True)
@@ -29,17 +29,30 @@ IMPOSSIBLE_DISTANCE = 1e10
 DELTA_K = np.mgrid[-1:1,-1:1,-1:1].reshape(3,1,1,-1)
 NEIGHBOR_K = np.mgrid[-1:2,-1:2,-1:2].reshape(3,-1).T[np.arange(27)!=13]
 
-def sigma_weight(sigma):
+def _sigma_weight(sigma: NDArray[np.float64]) -> NDArray[np.float64]:
     """Return the weight of a given (3,) array of singular values, which is proportional to the standard measure on R^9 
     """
     return np.abs(np.diff((np.array(sigma)[...,[[0,1,2],[1,2,0]]])**2, axis=-2).squeeze(axis=-2)).prod(axis=-1)
 
-def strain_energy_func(elasticA, elasticB):
+def strain_energy_func(
+    elasticA: NDArray[np.float64],
+    elasticB: NDArray[np.float64]
+) -> Callable[[NDArray[np.float64], bool, NDArray[np.float64], NDArray[np.float64]], float]:
     """Return the strain energy density function.
+    
+    Parameters
+    ----------
+    elasticA, elasticB : (3, 3, 3, 3) arrays
+        The rank-4 elastic tensors of the initial and final crystal structures, respectively.
+    
+    Returns
+    -------
+    strain : Callable
+        A function that takes a deformation gradient `s` and returns the strain energy density.
     """
     if elasticA.shape != (3,3,3,3) or elasticB.shape != (3,3,3,3):
         raise ValueError("elasticA and elasticB must be (3,3,3,3) arrays")
-    def w(s, return_quadratic_form=False, u=None, vt=None):
+    def strain(s, return_quadratic_form=False, u=None, vt=None):
         if return_quadratic_form:
             if u is None or vt is None: raise ValueError("u and v must be provided if return_quadratic_form is True")
             return 1/8 * (np.einsum('ijkl,mi,mj,nk,nl->mn', elasticA, vt, vt, vt, vt)
@@ -49,10 +62,10 @@ def strain_energy_func(elasticA, elasticB):
             u, sigma, vt = la.svd(s, compute_uv=True)
             return 1/2 * (np.einsum('ijkl,...mi,...mj,...nk,...nl,...m,...n->...', elasticA, vt, vt, vt, vt, sigma**0.5 - 1, sigma**0.5 - 1)
                         + np.einsum('ijkl,...im,...jm,...kn,...ln,...m,...n->...', elasticB, u, u, u, u, sigma**-0.5 - 1, sigma**-0.5 - 1))
-    return w
+    return strain
 
 def _cube_to_so3(vec):
-    """Map `vec` in [0,1)^3 to SO(3), preserving the uniformity of distribution.
+    """Map a vector in [0,1)^3 to SO(3), preserving the uniformity of distribution.
     """
     q0 = np.sqrt(1 - vec[0]) * np.sin(2 * np.pi * vec[1])
     q1 = np.sqrt(1 - vec[0]) * np.cos(2 * np.pi * vec[1])
@@ -61,10 +74,15 @@ def _cube_to_so3(vec):
     return Rotation.from_quat([q0,q1,q2,q3]).as_matrix()
 
 def enumerate_imt(
-    crystA: Cryst, crystB: Cryst, mu: int, max_strain: float,
-    strain: Callable = rmss, tol: float = 1e-3,
-    max_iter: int = 1000, verbose: int = 1
-) -> List[SLM]:
+    crystA: Cryst,
+    crystB: Cryst,
+    mu: int,
+    max_strain: float,
+    strain: Callable[[NDArray[np.float64], bool, NDArray[np.float64], NDArray[np.float64]], float] = rmss,
+    tol: float = 1e-3,
+    max_iter: int = 1000,
+    verbose: int = 1
+) -> NDArray[np.int32]:
     """Enumerating all IMTs of multiplicity `mu` with `strain` smaller than `max_strain`.
 
     Parameters
@@ -78,17 +96,18 @@ def enumerate_imt(
     max_strain : float
         The maximum strain energy density, with the same units as `strain`.
     strain : Callable, optional
-        How to quantify the strain, usually `rmss` or obtained via `strain_energy_func()`. Default is `rmss`.
+        How to quantify the strain, usually `rmss` or obtained via `strain_energy_func()`.
     tol : float, optional
-        The tolerance for determining the pure rotation group of the crystal structures. Default is 1e-3.
+        The tolerance for determining the pure rotation group of the crystal structures.
     max_iter : int, optional
-        The maximum number of consequtive iterations without finding any new SLMs. Default is 100.
+        The maximum number of consequtive iterations without finding any new SLMs.
     verbose : int, optional
-        The level of verbosity. Default is 1.
+        The level of verbosity.
     
     Returns
     -------
-    
+    slmlist : (N, 3, 3, 3) array of ints
+        The IMTs enumerated, where N is the number of noncongruent IMTs found.
     """
     cA = crystA[0].T
     cB = crystB[0].T
@@ -121,11 +140,11 @@ def enumerate_imt(
         mesh_ball = (np.random.uniform(low=0, high=1, size=size)**(1/3) / la.norm(vec, axis=1)).reshape(-1,1) * vec
         l = la.cholesky(quad_form)
         mesh_sigma = 1 + np.einsum('ij,kj->ki', la.inv(l.T), mesh_ball)
-        max_weight = sigma_weight(mesh_sigma).max()
+        max_weight = _sigma_weight(mesh_sigma).max()
         sigma0 = None
         while sigma0 is None:
             temp = mesh_sigma[np.random.randint(mesh_sigma.shape[0])]
-            if np.random.rand() > sigma_weight(temp) / max_weight: sigma0 = temp
+            if np.random.rand() > _sigma_weight(temp) / max_weight: sigma0 = temp
         s0 = np.einsum('ij,j,jk->ik', u, sigma0, vt)
         
         # Round `s0`s to nearest integer matrix triplets
@@ -154,8 +173,8 @@ def enumerate_imt(
     if verbose >= 1: progress_bar.close()
     return np.array(slmlist, dtype=int)
 
-def punishment_matrix(z, prevent, l=2):
-    """
+def _punishment_matrix(z, prevent, l=2):
+    """The punishment matrix for the given permutation constraint.
     """
     m = np.zeros((z,z))
     if not prevent: return m
@@ -163,8 +182,19 @@ def punishment_matrix(z, prevent, l=2):
     m[prevent_arr[:,0],prevent_arr[:,1]] = IMPOSSIBLE_DISTANCE**l
     return m
 
-def optimize_pct_fixed(c, species, pA, pB, constraint=Constraint(set(),set()), weight_func=None, l=2):
-    """
+def optimize_pct_fixed(
+    c: NDArray[np.float64],
+    species: NDArray[np.str_],
+    pA: NDArray[np.float64],
+    pB: NDArray[np.float64],
+    constraint: Constraint = Constraint(set(),set()),
+    weight_func: Optional[Dict[str, float]] = None,
+    l: int = 2
+) -> tuple[float, NDArray[np.int32] | None, NDArray[np.int32] | None]:
+    """Minimize the shuffle distance with variable PCT and fixed overall translation.
+    
+    Parameters
+    ----------
     c : (3, 3) array
         The base matrix of the shuffle lattice.
     species : (Z, ) array of str
@@ -172,12 +202,12 @@ def optimize_pct_fixed(c, species, pA, pB, constraint=Constraint(set(),set()), w
     pA, pB : (3, Z) array
         The fractional coordinates of the atoms in the initial and final structures, respectively.
     constraint : Constraint, optional
-        The constraint on the permutation. Default is an empty constraint.
+        The constraint on the permutation.
     weight_func : dict, optional
-        The weight function, with keys as atomic species. Default is None, which means all atoms have the same weight.
+        The weight function, with keys as atomic species. If None, all atoms have the same weight.
     l : float, optional
-        The l-norm to be used for distance calculation, must not be less than 1. Default is 2.
-    
+        The l-norm to be used for distance calculation, must not be less than 1.
+
     Returns
     -------
     d_hat : float
@@ -199,7 +229,7 @@ def optimize_pct_fixed(c, species, pA, pB, constraint=Constraint(set(),set()), w
         diff_frac = (pB[:,enforce[:,1]] - pA[:,enforce[:,0]]).reshape(3,-1,1) % 1.0 + DELTA_K.reshape(3,1,8)
         norm_squared = np.sum(np.tensordot(c, diff_frac, axes=(1,0))**2, axis=0)
         where_kij[enforce[:,0], enforce[:,1]] = np.argmin(norm_squared, axis=1)
-    punish = punishment_matrix(z, constraint.prevent, l=l)
+    punish = _punishment_matrix(z, constraint.prevent, l=l)
     
     for s in np.unique(species):
         row_ind = species == s
@@ -237,7 +267,20 @@ def optimize_pct_local(c, species, pA, pB, t, constraint=Constraint(set(),set())
     return d, p, ks, t0
 
 def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight_func=None, l=2, t_grid=64):
-    """
+    """Minimize the shuffle distance with variable PCT and overall translation.
+    
+    Parameters
+    ----------
+    crystA : cryst
+        The initial crystal structure, usually obtained by `load_poscar`.
+    crystB : cryst
+        The final crystal structure, usually obtained by `load_poscar`.
+    slm : slm
+        The SLM, represented by a triplet of integer matrices like `(hA, hB, q)`.
+    constraint : 2-tuple of sets, optional
+        The permutation constraint used in the Murty's algorithm.
+    weight_func : dict, optional
+        
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
     f = frac_cell(mA, mB)
@@ -336,7 +379,7 @@ def cong_permutations(p, crystA, crystB, slm):
                         .round(7) % 1.0) == 0).all(axis=0))[1] for j in range(tB.shape[1])]
     return np.unique([kB[p[kA]] for kA in lA for kB in lB], axis=0)
 
-def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, incong=True, verbose=1, warning_threshold=5000):
+def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, non_cong=True, verbose=1, warning_threshold=5000):
     """
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
@@ -375,7 +418,7 @@ def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, 
                     for new_node in murty_split(node, p):
                         node_stack.append(new_node)
                         if verbose >= 1: prob_total += 1
-                    if incong:
+                    if non_cong:
                         for p_cong in cong_permutations(p, crystA, crystB, slm):
                             split_stack.append(p_cong)
                 if d <= max_d or d >= IMPOSSIBLE_DISTANCE: break
@@ -387,7 +430,7 @@ def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, 
             progress_bar.refresh()
     if verbose >= 1:
         progress_bar.close()
-        print(f"\tFound {len(bottom_pcts)} {'noncongruent bottom PCTs' if incong else 'bottom PCTs (may be congruent)'} with d <= {max_d}.")
+        print(f"\tFound {len(bottom_pcts)} {'noncongruent bottom PCTs' if non_cong else 'bottom PCTs (may be congruent)'} with d <= {max_d}.")
         print(f"Filling non-bottom PCTs with d <= {max_d:.4f} ...")
 
     pctlist = np.array([], dtype=int).reshape(0, len(species), 4)
@@ -402,7 +445,7 @@ def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, 
         if verbose >= 1: progress_bar.update(1)
     if verbose >= 1:
         progress_bar.close()
-        print(f"\tFound {len(pctlist)} {'noncongruent PCTs' if incong else 'PCTs (may be congruent)'} with d <= {max_d}.")
+        print(f"\tFound {len(pctlist)} {'noncongruent PCTs' if non_cong else 'PCTs (may be congruent)'} with d <= {max_d}.")
     return pctlist, np.array(dlist)
 
 def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2):
@@ -444,7 +487,7 @@ def optimize_ct(crystA, crystB, slm, p, weight_func=None, l=2, t_grid=64):
 def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: float,
     strain: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss, tol: float = 1e-3, max_iter: int = 1000,
     weight_func: Union[Dict[str, float], None] = None, l: int = 2, t_grid: int = 64, verbose: int = 1
-) -> tuple[NDArray[np.int32], List[NDArray[np.int32]], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]:
+) -> tuple[NDArray[np.int32], list[NDArray[np.int32]], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]:
     """Enumerating all representative CSMs with multiplicity and strain not larger than `max_mu` and `max_strain`.
     
     Parameters
@@ -458,19 +501,19 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     max_strain : float
         The maximum value of the function `strain`.
     strain : Callable, optional
-        How to quantify the strain, usually `rmss` or obtained via `strain_energy_func()`. Default is `rmss`.
+        How to quantify the strain, usually `rmss` or obtained via `strain_energy_func()`.
     tol : float, optional
-        The tolerance for `spglib` symmetry detection. Default is 1e-3.
+        The tolerance for `spglib` symmetry detection.
     max_iter : int, optional
-        The maximum iteration number for IMT generation. Default is 1000.
+        The maximum iteration number for IMT generation.
     weight_func : dict, optional
-        A dictionary of atomic weights for each species. Default is None, which means all atoms have the same weight.
+        A dictionary of atomic weights for each species. If None, all atoms have the same weight.
     l : float, optional
-        The type of norm to be used for distance calculation. Default is 2.
+        The type of norm to be used for distance calculation.
     t_grid : int, optional
-        The number of grid points for PCT optimization. Default is 64.
+        The number of grid points for PCT optimization.
     verbose : int, optional
-        The level of verbosity. Default is 1.
+        The level of verbosity.
     
     Returns
     -------
@@ -551,7 +594,7 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
 def enumerate_all_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: float, max_d: float,
     strain: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss, tol: float = 1e-3, max_iter: int = 1000,
     weight_func: Union[Dict[str, float], None] = None, l: int = 2, t_grid: int = 16, verbose: int = 1
-) -> tuple[NDArray[np.int32], NDArray[np.int32], List[NDArray[np.int32]], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]:
+) -> tuple[NDArray[np.int32], NDArray[np.int32], list[NDArray[np.int32]], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]:
     """Enumerating all CSMs with multiplicity, strain, and shuffle distance not larger than `max_mu`, `max_strain`, and `max_d`.
     
     Parameters
@@ -567,19 +610,19 @@ def enumerate_all_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     max_d : float
         The maximum shuffle distance.
     strain : Callable, optional
-        How to quantify the strain, usually `rmss` or obtained via `strain_energy_func()`. Default is `rmss`.
+        How to quantify the strain, usually `rmss` or obtained via `strain_energy_func()`.
     tol : float, optional
-        The tolerance for `spglib` symmetry detection. Default is 1e-3.
+        The tolerance for `spglib` symmetry detection.
     max_iter : int, optional
-        The maximum iteration number for IMT generation. Default is 1000.
+        The maximum iteration number for IMT generation.
     weight_func : dict, optional
-        A dictionary of atomic weights for each species. Default is None, which means all atoms have the same weight.
+        A dictionary of atomic weights for each species. If None, all atoms have the same weight.
     l : float, optional
-        The type of norm to be used for distance calculation. Default is 2.
+        The type of norm to be used for distance calculation.
     t_grid : int, optional
-        The number of grid points for PCT optimization. Default is 16.
+        The number of grid points for PCT optimization.
     verbose : int, optional
-        The level of verbosity. Default is 1.
+        The level of verbosity.
     
     Returns
     -------

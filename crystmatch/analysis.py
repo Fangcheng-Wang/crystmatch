@@ -69,7 +69,7 @@ def conventional_cryst(cryst_sup, return_primitive=False, tol=1e-3):
 def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], ks: NDArray[np.int32],
     tol: float = 1e-3, orientation: Literal['norot', 'uspfixed'] = 'norot', use_medium_cell: bool = False,
     min_t0: bool = False, weight_func: Union[Dict[str, float], None] = None, l: float = 2
-) -> Union[Tuple[Cryst, Cryst], Tuple[Cryst, Cryst, Cryst]]:
+) -> Union[tuple[Cryst, Cryst], tuple[Cryst, Cryst, Cryst]]:
     """Convert the IMT and PCT representation of a CSM to a pair of crysts.
     
     Parameters
@@ -83,20 +83,19 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
     ks : (3, Z) array of ints
         The lattice-vector translations of the shuffle.
     tol : float, optional
-        The tolerance for symmetry finding. Default is 1e-3.
+        The tolerance for symmetry finding.
     orientation : str, optional
         The orientation of the final structure, either 'norot' or 'uspfixed', which means that the deformation is rotation-free \
-            or fixing the uniformly scaled plane (USP). When 'uspfixed', two final structures are returned since there are two USPs. \
-            Default is 'norot'. 
+            or fixing the uniformly scaled plane (USP). When 'uspfixed', two final structures are returned since there are two USPs.
     use_medium_cell : bool, optional
         Whether to return the average cell of `crystA_sup` and `crystB_sup`.
     min_t0 : bool, optional
-        Whether to use optimal translation of `crystB_sup_norot` to minimize the shuffle distance. Default is False.
+        Whether to use optimal translation of `crystB_sup_norot` to minimize the shuffle distance.
     weight_func : dict, optional
         The weight function used when minimizing the shuffle distance, with keys as atomic species. \
-            Default is None, which means all atoms have the same weight.
+            If None, all atoms have the same weight.
     l : float, optional
-        The l-norm to be used for distance calculation, must not be less than 1. Default is 2.
+        The l-norm to be used for distance calculation, must not be less than 1.
         
     Returns
     -------
@@ -264,7 +263,7 @@ def miller_to_vec(cryst, hkl, tol=1e-3):
     hkl : (3,) array_like
         Miller indices.
     tol : float, optional
-        Tolerance for determining the symmetry of the crystal. Default is 1e-3.
+        Tolerance for determining the symmetry of the crystal.
 
     Returns
     -------
@@ -278,7 +277,7 @@ def miller_to_vec(cryst, hkl, tol=1e-3):
 def deviation_angle(
     crystA: Cryst,
     crystB: Cryst,
-    slmlist: Union[List[SLM], NDArray[np.int32]],
+    slmlist: list[SLM] | NDArray[np.int32],
     r: NDArray[np.float64],
     orientation: Literal['norot', 'uspfixed']
 ) -> NDArray[np.float64]:
@@ -296,7 +295,7 @@ def deviation_angle(
         A rotation matrix representing the given orientation relationship.
     orientation : str, optional
         The orientation of the final structure, either 'norot' or 'uspfixed', which means that the deformation is rotation-free \
-            or fixing the uniformly scaled plane (USP). Default is 'norot'. When 'uspfixed', two final structures are returned since there are two USPs.
+            or fixing the uniformly scaled plane (USP). When 'uspfixed', two final structures are returned since there are two USPs.
 
     Returns
     -------
@@ -508,7 +507,7 @@ def visualize_csm(
     plt.show()
     return
 
-def _species_to_poscar(species: NDArray[np.str_]) -> Tuple[NDArray[np.str_], NDArray[np.int32]]:
+def _species_to_poscar(species: NDArray[np.str_]) -> tuple[NDArray[np.str_], NDArray[np.int32]]:
     _, sp_idx, sp_inv, sp_counts = np.unique(species, return_index=True, return_inverse=True, return_counts=True)
     if np.sum(np.diff(sp_inv) != 0) != sp_idx.shape[0] - 1:
         raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
@@ -623,7 +622,7 @@ def save_xdatcar(
     crystA_sup, crystB_sup : cryst
         The initial and final crystal structures with specified atomic correspondence, usually obtained by `minimize_rmsd`.
     n_im : int, optional
-        Number of images to generate. Default is 50.
+        Number of images to generate.
     crystname : str, optional
         A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
     """

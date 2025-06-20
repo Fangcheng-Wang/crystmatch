@@ -40,7 +40,7 @@ Check whether `crystmatch` is successfully installed (the first run may take a f
 crystmatch --version
 ```
 
-**The current version of `crystmatch` is `2.0.5`.**
+**The current version of `crystmatch` is `2.0.6`.**
 
 !!! tip
     If you prefer using `conda`, you can install `crystmatch` by running:
@@ -228,14 +228,14 @@ You can also export CSMs as XDATCAR files using the `--xdatcar` option. Both `--
 
 ### Interpolating between two POSCAR files (nebmake)
 
-To interpolate between two POSCAR files `POSCAR_I` and `POSCAR_F`, creating `3` new structures, run:
+To interpolate between `POSCAR_I` and `POSCAR_F`, creating `3` new structures, run:
 
 ```
 crystmatch --direct POSCAR_I POSCAR_F --nebmake 3
 ```
 
 !!! danger "Important"
-    When producing POSCAR files, some softwares (e.g. [VASP](https://www.vasp.at/)) may add integers to the fractional coordinates to, making them all in $[0,1)$. In such case, `POSCAR_I` and `POSCAR_F` may not have the CSM you expect. To avoid this, add `--restore` to the above command:
+    When producing POSCAR files, some softwares (e.g. [VASP](https://www.vasp.at/)) may add integers to the fractional coordinates to make them in $[0,1)$. In such case, the CSM determined by `POSCAR_I` and `POSCAR_F` can be irrational. This is much like how `0.9 -> 1.1` is inequivalent to `0.9 -> 0.1`. To avoid this, add `--restore` to the above command:
 
     ```
     crystmatch -D POSCAR_I POSCAR_F -n 3 --restore
@@ -260,10 +260,16 @@ Similar to `nebmake.pl` provided by [VTST scripts](https://theory.cm.utexas.edu/
 They can be directly used for subsequent [SSNEB calculations](https://theory.cm.utexas.edu/vtsttools/neb.html).
 
 !!! danger "Important"
-    `nebmake.pl` provided by VTST scripts does not preserve the CSM between `POSCAR_I` and `POSCAR_F`. Specifically, it will first reduce each fractional coordinate to `[0,1)` and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as energy barriers. Therefore, we always recommend generating interpolated structures using
+    `nebmake.pl` provided by VTST scripts does not preserve the CSM between `POSCAR_I` and `POSCAR_F`. Specifically, it will first reduce each fractional coordinate to `[0,1)` and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as their energy barriers. We always recommend interpolating structures by:
     
     ```
     crystmatch -D POSCAR_I POSCAR_F -n IMAGES
+    ```
+
+    or by:
+
+    ```
+    crystmatch -D POSCAR_I POSCAR_F -n IMAGES --restore
     ```
 
 ### Enumerating CSMs within given supercells

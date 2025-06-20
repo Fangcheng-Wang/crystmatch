@@ -1,9 +1,5 @@
 # Python API
 
-!!! warning "In progress"
-    **The API reference for `crystmatch` v2.0.x is still under development. Please do not rely on it yet.**
-
-
 | Data type | Structure | Description |
 | --- | --- | --- |
 | `cryst` | `(lattice, species, positions)` | A crystal structure described by a primitive cell `lattice`, atomic species `species`, and fractional coordinates `positions`. Cell vectors are **rows** of `lattice`. |
