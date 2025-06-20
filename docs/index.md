@@ -40,7 +40,7 @@ Check whether `crystmatch` is successfully installed (the first run may take a f
 crystmatch --version
 ```
 
-**The current version of `crystmatch` is `2.0.6`.**
+**The current version of `crystmatch` is `2.0.7`.**
 
 !!! tip
     If you prefer using `conda`, you can install `crystmatch` by running:
