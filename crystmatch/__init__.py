@@ -338,7 +338,7 @@ def main():
                 slm1, p1, ks1 = primitive_shuffle(crystA, crystB, slm0, p_tmp, ks_tmp)
                 mu1 = imt_multiplicity(crystA, crystB, slm1)
                 mulist.append(mu1)
-                where = np.nonzero((slm1 == slmlist).all(axis=(1,2,3)).any())[0]
+                where = np.nonzero((slm1 == slmlist).all(axis=(1,2,3)))[0]
                 if where.shape[0] == 0:
                     slm_ind.append(slmlist.shape[0])
                     slmlist = np.concatenate((slmlist, slm1.reshape(-1,3,3,3)), axis=0)
