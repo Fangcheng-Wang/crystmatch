@@ -19,55 +19,25 @@
 
 from .utilities import *
 
-__all__ = ["decompose_cryst", "conventional_cryst", "csm_to_cryst", "cryst_to_csm", "csm_distance", "primitive_shuffle",
+__all__ = ["decompose_cryst", "csm_to_cryst", "cryst_to_csm", "csm_distance", "primitive_shuffle",
             "orient_matrix", "rot_usp", "miller_to_vec", "deviation_angle", "visualize_slmlist", "visualize_pctlist",
             "visualize_csm", "save_csv", "save_npz", "load_npz", "unzip_csm", "save_poscar", "nebmake", "save_xdatcar"]
 
 np.set_printoptions(suppress=True)
 
-def decompose_cryst(cryst_sup, cryst_prim=None, tol=1e-3):
-    """Compute the rotation `r` and the integer transformation matrix `m` such that `c_sup = r @ c_prim @ m`
+def decompose_cryst(cryst_sup, tol=1e-3):
+    """Compute the primitive `cryst_prim` and integer matrix `m` such that `c_sup = c_prim @ m` and `p_prim ∈ m @ p_sup (mod 1)`
     """
-    if cryst_prim is None:
-        cryst_prim = primitive_cryst(cryst_sup, tol=tol)
-
-    # c_conv @ m0 = r0 @ c_prim
-    sym0 = get_symmetry_dataset(cryst_to_spglib(cryst_prim), symprec=tol)
-    m0 = sym0.transformation_matrix
-    r0 = sym0.std_rotation_matrix
-
-    # c_conv @ m1 = r1 @ c_sup
-    sym1 = get_symmetry_dataset(cryst_to_spglib(cryst_sup), symprec=tol)
-    m1 = sym1.transformation_matrix
-    r1 = sym1.std_rotation_matrix
-
-    # c_sup = (r1.inv @ r0) @ c_prim @ (m0.inv @ m1)
-    r = r1.T @ r0
-    m = la.inv(m0) @ m1
-    if (np.abs(m - m.round()) < tol).all(): m = m.round().astype(int)
-    return r, m
-
-def conventional_cryst(cryst_sup, return_primitive=False, tol=1e-3):
-    """Rotate the crystal structure and change its lattice basis to make it conventional.
-    """
-    c_sup = cryst_sup[0].T
-    p_sup = cryst_sup[2].T
-    r, m = decompose_cryst(cryst_sup, tol=tol)
-    h, q = hnf(m.round().astype(int), return_q=True)
-    c_sup_tri = la.inv(r) @ c_sup @ la.inv(q)
-    p_sup_tri = (q @ p_sup) % 1.0
-    cryst_sup_tri = (c_sup_tri.T, cryst_sup[1], p_sup_tri.T)
-    if return_primitive:
-        cell_sup, species_dict = cryst_to_spglib(cryst_sup, return_dict=True)
-        cryst_tri = spglib_to_cryst(refine_cell(cell_sup, symprec=tol), species_dict)
-        if not np.allclose(cryst_tri[0].T @ h, c_sup_tri):
-            raise ValueError("Error in triangularization. Please report this bug to wfc@pku.edu.cn.")
-        return cryst_sup_tri, cryst_tri
-    else:
-        return cryst_sup_tri
+    sym = get_symmetry_dataset(cryst_to_spglib(cryst_sup), symprec=tol)
+    c_prim = sym.primitive_lattice.T
+    if la.det(c_prim) < 0: c_prim = - c_prim
+    m = (la.inv(c_prim) @ cryst_sup[0].T).round().astype(int)
+    ind_prim = np.unique(sym.mapping_to_primitive, return_index=True)[1]
+    p_prim = (m @ cryst_sup[2].T[:,ind_prim]) % 1.0
+    return (c_prim.T, cryst_sup[1][ind_prim], p_prim.T), m
 
 def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], ks: NDArray[np.int32],
-    tol: float = 1e-3, orientation: Literal['norot', 'uspfixed'] = 'norot', use_medium_cell: bool = False,
+    orientation: Literal['norot', 'uspfixed'] = 'norot', use_medium_cell: bool = False,
     min_t0: bool = False, weight_func: Union[Dict[str, float], None] = None, l: float = 2
 ) -> Union[tuple[Cryst, Cryst], tuple[Cryst, Cryst, Cryst]]:
     """Convert the IMT and PCT representation of a CSM to a pair of crysts.
@@ -82,8 +52,6 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
         The permutaion of the shuffle.
     ks : (3, Z) array of ints
         The lattice-vector translations of the shuffle.
-    tol : float, optional
-        The tolerance for symmetry finding.
     orientation : str, optional
         The orientation of the final structure, either 'norot' or 'uspfixed', which means that the deformation is rotation-free \
             or fixing the uniformly scaled plane (USP). When 'uspfixed', two final structures are returned since there are two USPs.
@@ -132,10 +100,8 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
 def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
     """Return the primitive crysts and IMT and PCT representation of a CSM determined by a pair of crysts.
     """
-    crystA = primitive_cryst(crystA_sup, tol=tol)
-    crystB = primitive_cryst(crystB_sup, tol=tol)
-    _, mA0 = decompose_cryst(crystA_sup, cryst_prim=crystA, tol=tol)
-    _, mB0 = decompose_cryst(crystB_sup, cryst_prim=crystB, tol=tol)
+    crystA, mA0 = decompose_cryst(crystA_sup, tol=tol)
+    crystB, mB0 = decompose_cryst(crystB_sup, tol=tol)
     if not (mA0.dtype == int and mB0.dtype == int): raise ValueError("Both 'crystA' and 'crystB' must be primitive.")
     if not (la.det(mA0) > 0 and la.det(mB0) > 0): raise ValueError("The cell vectors must be right-handed.")
     hA, qA = hnf(mA0, return_q=True)
@@ -151,8 +117,16 @@ def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
     # since pA0 -> pB0, we expect pA == pA0[:,p0] + ks0 -> pB[:,p] + ks == pB0[:,p0] + ks0
     p0 = np.nonzero(((pA.reshape(3,-1,1) - pA0.reshape(3,1,-1) + tol) % 1.0 < 2 * tol).all(axis=0))[1]
     p = np.nonzero(((pB.reshape(3,1,-1) - pB0[:,p0].reshape(3,-1,1) + tol) % 1.0 < 2 * tol).all(axis=0))[1]
-    if not len(p) == len(p0): raise ValueError("Failed to find the PCT representation. Please consider using a larger tolerance.")
+    z = pA.shape[1]
+    if (np.sort(p) != np.arange(z)).any() or (np.sort(p0) != np.arange(z)).any():
+        raise ValueError("Failed to find the PCT representation. Please consider using a larger tolerance.")
     ks = (pB0[:,p0] - pA0[:,p0] + pA - pB[:,p]).round().astype(int)
+    
+    # assertion
+    d1 = csm_distance(crystA_sup, crystB_sup, np.array([np.eye(3), np.eye(3), np.eye(3)]).round().astype(int),
+                    np.arange(len(crystA_sup[1])), np.zeros_like(crystA_sup[2].T))
+    d2 = csm_distance(crystA, crystB, slm, p, ks)
+    assert np.abs(d1 - d2) < tol, "'cryst_to_csm' failed. Please report this bug to wfc@pku.edu.cn."
     return crystA, crystB, slm, p, ks
 
 def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2, min_t0=True, return_t0=False):
@@ -210,11 +184,11 @@ def primitive_shuffle(crystA, crystB, slm0, p0, ks0):
     iB0_to_iB[iB0] = iB
     for i in range(z):
         pi = iB0_to_iB[p0[iA0[iA == i]]]
-        if np.diff(pi).any(): raise AssertionError("'p0' is not a class function. Please report this bug to wfc@pku.edu.cn if you see this message.")
+        assert not np.diff(pi).any(), "'p0' is not a class function. Please report this bug to wfc@pku.edu.cn."
         p[i] = pi[0]
         i0 = iA0[iA == i][0]
         ksi = (la.inv(mB) @ mB0 @ (pB_sup0[:,p0[i0]] + ks0[:,i0]) - la.inv(mA) @ mA0 @ pA_sup0[:,i0]) - (pB_sup[:,p[i]] - pA_sup[:,i])
-        if (ksi.round(7) % 1.0 != 0).any(): raise AssertionError("'ks0' is not integer. Please report this bug to wfc@pku.edu.cn if you see this message.")
+        assert (ksi.round(7) % 1.0 == 0).all(), "'ks0' is not integer. Please report this bug to wfc@pku.edu.cn."
         ks[:,i] = ksi.round().astype(int)
     return slm, p, ks
     
@@ -277,7 +251,7 @@ def miller_to_vec(cryst, hkl, tol=1e-3):
 def deviation_angle(
     crystA: Cryst,
     crystB: Cryst,
-    slmlist: list[SLM] | NDArray[np.int32],
+    slmlist: NDArray[np.int32],
     r: NDArray[np.float64],
     orientation: Literal['norot', 'uspfixed']
 ) -> NDArray[np.float64]:
@@ -483,7 +457,7 @@ def visualize_csm(
         if show_conventional:
             cryst = crystA_sup if left else crystB_sup
             sym = get_symmetry_dataset(cryst_to_spglib(cryst), symprec=tol)
-            c_conv = sym.std_rotation_matrix.T @ sym.std_lattice.T
+            c_conv = (u @ vT).T @ sym.std_rotation_matrix.T @ sym.std_lattice.T
             ax.quiver(np.zeros(3), np.zeros(3), np.zeros(3), c_conv[0], c_conv[1], c_conv[2], color=['#666666', '#888888', '#aaaaaa'], arrow_length_ratio=0.2)
 
         xlim = ax.get_xlim3d()
@@ -510,7 +484,7 @@ def visualize_csm(
 def _species_to_poscar(species: NDArray[np.str_]) -> tuple[NDArray[np.str_], NDArray[np.int32]]:
     _, sp_idx, sp_inv, sp_counts = np.unique(species, return_index=True, return_inverse=True, return_counts=True)
     if np.sum(np.diff(sp_inv) != 0) != sp_idx.shape[0] - 1:
-        raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
+        raise ValueError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn.")
     return species[np.sort(sp_idx)], sp_counts
 
 def save_csv(filename, table):

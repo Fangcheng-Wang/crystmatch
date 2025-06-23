@@ -190,7 +190,7 @@ def optimize_pct_fixed(
     constraint: Constraint = Constraint(set(),set()),
     weight_func: Optional[Dict[str, float]] = None,
     l: int = 2
-) -> tuple[float, NDArray[np.int32] | None, NDArray[np.int32] | None]:
+) -> tuple[float, NDArray[np.int32], NDArray[np.int32]]:
     """Minimize the shuffle distance with variable PCT and fixed overall translation.
     
     Parameters
@@ -263,7 +263,7 @@ def optimize_pct_local(c, species, pA, pB, t, constraint=Constraint(set(),set())
         if dh >= IMPOSSIBLE_DISTANCE: return IMPOSSIBLE_DISTANCE, None, None, None
         d, t0 = pct_distance(c, pA, pB, p, ks, weights=weights, l=l, return_t0=True)
         if dh - d < 1e-4: break
-        if n_iter > 100: raise RecursionError("PCT optimization failed to converge. Please report this bug to wfc@pku.edu.cn if you see this message.")
+        if n_iter > 100: raise RecursionError("PCT optimization failed to converge. Please report this bug to wfc@pku.edu.cn.")
     return d, p, ks, t0
 
 def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight_func=None, l=2, t_grid=64):
@@ -466,7 +466,7 @@ def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2):
         dh, ks = optimize_ct_fixed(c, pA, pB+t0, p, weights=weights, l=l)
         d, t0 = pct_distance(c, pA, pB, p, ks, weights=weights, l=l, return_t0=True)
         if dh - d < 1e-4: break
-        if n_iter > 100: raise RecursionError("CT optimization failed to converge. Please report this bug to wfc@pku.edu.cn if you see this message.")
+        if n_iter > 100: raise RecursionError("CT optimization failed to converge. Please report this bug to wfc@pku.edu.cn.")
     return d, ks, t0
 
 def optimize_ct(crystA, crystB, slm, p, weight_func=None, l=2, t_grid=64):

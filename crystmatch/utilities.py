@@ -288,28 +288,6 @@ def primitive_cryst(
     cell = standardize_cell(cell_sup, to_primitive=True, no_idealize=True, symprec=tol)
     return spglib_to_cryst(cell, species_dict)
 
-def conventional_cryst(
-    cryst: Cryst,
-    tol: float = 1e-3
-) -> Cryst:
-    """Convert a crystal structure to its conventional structure using spglib.
-    
-    Parameters
-    ----------
-    cryst : cryst
-        The crystal structure to be converted, represented as a tuple of `(lattice, species, positions)`.
-    tol : float, optional
-        The tolerance for symmetry detection.
-        
-    Returns
-    -------
-    cryst : cryst
-        The conventional crystal structure, represented as a tuple of `(lattice, species, positions)`.
-    """
-    cell, species_dict = cryst_to_spglib(cryst, return_dict=True)
-    sym = get_symmetry_dataset(cell, symprec=tol)
-    return spglib_to_cryst((sym.std_lattice, sym.std_positions, sym.std_types), species_dict)
-
 def check_stoichiometry(
     speciesA: NDArray[np.int32],
     speciesB: NDArray[np.int32]
@@ -380,7 +358,7 @@ def create_common_supercell(
     argsortA = np.argsort(speciesA_sup)
     argsortB = np.argsort(speciesB_sup)
     if not (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all():
-        raise AssertionError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn if you see this message.")
+        raise AssertionError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn.")
     species_sup = speciesA_sup[argsortA]
     pA_sup = pA_sup[:,argsortA]
     pB_sup = pB_sup[:,argsortB]
@@ -415,7 +393,7 @@ def frac_cell(
 def imt_multiplicity(
     crystA: Cryst,
     crystB: Cryst,
-    slmlist: SLM | list[SLM] | NDArray[np.int32]
+    slmlist: NDArray[np.int32]
 ) -> int | NDArray[np.int32]:
     """Return multiplicities of elements in `slmlist`.
 
@@ -443,7 +421,7 @@ def imt_multiplicity(
 def deformation_gradient(
     crystA: Cryst,
     crystB: Cryst,
-    slmlist: list[SLM] | NDArray[np.int32]
+    slmlist: NDArray[np.int32]
 ) -> NDArray[np.float64]:
     """Compute the deformation gradient matrices of given IMTs.
     
@@ -694,7 +672,7 @@ def hnf(
         return h
 
 def standardize_imt(
-    slm: SLM | NDArray[np.int32],
+    slm: NDArray[np.int32],
     gA: NDArray[np.int32],
     gB: NDArray[np.int32]
 ) -> SLM:

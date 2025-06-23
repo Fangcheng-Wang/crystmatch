@@ -25,7 +25,7 @@ import sys
 import argparse
 
 __name__ = "crystmatch"
-__version__ = "2.0.7"
+__version__ = "2.0.8"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
@@ -306,9 +306,9 @@ def main():
         if mu0 == mu: print(f"\nThe input POSCAR files are already smallest supercells required to describe the CSM, with:")
         else: print(f"\nThe input POSCAR files are {mu0//mu:d}-fold larger than the smallest supercells required to describe the CSM, with:")
         print("M_A =")
-        print(decompose_cryst(crystA_sup, cryst_prim=crystA, tol=tol)[1])
+        print(decompose_cryst(crystA_sup, tol=tol)[1])
         print("M_B =")
-        print(decompose_cryst(crystB_sup, cryst_prim=crystB, tol=tol)[1])
+        print(decompose_cryst(crystB_sup, tol=tol)[1])
         
         print(f"\nTo produce a list of CSMs that contains this CSM, run:\n"
                 + f"\n\t$ crystmatch --enumerate '{fileA}' '{fileB}' {mu} {0.01 + rms_strain:.2f} --all {0.01 + d:.2f}")
@@ -391,7 +391,7 @@ def main():
             else: ind = i
             makedirs(f"{direxport}{sep}CSM_{ind:d}")
             if args.poscar == 'norot' or args.xdatcar == 'norot':
-                crystA_csm, crystB_csm_norot = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol, orientation='norot', use_medium_cell=args.mediumcell,
+                crystA_csm, crystB_csm_norot = csm_to_cryst(crystA, crystB, slm, p, ks, orientation='norot', use_medium_cell=args.mediumcell,
                                                             min_t0=True, weight_func=weight_func)
                 if args.poscar == 'norot':
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{ind:d} initial")
@@ -399,7 +399,7 @@ def main():
                 if args.xdatcar == 'norot':
                     save_xdatcar(f"{direxport}{sep}CSM_{ind:d}{sep}XDATCAR", crystA_csm, crystB_csm_norot, n_im=50, crystname=f"CSM_{ind:d} (no rotation)")
             if args.poscar == 'uspfixed' or args.xdatcar == 'uspfixed':
-                crystA_csm, crystB_csm_usp1, crystB_csm_usp2 = csm_to_cryst(crystA, crystB, slm, p, ks, tol=tol, orientation='uspfixed',
+                crystA_csm, crystB_csm_usp1, crystB_csm_usp2 = csm_to_cryst(crystA, crystB, slm, p, ks, orientation='uspfixed',
                                                                             min_t0=True, weight_func=weight_func)
                 if args.poscar == 'uspfixed':
                     save_poscar(f"{direxport}{sep}CSM_{ind:d}{sep}POSCAR_I", crystA_csm, crystname=f"CSM_{ind:d} initial")
@@ -414,10 +414,10 @@ def main():
         if n_im <= 0 or n_im >= 99:
             print("Warning: Invalid number of images for '--nebmake'. Skipping interpolation.")
         else:
-            print(f"Interpolating between the initial and final structures with {n_im} images ...")
+            print(f"Interpolating between the initial and final structures with {n_im:d} images ...")
             for i in range(n_im+2):
                 if exists(f"{i:02d}"):
-                    raise ValueError(f"Please remove all folders named {', '.join([f'{j:02d}' for j in range(n_im+2)])} before using '--nebmake'.")
+                    raise ValueError(f"Please remove all folders named {', '.join([f'{j:02d}' for j in range(n_im+2)])} before using '--nebmake {n_im:d}'.")
             for i, cryst_im in enumerate(nebmake(crystA_sup, crystB_sup, n_im)):
                 makedirs(f"{i:02d}")
                 save_poscar(f"{i:02d}{sep}POSCAR", cryst_im, crystname=f"crystmatch-nebmake (image {i:02d})")
