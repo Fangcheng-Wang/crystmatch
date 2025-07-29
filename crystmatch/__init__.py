@@ -66,7 +66,7 @@ def main():
                         help="when using --direct, interpolate between POSCAR_I and POSCAR_F to generate images for NEB calculation")
     parser.add_argument("-r", "--restore", action='store_true',
                         help="when using --direct, add integers to fractional coordinates to minimize the shuffle distance")
-    parser.add_argument("-t", "--tol", type=float, default=1e-3, metavar='TOL',
+    parser.add_argument("-t", "--tol", "--tolerance", type=float, default=1e-3, metavar='TOL',
                         help="tolerance in angstroms for detecting symmetry (default is 1e-3)")
     parser.add_argument("-i", "--interact", nargs='?', type=float, default=None, const=1.2, metavar='SIZE',
                         help="interactively visualize each CSM using a 3D plot, with SIZE controlling the radius of the cluster to display (default is 1.2)")
@@ -130,7 +130,6 @@ def main():
         crystB = load_poscar(fileB, tol=tol)
         check_stoichiometry(crystA[1], crystB[1])
         zlcm = np.lcm(len(crystA[1]), len(crystB[1]))
-        print("A CSM with multiplicity μ contains ({zlcm:d} * μ) atoms.")
 
         if voigtA is None and voigtB is None:
             strain = rmss
@@ -148,6 +147,7 @@ def main():
         if max_mu >= 8 or (strain==rmss and max_strain > 0.4):
             print(f"Warning: Current MAX_MU = {max_mu:d} and MAX_STRAIN = {max_strain:.2f} may result in a large number of SLMs, which may take a very long time to enumerate.")
         
+        print(f"A CSM with multiplicity μ contains ({zlcm:d} * μ) atoms.")
         if args.all is None:
             slmlist, pct_arrs, mulist, strainlist, dlist = enumerate_rep_csm(crystA, crystB, max_mu, max_strain, strain=strain, weight_func=weight_func, tol=tol)
             slm_ind = np.arange(len(slmlist))
