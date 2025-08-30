@@ -245,10 +245,11 @@ crystmatch --interpolate POSCAR_I POSCAR_F 3
     crystmatch -D POSCAR_I POSCAR_F --poscar
     ```
     
-    to optimize the integer parts of the fractional coordinates, which will be stored into `./CSM_0/POSCAR_I` and `./CSM_0/POSCAR_F`. Then, run:
+    to optimize the integer parts of the fractional coordinates, which will be stored into `EXPORT-direct/CSM_0/POSCAR_I` and `EXPORT-direct/CSM_0/POSCAR_F`. Then, run:
     
     ```
-    crystmatch -I CSM_0/POSCAR_I CSM_0/POSCAR_F 3
+    cd EXPORT-direct/CSM_0
+    crystmatch -I POSCAR_I POSCAR_F 3
     ```
 
 Similar to `nebmake.pl` provided by [VTST scripts](https://theory.cm.utexas.edu/vtsttools/scripts.html), the following files will be created in the current directory:
