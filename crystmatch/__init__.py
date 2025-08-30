@@ -17,15 +17,15 @@
 
 """Enumerating and analyzing crystal-structure matches."""
 
-from .utilities import *
-from .enumeration import *
-from .analysis import *
 from time import perf_counter
 import sys
 import argparse
+from .utilities import *
+from .enumeration import *
+from .analysis import *
 
 __name__ = "crystmatch"
-__version__ = "2.0.8"
+__version__ = "2.0.9"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
@@ -58,14 +58,16 @@ def main():
                         help="read CSMs from CSMLIST, with optional IND1 IND2 ... to specify the indices of the CSMs to be loaded")
     parser.add_argument("-D", "--direct", nargs=2, type=str, metavar=('POSCAR_I', 'POSCAR_F'),
                         help="directly read a single CSM from POSCAR_I and POSCAR_F")
+    parser.add_argument("-I", "--interpolate", nargs=3, type=str, metavar=('POSCAR_I', 'POSCAR_F', 'N_IMAGES'),
+                        help="interpolate between POSCAR_I and POSCAR_F to generate N_IMAGES images for NEB calculation")
     parser.add_argument("-e", "--extra", type=str, metavar='CSMCAR',
                         help="load extra parameters from CSMCAR, including the elastic tensors, atomic weights, and orientation relationship used to benchmark CSMs")
     parser.add_argument("-a", "--all", type=float, metavar='MAX_D',
                         help="enumerate all CSMs for each SLM, with MAX_D as the upper bound for the shuffle distance")
-    parser.add_argument("-n", "--nebmake", type=int, metavar='IMAGES',
-                        help="when using --direct, interpolate between POSCAR_I and POSCAR_F to generate images for NEB calculation")
-    parser.add_argument("-r", "--restore", action='store_true',
-                        help="when using --direct, add integers to fractional coordinates to minimize the shuffle distance")
+    parser.add_argument("-f", "--fix-integer", action='store_true',
+                        help="when using --direct, do not add or subtract integers to fractional coordinates")
+    parser.add_argument("-l", type=float, default=2.0, metavar='ELL',
+                        help="using l-norm to quantify the shuffle distance (2.0 for RMSD and 1.0 for simple sum of distances)")
     parser.add_argument("-t", "--tol", "--tolerance", type=float, default=1e-3, metavar='TOL',
                         help="tolerance in angstroms for detecting symmetry (default is 1e-3)")
     parser.add_argument("-i", "--interact", nargs='?', type=float, default=None, const=1.2, metavar='SIZE',
@@ -86,24 +88,28 @@ def main():
     args = parser.parse_args()
     
     # check if exactly one mode is specified
-    n_modes = sum(1 for x in [args.enumerate, args.read, args.direct] if x is not None)
-    if n_modes >= 2: raise ValueError("Cannot choose more than one mode.")
-    elif n_modes == 0: raise ValueError("No mode is specified.")
-    mode = 'enumerate' if args.enumerate is not None else ('read' if args.read is not None else 'direct')
+    n_modes = sum(1 for x in [args.enumerate, args.read, args.direct, args.interpolate] if x is not None)
+    if n_modes >= 2:
+        raise ValueError("Cannot choose more than one mode.")
+    if n_modes == 0:
+        raise ValueError("No mode is specified.")
+    mode = 'enumerate' if args.enumerate is not None else ('read' if args.read is not None else ('direct' if args.direct is not None else 'interpolate'))
     
     # check if --read has duplicate indices
-    if args.read is not None and len(set([int(i) for i in args.read[1:]])) != len(args.read[1:]): raise ValueError("Duplicate indices in --read.")
+    if args.read is not None and len(set([int(i) for i in args.read[1:]])) != len(args.read[1:]):
+        raise ValueError("Duplicate indices in --read.")
     
-    # check if --nebmake and --restore is used with --direct without --all
-    if args.nebmake is not None:
-        if not (mode == 'direct' and args.all is None): raise ValueError("'--nebmake' can only be used with '--direct' without '--all'.")
-    if args.restore:
-        if not (mode == 'direct' and args.all is None): raise ValueError("'--restore' can only be used with '--direct' without '--all'.")
+    # check if --fix-integer is used with --direct without --all
+    if args.fix_integer:
+        if not (mode == 'direct' and args.all is None):
+            raise ValueError("'--fix-integer' can only be used with '--direct' without '--all'.")
     
     # check if --mediumcell is used with (--poscar or --xdatcar) and ASSUM == 'norot'
     if args.mediumcell:
-        if args.poscar is None and args.xdatcar is None: raise ValueError("'--mediumcell' can only be used with '--poscar' or '--xdatcar'.")
-        if args.poscar == 'uspfixed' or args.xdatcar == 'uspfixed': raise ValueError("'--mediumcell' can only be used with ASSUM == 'norot'.")
+        if args.poscar is None and args.xdatcar is None:
+            raise ValueError("'--mediumcell' can only be used with '--poscar' or '--xdatcar'.")
+        if args.poscar == 'uspfixed' or args.xdatcar == 'uspfixed':
+            raise ValueError("'--mediumcell' can only be used with ASSUM == 'norot'.")
     
     # automatically enable --csv and --scatter
     if args.enumerate is not None or args.all is not None or args.orientation is not None:
@@ -112,7 +118,8 @@ def main():
     
     # load global settings
     voigtA, voigtB, weight_func, ori_rel = None, None, None, None
-    if args.extra is not None: voigtA, voigtB, weight_func, ori_rel = load_csmcar(args.extra)
+    if args.extra is not None:
+        voigtA, voigtB, weight_func, ori_rel = load_csmcar(args.extra)
     tol = args.tol
     
     # get CSMs
@@ -142,9 +149,11 @@ def main():
         else:
             raise ValueError("Both voigtA and voigtB must be provided if either is provided.")
 
-        if max_mu < 1: raise ValueError("Multiplicity should be a positive integer.")
-        elif max_strain <= 0: raise ValueError("Root-mean-squared strain should be a positive float.")
-        if max_mu >= 8 or (strain==rmss and max_strain > 0.4):
+        if max_mu < 1:
+            raise ValueError("Multiplicity should be a positive integer.")
+        if max_strain <= 0:
+            raise ValueError("Root-mean-squared strain should be a positive float.")
+        if max_mu >= 8 or (strain == rmss and max_strain > 0.4):
             print(f"Warning: Current MAX_MU = {max_mu:d} and MAX_STRAIN = {max_strain:.2f} may result in a large number of SLMs, which may take a very long time to enumerate.")
         
         print(f"A CSM with multiplicity μ contains ({zlcm:d} * μ) atoms.")
@@ -154,8 +163,10 @@ def main():
         else:
             max_d = args.all
             jobname += f"d{max_d:.2f}"
-            if max_d > 2.0: print(f"Warning: Current MAX_D = {max_d:.2f} may result in a large number of CSMs, which may take a very long time to enumerate.")
-            if zlcm * max_mu >= 12: print(f"Warning: Current MAX_MU = {max_mu:d} leads to a maxinum period of {zlcm * max_mu:d}, which may result in too many CSMs.")
+            if max_d > 2.0:
+                print(f"Warning: Current MAX_D = {max_d:.2f} may result in a large number of CSMs, which may take a very long time to enumerate.")
+            if zlcm * max_mu >= 12:
+                print(f"Warning: Current MAX_MU = {max_mu:d} leads to a maxinum period of {zlcm * max_mu:d}, which may result in too many CSMs.")
             slmlist, slm_ind, pct_arrs, mulist, strainlist, dlist = enumerate_all_csm(crystA, crystB, max_mu, max_strain, max_d, strain=strain, weight_func=weight_func, tol=tol)
         
         if strain == rmss:
@@ -265,13 +276,13 @@ def main():
         print(save_poscar(None, crystA, crystname="\nPrimitive cell of the initial structure (in POSCAR format):"))
         print(save_poscar(None, crystB, crystname="\nPrimitive cell of the final structure (in POSCAR format):"))
 
-        if args.restore:
+        if not args.fix_integer:
             d0 = csm_distance(crystA, crystB, slm0, p0, ks0, weight_func=weight_func)
             ks0 = optimize_ct(crystA, crystB, slm0, p0, weight_func=weight_func)[1]
         slm, p, ks = primitive_shuffle(crystA, crystB, slm0, p0, ks0)
         d = csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func)
-        if args.restore and d < d0 - tol:
-            print(f"\nBy adding integers to fractional coordinates (--restore), the shuffle distance is reduced by {d0 - d:.4f} Å.")
+        if (not args.fix_integer) and d < d0 - tol:
+            print(f"\nBy adding and subtracting integers to fractional coordinates, the shuffle distance is reduced by {d0 - d:.4f} Å. You can use --fix-integer to prevent this.")
         
         if voigtA is None and voigtB is None:
             strain = rmss
@@ -355,6 +366,27 @@ def main():
             header = ['csm_id', 'slm_id', 'mu', 'period', 'w', 'rmss', 'd']
             data = np.array([np.arange(len(dlist)), slm_ind, mulist, zlcm * mulist, [w] * len(dlist), [rms_strain] * len(dlist), dlist]).T
 
+    if mode == 'interpolate':
+        
+        jobname = 'interpolate'
+        fileA = args.interpolate[0]
+        fileB = args.interpolate[1]
+        n_im = int(args.interpolate[2])
+        crystA_sup = load_poscar(fileA, tol=tol, to_primitive=False)
+        crystB_sup = load_poscar(fileB, tol=tol, to_primitive=False)
+        if not crystA_sup[1].shape[0] == crystB_sup[1].shape[0]: raise ValueError("The numbers of atoms in two POSCAR files are not equal!")
+        check_stoichiometry(crystA_sup[1], crystB_sup[1])
+        if n_im <= 0 or n_im >= 99:
+            print("Warning: Invalid number of images for 'N_IMAGES'. Skipping interpolation.")
+        else:
+            print(f"Interpolating between the initial and final structures with {n_im:d} images ...")
+            for i in range(n_im+2):
+                if exists(f"{i:02d}"):
+                    raise ValueError(f"Please remove all folders named {', '.join([f'{j:02d}' for j in range(n_im+2)])} before using '--interpolate POSCAR_I POSCAR_F {n_im:d}'.")
+            for i, cryst_im in enumerate(nebmake(crystA_sup, crystB_sup, n_im)):
+                makedirs(f"{i:02d}")
+                save_poscar(f"{i:02d}{sep}POSCAR", cryst_im, crystname=f"crystmatch-interpolate (image {i:02d})")
+    
     print('\n', end='')   # simply a line break
 
     # orientation analysis
@@ -409,19 +441,6 @@ def main():
                     save_xdatcar(f"{direxport}{sep}CSM_{ind:d}{sep}XDATCAR1", crystA_csm, crystB_csm_usp1, n_im=50, crystname=f"CSM_{ind:d} (USP1 fixed)")
                     save_xdatcar(f"{direxport}{sep}CSM_{ind:d}{sep}XDATCAR2", crystA_csm, crystB_csm_usp2, n_im=50, crystname=f"CSM_{ind:d} (USP2 fixed)")
     
-    if args.nebmake is not None:
-        n_im = args.nebmake
-        if n_im <= 0 or n_im >= 99:
-            print("Warning: Invalid number of images for '--nebmake'. Skipping interpolation.")
-        else:
-            print(f"Interpolating between the initial and final structures with {n_im:d} images ...")
-            for i in range(n_im+2):
-                if exists(f"{i:02d}"):
-                    raise ValueError(f"Please remove all folders named {', '.join([f'{j:02d}' for j in range(n_im+2)])} before using '--nebmake {n_im:d}'.")
-            for i, cryst_im in enumerate(nebmake(crystA_sup, crystB_sup, n_im)):
-                makedirs(f"{i:02d}")
-                save_poscar(f"{i:02d}{sep}POSCAR", cryst_im, crystname=f"crystmatch-nebmake (image {i:02d})")
-    
     # create scatter plot
 
     if args.scatter:
@@ -450,6 +469,3 @@ def main():
                             + f"RMSD = {csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func):.3f}Å")
 
     return
-
-if __name__ == "__main__":
-    main()

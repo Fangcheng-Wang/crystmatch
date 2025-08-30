@@ -326,14 +326,18 @@ def visualize_slmlist(
     plt.ylabel("Shuffle distance (Å)", fontsize=13)
     plt.xlim(0, np.max(strainlist) * 1.01)
     plt.ylim(min(0, np.min(dlist) - np.max(dlist)*0.01), np.max(dlist)*1.01)
-    if (colorlist == 0).all(): pass
-    elif colorlist.dtype == int: cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist))
-    else: cbar = plt.colorbar(sc, aspect=40)
-    if (colorlist != 0).any() and cbarlabel is not None: cbar.set_label(cbarlabel, fontsize=13)
+    if (colorlist == 0).all():
+        pass
+    else:
+        cbar = plt.colorbar(sc, aspect=40, ticks=np.unique(colorlist)) if colorlist.dtype == int else plt.colorbar(sc, aspect=40)
+        if cbarlabel is not None:
+            cbar.set_label(cbarlabel, fontsize=13)
     ax.tick_params(axis='both', which='major', labelsize=11)
     ax.tick_params(axis='both', which='minor', labelsize=8)
-    if filename: plt.savefig(f"{filename}", bbox_inches='tight')
-    else: plt.show()
+    if filename:
+        plt.savefig(f"{filename}", bbox_inches='tight')
+    else:
+        plt.show()
     return
 
 def visualize_pctlist(filename, pctlist, dlist):
@@ -541,8 +545,7 @@ def save_poscar(
         A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
     """
     species_name, species_counts = _species_to_poscar(cryst[1])
-    if crystname is not None: content = crystname
-    else: content = ""
+    content = crystname if crystname is not None else ""
     content += "\n1.0\n"
     content += "\n".join(f"{v[0]:.12f}\t{v[1]:.12f}\t{v[2]:.12f}" for v in cryst[0].tolist())
     content += "\n" + " ".join(species_name.tolist())
@@ -558,10 +561,11 @@ def save_poscar(
         return content
 
 def nebmake(crystA_sup, crystB_sup, n_im):
-
+    """
+    """
     if not (crystA_sup[1] == crystB_sup[1]).all():
         raise ValueError("Atomic species of crystA and crystB must be the same.")
-    if type(n_im) != int or n_im < 1:
+    if (not isinstance(n_im, int)) or n_im < 1:
         raise ValueError("Number of images must be a positive integer.")
     
     cA = crystA_sup[0].T
@@ -604,8 +608,10 @@ def save_xdatcar(
     content = crystname
     for i in range(n_im+2):
         if i > 0: content += '\n'
-        if crystname: content += crystname
-        else: content += filename.split(sep='.')[0]
+        if crystname:
+            content += crystname
+        else:
+            content += filename.split(sep='.')[0]
         content += '\n1.0\n'
         content += '\n'.join(f'{v[0]:.12f}\t{v[1]:.12f}\t{v[2]:.12f}' for v in crystlist[i][0].tolist())
         species_name, species_counts = _species_to_poscar(crystA_sup[1])

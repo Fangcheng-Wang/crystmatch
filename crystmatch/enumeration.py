@@ -125,9 +125,9 @@ def enumerate_imt(
         progress_bar = tqdm(total=max_iter, position=0, desc=f"\tμ={mu:d}", ncols=60, mininterval=0.5,
                             bar_format=f'{{desc}}: {{percentage:3.0f}}% |{{bar}}| [elapsed {{elapsed:5s}}, remaining {{remaining:5s}}]')
     slmlist = np.array([], dtype=int).reshape(-1,3,3,3)
-    iter = 0
+    it = 0
     
-    while iter < max_iter:
+    while it < max_iter:
         # generate a random `s0`
         rand6 = sobol6.random(1)
         u = _cube_to_so3(rand6[0,0:3])
@@ -161,14 +161,14 @@ def enumerate_imt(
             slm = np.array(standardize_imt(slm, gA, gB), dtype=int)
             if not (slm == slmlist).all(axis=(1,2,3)).any():
                 slmlist = np.concatenate((slmlist, slm.reshape(-1,3,3,3)))
-                if iter >= max_iter / 10: max_iter *= 2          # current max_iter is not safe.
-                iter = 0
+                if it >= max_iter / 10: max_iter *= 2          # current max_iter is not safe.
+                it = 0
                 if verbose >= 1:
                     progress_bar.total = max_iter
                     progress_bar.n = 0
                     progress_bar.last_print_n = 0
                     progress_bar.refresh()
-        iter = iter + 1
+        it = it + 1
         if verbose >= 1: progress_bar.update(1)
     if verbose >= 1: progress_bar.close()
     return np.array(slmlist, dtype=int)

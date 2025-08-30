@@ -40,7 +40,7 @@ Check whether `crystmatch` is successfully installed (the first run may take a f
 crystmatch --version
 ```
 
-**The current version of `crystmatch` is `2.0.8`.**
+**The current version of `crystmatch` is `2.0.9`.**
 
 !!! tip
     If you prefer using `conda`, you can install `crystmatch` by running:
@@ -231,14 +231,20 @@ You can also export CSMs as XDATCAR files using the `--xdatcar` option. Both `--
 To interpolate between `POSCAR_I` and `POSCAR_F`, creating `3` new structures, run:
 
 ```
-crystmatch --direct POSCAR_I POSCAR_F --nebmake 3
+crystmatch --interpolate POSCAR_I POSCAR_F 3
 ```
 
 !!! danger "Important"
-    When producing POSCAR files, some softwares (e.g. [VASP](https://www.vasp.at/)) may add integers to the fractional coordinates to make them in $[0,1)$. In such case, the CSM determined by `POSCAR_I` and `POSCAR_F` can be irrational. This is much like how `0.9 -> 1.1` is inequivalent to `0.9 -> 0.1`. To avoid this, add `--restore` to the above command:
+    When producing POSCAR files, some softwares (e.g. [VASP](https://www.vasp.at/)) may add integers to the fractional coordinates to make them in $[0,1)$. In such case, the CSM determined by `POSCAR_I` and `POSCAR_F` can be irrational. This is much like how `0.9 -> 1.1` is inequivalent to `0.9 -> 0.1`. To avoid this, first run:
+    
+    ```
+    crystmatch -D POSCAR_I POSCAR_F --poscar
+    ```
+    
+    to restore the optimal coordinates and thus the original CSM, and then run:
 
     ```
-    crystmatch -D POSCAR_I POSCAR_F -n 3 --restore
+    crystmatch -I CSM_0/POSCAR_I CSM_0/POSCAR_F 3
     ```
 
 Similar to `nebmake.pl` provided by [VTST scripts](https://theory.cm.utexas.edu/vtsttools/scripts.html), the following files will be created in the current directory:
