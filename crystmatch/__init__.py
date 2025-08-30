@@ -20,12 +20,13 @@
 from time import perf_counter
 import sys
 import argparse
+from .enumeration import optimize_ct_local
 from .utilities import *
 from .enumeration import *
 from .analysis import *
 
 __name__ = "crystmatch"
-__version__ = "2.0.9"
+__version__ = "2.0.10"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
@@ -98,10 +99,10 @@ def main():
     if args.read is not None and len(set([int(i) for i in args.read[1:]])) != len(args.read[1:]):
         raise ValueError("Duplicate indices in --read.")
     
-    # check if --fix-integer is used with --direct without --all
+    # check if --fix-integer is properly used
     if args.fix_integer:
-        if not (mode == 'direct' and args.all is None):
-            raise ValueError("'--fix-integer' can only be used with '--direct' without '--all'.")
+        if not ((mode == 'direct' and args.all is None) or (mode == 'interpolate' and args.all is None)):
+            raise ValueError("'--fix-integer' can only be used with '--direct' without '--all', or with '--interpolate'.")
     
     # check if --mediumcell is used with (--poscar or --xdatcar) and ASSUM == 'norot'
     if args.mediumcell:
@@ -380,6 +381,28 @@ def main():
         crystB_sup = load_poscar(fileB, tol=tol, to_primitive=False)
         if not crystA_sup[1].shape[0] == crystB_sup[1].shape[0]: raise ValueError("The numbers of atoms in two POSCAR files are not equal!")
         check_stoichiometry(crystA_sup[1], crystB_sup[1])
+        
+        z = crystA_sup[1].shape[0]
+        slm_zero = np.array([np.eye(3), np.eye(3), np.eye(3)], dtype=int)
+        p_zero = np.arange(z)
+        ks_zero = np.zeros((3, z), dtype=int)
+        d0 = csm_distance(crystA_sup, crystB_sup, slm_zero, p_zero, ks_zero, weight_func=weight_func, l=ell)
+
+        if not args.fix_integer:
+            _, _, c_sup_half, _, _ = create_common_supercell(crystA_sup, crystB_sup, slm_zero)
+            species = crystA_sup[1]
+            weights = [weight_func[s] for s in species] if weight_func else None
+            pA_sup = crystA_sup[2].T
+            pB_sup = crystB_sup[2].T
+            reslist = [optimize_ct_local(c_sup_half, pA_sup, pB_sup, p_zero, t, weights=weights, l=ell) for t in Sobol(3).random(64)]
+            ind = np.argmin([res[0] for res in reslist])
+            d, ks, t0 = reslist[ind]
+            
+            crystB_sup = (crystB_sup[0], crystB_sup[1], crystB_sup[2] + ks.T + t0.round().astype(int).T)
+            assert np.allclose(csm_distance(crystA_sup, crystB_sup, slm_zero, p_zero, ks_zero, weight_func=weight_func, l=ell), d), "CT optimization failed. Please report this bug to wfc@pku.edu.cn."
+            if (not args.fix_integer) and d < d0 - tol:
+                print(f"\nBy adding and subtracting integers to fractional coordinates, the shuffle distance is reduced by {d0 - d:.4f} Å. You can use --fix-integer to prevent this.")
+        
         if n_im <= 0 or n_im >= 99:
             print("Warning: Invalid number of images for 'N_IMAGES'. Skipping interpolation.")
         else:
@@ -387,9 +410,17 @@ def main():
             for i in range(n_im+2):
                 if exists(f"{i:02d}"):
                     raise ValueError(f"Please remove all folders named {', '.join([f'{j:02d}' for j in range(n_im+2)])} before using '--interpolate POSCAR_I POSCAR_F {n_im:d}'.")
+            cryst_list = []
             for i, cryst_im in enumerate(nebmake(crystA_sup, crystB_sup, n_im)):
+                cryst_list.append(cryst_im)
                 makedirs(f"{i:02d}")
                 save_poscar(f"{i:02d}{sep}POSCAR", cryst_im, crystname=f"crystmatch-interpolate (image {i:02d})")
+            print("RMSS and shuffle distances between images:")
+            print(f"#image\tRMSS\t{'RMSD' if np.allclose(ell, 2.0, atol=1e-6) else f'd (l={ell:.1f})'}")
+            for i in range(n_im+1):
+                strain = rmss(cryst_list[i+1][0].T @ la.inv(cryst_list[i][0].T))
+                distance = csm_distance(cryst_list[i], cryst_list[i+1], slm_zero, p_zero, ks_zero, weight_func=weight_func, l=ell)
+                print(f"{i:02d}~{i+1:02d}\t{strain * 100:.2f}%\t{distance:.4f} Å")
         return
     
     print('\n', end='')   # simply a line break
