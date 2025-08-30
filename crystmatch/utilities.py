@@ -819,7 +819,7 @@ def pct_distance(
     p: NDArray[np.int32],
     ks: NDArray[np.int32],
     weights: Optional[NDArray[np.float64]] = None,
-    l: float = 2,
+    l: float = 2.0,
     min_t0: bool = True,
     return_t0: bool = False
 ) -> float | tuple[float, NDArray[np.float64]]:
@@ -853,13 +853,13 @@ def pct_distance(
     """
     if ks.shape != (3,len(p)): raise ValueError("'p' and 'ks' must have the same number of atoms.")
     if not min_t0: return np.average(((c @ (pB[:,p] + ks - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
-    if l == 2:
+    if np.allclose(l, 2.0, atol=1e-6):
         t0 = -np.average(pB[:,p] + ks - pA, axis=1, weights=weights, keepdims=True)
         d = np.average(((c @ (pB[:,p] + ks + t0 - pA))**2).sum(axis=0)**(l/2), weights=weights) ** (1/l)
     else:
         res = minimize(lambda t: np.average(la.norm(c @ (pB[:,p] + ks + t.reshape(3,1) - pA), axis=0)**l, weights=weights),
                         -np.average(pB[:,p] + ks - pA, axis=1, weights=weights), method='SLSQP', options={'disp': False})
         d = res.fun ** (1/l)
-        t0 = res.x
+        t0 = res.x.reshape(3,1)
     if return_t0: return d, t0
     else: return d

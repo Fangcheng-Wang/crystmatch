@@ -98,7 +98,11 @@ To run `crystmatch`, one of the following modes must be selected:
 
 3. **`--direct`**
     
-    Directly determine a single CSM by two POSCAR files (must have the same number of atoms), perform detailed CSM analysis, and interpolate between the initial and final structures.
+    Directly determine a single CSM by two POSCAR files (must have the same number of atoms) and perform detailed CSM analysis.
+
+4. **`--interpolate`**
+    
+    Interpolate between two POSCAR files, like `nebmake.pl` provided by [VTST scripts](https://theory.cm.utexas.edu/vtsttools/scripts.html). The interpolated structures can be used for subsequent NEB calculations.
 
 **We strongly recommend starting with the [examples](#examples) provided below, and then see [all available options](https://fangcheng-wang.github.io/crystmatch/cli/).** To see the help message, run:
 
@@ -241,8 +245,8 @@ crystmatch --interpolate POSCAR_I POSCAR_F 3
     crystmatch -D POSCAR_I POSCAR_F --poscar
     ```
     
-    to restore the optimal coordinates and thus the original CSM, and then run:
-
+    to optimize the integer parts of the fractional coordinates, which will be stored into `./CSM_0/POSCAR_I` and `./CSM_0/POSCAR_F`. Then, run:
+    
     ```
     crystmatch -I CSM_0/POSCAR_I CSM_0/POSCAR_F 3
     ```
@@ -269,13 +273,7 @@ They can be directly used for subsequent [SSNEB calculations](https://theory.cm.
     `nebmake.pl` provided by VTST scripts does not preserve the CSM between `POSCAR_I` and `POSCAR_F`. Specifically, it will first reduce each fractional coordinate to `[0,1)` and then interpolate the reduced coordinates. This may lead to unexpected CSMs and thus incorrect transition paths as well as their energy barriers. We always recommend interpolating structures by:
     
     ```
-    crystmatch -D POSCAR_I POSCAR_F -n IMAGES
-    ```
-
-    or by:
-
-    ```
-    crystmatch -D POSCAR_I POSCAR_F -n IMAGES --restore
+    crystmatch -I POSCAR_I POSCAR_F N_IMAGES
     ```
 
 ### Enumerating CSMs within given supercells

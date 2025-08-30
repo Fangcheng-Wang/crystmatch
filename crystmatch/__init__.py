@@ -38,7 +38,6 @@ __epilog__ = "The current version is v" + __version__ + ". To get the latest ver
 \n\nYou are also welcome to contact us at " + __email__ + " for any questions, feedbacks or comments."
 
 def main():
-
     time0 = perf_counter()
     sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
     sys.stderr = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', closefd=False)
@@ -121,6 +120,11 @@ def main():
     if args.extra is not None:
         voigtA, voigtB, weight_func, ori_rel = load_csmcar(args.extra)
     tol = args.tol
+    ell = args.l
+    if ell <= 0:
+        raise ValueError("The norm used to quantify the shuffle distance must be a positive float.")
+    if not np.allclose(ell, 2.0, atol=1e-6):
+        print(f"\nWarning: Using l={ell:.1f} instead of RMSD (l=2.0) for calculating the shuffle distance.")
     
     # get CSMs
     
@@ -158,7 +162,7 @@ def main():
         
         print(f"A CSM with multiplicity μ contains ({zlcm:d} * μ) atoms.")
         if args.all is None:
-            slmlist, pct_arrs, mulist, strainlist, dlist = enumerate_rep_csm(crystA, crystB, max_mu, max_strain, strain=strain, weight_func=weight_func, tol=tol)
+            slmlist, pct_arrs, mulist, strainlist, dlist = enumerate_rep_csm(crystA, crystB, max_mu, max_strain, strain=strain, weight_func=weight_func, l=ell, tol=tol)
             slm_ind = np.arange(len(slmlist))
         else:
             max_d = args.all
@@ -167,7 +171,7 @@ def main():
                 print(f"Warning: Current MAX_D = {max_d:.2f} may result in a large number of CSMs, which may take a very long time to enumerate.")
             if zlcm * max_mu >= 12:
                 print(f"Warning: Current MAX_MU = {max_mu:d} leads to a maxinum period of {zlcm * max_mu:d}, which may result in too many CSMs.")
-            slmlist, slm_ind, pct_arrs, mulist, strainlist, dlist = enumerate_all_csm(crystA, crystB, max_mu, max_strain, max_d, strain=strain, weight_func=weight_func, tol=tol)
+            slmlist, slm_ind, pct_arrs, mulist, strainlist, dlist = enumerate_all_csm(crystA, crystB, max_mu, max_strain, max_d, strain=strain, weight_func=weight_func, l=ell, tol=tol)
         
         if strain == rmss:
             header = ['csm_id', 'slm_id', 'mu', 'period', 'rmss', 'd']
@@ -242,7 +246,7 @@ def main():
             
             for i, slm in enumerate(slmlist):
                 mu = imt_multiplicity(crystA, crystB, slm)
-                pcts, ds = enumerate_pct(crystA, crystB, slm, max_d, weight_func=weight_func, verbose=0, warning_threshold=100000)
+                pcts, ds = enumerate_pct(crystA, crystB, slm, max_d, weight_func=weight_func, l=ell, verbose=0, warning_threshold=100000)
                 slm_ind += [i] * pcts.shape[0]
                 pct_arrs[mu] = np.concatenate([pct_arrs[mu], pcts], axis=0)
                 dlist = np.concatenate([dlist, ds], axis=0)
@@ -277,10 +281,10 @@ def main():
         print(save_poscar(None, crystB, crystname="\nPrimitive cell of the final structure (in POSCAR format):"))
 
         if not args.fix_integer:
-            d0 = csm_distance(crystA, crystB, slm0, p0, ks0, weight_func=weight_func)
-            ks0 = optimize_ct(crystA, crystB, slm0, p0, weight_func=weight_func)[1]
+            d0 = csm_distance(crystA, crystB, slm0, p0, ks0, weight_func=weight_func, l=ell)
+            ks0 = optimize_ct(crystA, crystB, slm0, p0, weight_func=weight_func, l=ell)[1]
         slm, p, ks = primitive_shuffle(crystA, crystB, slm0, p0, ks0)
-        d = csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func)
+        d = csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func, l=ell)
         if (not args.fix_integer) and d < d0 - tol:
             print(f"\nBy adding and subtracting integers to fractional coordinates, the shuffle distance is reduced by {d0 - d:.4f} Å. You can use --fix-integer to prevent this.")
         
@@ -301,7 +305,7 @@ def main():
         print(f"\tperiod: {zlcm * mu:d}")
         print(f"\tprincipal strains: {100 * ps[0]:.2f} %, {100 * ps[1]:.2f} %, {100 * ps[2]:.2f} %")
         print(f"\troot-mean-squared strain (RMSS): {100 * rms_strain:.2f} %")
-        print(f"\tshuffle distance (RMSD): {d:.4f} Å")
+        print(f"\tshuffle distance ({'RMSD' if np.allclose(ell, 2.0, atol=1e-6) else f'l={ell:.1f}'}): {d:.4f} Å")
         if not strain == rmss:
             w = strain(deformation_gradient(crystA, crystB, slm))
             print(f"\testimated strain energy: {w:.3f} (same unit as in CSMCAR)")
@@ -339,7 +343,7 @@ def main():
             if max_d > 2.0: print(f"Warning: Current MAX_D = {max_d:.2f} may result in a large number of CSMs, which may take a very long time to enumerate.")
             if zlcm * mu0 >= 12: print(f"Warning: Current period {zlcm * mu0:d} may result in a large number of CSMs, which may take a very long time to enumerate.")
             print(f"\nEnumerating all CSMs with the same SLM as the input POSCAR files (μ = {mu0:d}) and MAX_D = {max_d:.2f} ...")
-            pctlist, dlist = enumerate_pct(crystA, crystB, slm0, max_d, weight_func=weight_func, verbose=False, warning_threshold=100000)
+            pctlist, dlist = enumerate_pct(crystA, crystB, slm0, max_d, weight_func=weight_func, l=ell, verbose=False, warning_threshold=100000)
             mulist = []
             slmlist = np.array([], dtype=int).reshape(0,3,3,3)
             slm_ind = []
@@ -386,6 +390,7 @@ def main():
             for i, cryst_im in enumerate(nebmake(crystA_sup, crystB_sup, n_im)):
                 makedirs(f"{i:02d}")
                 save_poscar(f"{i:02d}{sep}POSCAR", cryst_im, crystname=f"crystmatch-interpolate (image {i:02d})")
+        return
     
     print('\n', end='')   # simply a line break
 
@@ -466,6 +471,6 @@ def main():
                             f"csm_id = {indices[i] if (mode == 'read' and len(args.read) > 1) else i}, "
                             + f"μ = {imt_multiplicity(crystA, crystB, slm):d}, "
                             + f"RMSS = {100 * rmss(deformation_gradient(crystA, crystB, slm)):.2f}%, "
-                            + f"RMSD = {csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func):.3f}Å")
+                            + f"d = {csm_distance(crystA, crystB, slm, p, ks, weight_func=weight_func, l=ell):.3f}Å")
 
     return

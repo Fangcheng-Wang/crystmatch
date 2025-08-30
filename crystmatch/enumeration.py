@@ -173,7 +173,7 @@ def enumerate_imt(
     if verbose >= 1: progress_bar.close()
     return np.array(slmlist, dtype=int)
 
-def _punishment_matrix(z, prevent, l=2):
+def _punishment_matrix(z, prevent, l=2.0):
     """The punishment matrix for the given permutation constraint.
     """
     m = np.zeros((z,z))
@@ -189,7 +189,7 @@ def optimize_pct_fixed(
     pB: NDArray[np.float64],
     constraint: Constraint = Constraint(set(),set()),
     weight_func: Optional[Dict[str, float]] = None,
-    l: int = 2
+    l: float = 2.0
 ) -> tuple[float, NDArray[np.int32], NDArray[np.int32]]:
     """Minimize the shuffle distance with variable PCT and fixed overall translation.
     
@@ -251,7 +251,7 @@ def optimize_pct_fixed(
     d = pct_distance(c, pA, pB, p, ks, weights=weights, l=l, min_t0=False)
     return d, p, ks
 
-def optimize_pct_local(c, species, pA, pB, t, constraint=Constraint(set(),set()), weight_func=None, l=2):
+def optimize_pct_local(c, species, pA, pB, t, constraint=Constraint(set(),set()), weight_func=None, l=2.0):
     """
     """
     t0 = t.reshape(3,1)
@@ -266,7 +266,7 @@ def optimize_pct_local(c, species, pA, pB, t, constraint=Constraint(set(),set())
         if n_iter > 100: raise RecursionError("PCT optimization failed to converge. Please report this bug to wfc@pku.edu.cn.")
     return d, p, ks, t0
 
-def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight_func=None, l=2, t_grid=64):
+def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight_func=None, l=2.0, t_grid=64):
     """Minimize the shuffle distance with variable PCT and overall translation.
     
     Parameters
@@ -293,7 +293,7 @@ def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight
     d, p, ks, t0 = reslist[ind]
     return d, p, ks, t0
 
-def pct_fill(crystA, crystB, slm, max_d, p, ks0=None, weight_func=None, l=2, warning_threshold=5000):
+def pct_fill(crystA, crystB, slm, max_d, p, ks0=None, weight_func=None, l=2.0, warning_threshold=5000):
     """Returns all class-wise translations with permutation p that has d <= max_d, including ks0.
     """
     z = p.shape[0]
@@ -304,13 +304,13 @@ def pct_fill(crystA, crystB, slm, max_d, p, ks0=None, weight_func=None, l=2, war
     if not (crystB_sup[1][p] == species).all(): raise ValueError("Permuation does not preserve atom species.")
     vs = (crystB_sup[2].T[:,p] - crystA_sup[2].T).reshape(1,3,z)
     weights = [weight_func[s] for s in species] if weight_func else None
-    if l == 2:
+    if np.allclose(l, 2.0, atol=1e-6):
         def dl(ks):
             return np.average(la.norm(c_sup_half @ (vs + ks - np.average(vs + ks, axis=2, weights=weights, keepdims=True)), axis=1) ** l, axis=1, weights=weights)
     else:
         def dl(ks):
             t0 = minimize(lambda t: np.average(la.norm(c_sup_half @ (vs + ks - t.reshape(-1,3,1)), axis=1) ** l, axis=1, weights=weights).sum(),
-                            np.average(vs + ks, axis=2, weights=weights).reshape(-1), method='SLSQP', options={'disp': False}).x
+                            np.average(vs + ks, axis=2, weights=weights).reshape(-1), method='SLSQP', options={'disp': False}).x.reshape(-1,3,1)
             return np.average(la.norm(c_sup_half @ (vs + ks - t0), axis=1) ** l, axis=1, weights=weights)
     if ks0 is None:
         d0, ks0, _ = optimize_ct(crystA, crystB, slm, p, weight_func=weight_func, l=l)
@@ -379,7 +379,7 @@ def cong_permutations(p, crystA, crystB, slm):
                         .round(7) % 1.0) == 0).all(axis=0))[1] for j in range(tB.shape[1])]
     return np.unique([kB[p[kA]] for kA in lA for kB in lB], axis=0)
 
-def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, non_cong=True, verbose=1, warning_threshold=5000):
+def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2.0, t_grid=16, non_cong=True, verbose=1, warning_threshold=5000):
     """
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
@@ -448,7 +448,7 @@ def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2, t_grid=16, 
         print(f"\tFound {len(pctlist)} {'noncongruent PCTs' if non_cong else 'PCTs (may be congruent)'} with d <= {max_d}.")
     return pctlist, np.array(dlist)
 
-def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2):
+def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2.0):
     """
     """
     k_grid = (-np.floor(pB[:,p] - pA).reshape(3,-1,1) + DELTA_K.reshape(3,1,-1)).round().astype(int)
@@ -456,7 +456,7 @@ def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2):
     ks = k_grid[:,np.arange(len(p)),np.argmin(norm_squared, axis=1)]
     return pct_distance(c, pA, pB, p, ks, weights=weights, l=l, min_t0=False), ks
 
-def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2):
+def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2.0):
     """
     """
     t0 = t.reshape(3,1)
@@ -469,7 +469,7 @@ def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2):
         if n_iter > 100: raise RecursionError("CT optimization failed to converge. Please report this bug to wfc@pku.edu.cn.")
     return d, ks, t0
 
-def optimize_ct(crystA, crystB, slm, p, weight_func=None, l=2, t_grid=64):
+def optimize_ct(crystA, crystB, slm, p, weight_func=None, l=2.0, t_grid=64):
     """
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
@@ -486,7 +486,7 @@ def optimize_ct(crystA, crystB, slm, p, weight_func=None, l=2, t_grid=64):
 
 def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: float,
     strain: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss, tol: float = 1e-3, max_iter: int = 1000,
-    weight_func: Union[Dict[str, float], None] = None, l: int = 2, t_grid: int = 64, verbose: int = 1
+    weight_func: Union[Dict[str, float], None] = None, l: float = 2.0, t_grid: int = 64, verbose: int = 1
 ) -> tuple[NDArray[np.int32], list[NDArray[np.int32]], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]:
     """Enumerating all representative CSMs with multiplicity and strain not larger than `max_mu` and `max_strain`.
     
@@ -593,7 +593,7 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
 
 def enumerate_all_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: float, max_d: float,
     strain: Callable[[NDArray[np.float64]], NDArray[np.float64]] = rmss, tol: float = 1e-3, max_iter: int = 1000,
-    weight_func: Union[Dict[str, float], None] = None, l: int = 2, t_grid: int = 16, verbose: int = 1
+    weight_func: Union[Dict[str, float], None] = None, l: float = 2.0, t_grid: int = 16, verbose: int = 1
 ) -> tuple[NDArray[np.int32], NDArray[np.int32], list[NDArray[np.int32]], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]:
     """Enumerating all CSMs with multiplicity, strain, and shuffle distance not larger than `max_mu`, `max_strain`, and `max_d`.
     

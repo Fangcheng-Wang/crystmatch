@@ -38,7 +38,7 @@ def decompose_cryst(cryst_sup, tol=1e-3):
 
 def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], ks: NDArray[np.int32],
     orientation: Literal['norot', 'uspfixed'] = 'norot', use_medium_cell: bool = False,
-    min_t0: bool = False, weight_func: Union[Dict[str, float], None] = None, l: float = 2
+    min_t0: bool = False, weight_func: Union[Dict[str, float], None] = None, l: float = 2.0
 ) -> Union[tuple[Cryst, Cryst], tuple[Cryst, Cryst, Cryst]]:
     """Convert the IMT and PCT representation of a CSM to a pair of crysts.
     
@@ -129,7 +129,7 @@ def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
     assert np.abs(d1 - d2) < tol, "'cryst_to_csm' failed. Please report this bug to wfc@pku.edu.cn."
     return crystA, crystB, slm, p, ks
 
-def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2, min_t0=True, return_t0=False):
+def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2.0, min_t0=True, return_t0=False):
     """Return the shuffle distance of a CSM.
     """
     crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, slm)
@@ -399,7 +399,7 @@ def colors_light(i):
     return plt.get_cmap('Pastel1')(0.1 * i + 0.05)
 
 def visualize_csm(
-    crystA, crystB, slm, p, ks, weight_func=None, l=2, tol=1e-3,
+    crystA, crystB, slm, p, ks, weight_func=None, l=2.0, tol=1e-3,
     cluster_size=1.2, show_conventional=True, label=None
 ):
     """Use with `%matplotlib widget` in Jupyter notebook (need to install `ipympl`) to interactively visualize the shuffling process.

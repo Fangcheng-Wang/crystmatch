@@ -11,6 +11,7 @@ flowchart TB
   modeR --> all;
   mode --> |"<code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'>--direct</code>"| modeD["read a single CSM from<br>a pair of **POSCAR** files"];
   modeD --> all["if <code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'>--all</code>, enumerate<br>**all** CSMs for each SLM"];
+  mode --> modeI["if <code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'>--interpolate</code>, interpolate<br>between a pair of **POSCAR** files"];
   all --> export["**export** individual CSMs as<br><code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'>--poscar --xdatcar</code>"];
   export --> visualize["**visualize** CSMs using<br><code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'>--scatter --interact</code>"]
 ```
