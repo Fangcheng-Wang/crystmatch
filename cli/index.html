@@ -516,8 +516,8 @@
 
 <h1 id="command-line-interface">Command-line interface</h1>
 <h2 id="flowchart">Flowchart</h2>
+<p>If you are not using <code>--interpolate</code> or <code>--polish</code>, the flowchart is as follows:</p>
 <pre class="mermaid"><code>flowchart TB
-  modeI["if &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--interpolate&lt;/code&gt;, create **POSCAR** files and exit"] --&gt; config;
   config["if &lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--extra&lt;/code&gt;,&lt;br&gt;read **CSMCAR** file"] --&gt; mode;
   mode{how to&lt;br&gt;**get CSMs**} --&gt; |"&lt;code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'&gt;--enumerate&lt;/code&gt;"| modeE[enumerate a list of&lt;br&gt;**representative** CSMs];
   modeE --&gt; all;
@@ -668,6 +668,10 @@ or</p>
 <div class="highlight"><pre><span></span><code>crystmatch -I POSCAR_I POSCAR_F N_IMAGES
 </code></pre></div>
 </div>
+</li>
+<li>
+<p><code>-P N_IMAGES</code>, <code>--polish N_IMAGES</code></p>
+<p>Create and evenly distribute <code>N_IMAGES</code> images along the transition path stored in <code>00</code>, <code>01</code>, <code>02</code>, ..., similar to <code>--interpolate</code> but not limited to the two endpoints. The new images will be stored in <code>IMAGES/00</code>, <code>IMAGES/01</code>, <code>IMAGES/02</code>, ..., and can be used for subsequent NEB calculations.</p>
 </li>
 <li>
 <p><code>-f</code>, <code>--fix-integer</code></p>

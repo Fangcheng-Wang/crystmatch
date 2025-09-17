@@ -356,6 +356,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#redistributing-images-along-the-transition-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redistributing images along the transition path
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#enumerating-csms-within-given-supercells" class="md-nav__link">
     <span class="md-ellipsis">
       Enumerating CSMs within given supercells
@@ -570,6 +579,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#redistributing-images-along-the-transition-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Redistributing images along the transition path
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#enumerating-csms-within-given-supercells" class="md-nav__link">
     <span class="md-ellipsis">
       Enumerating CSMs within given supercells
@@ -657,7 +675,7 @@ pip3 install --upgrade crystmatch
 <p>Check whether <code>crystmatch</code> is successfully installed (the first run may take a few minutes to compile the required modules):</p>
 <div class="highlight"><pre><span></span><code>crystmatch --version
 </code></pre></div>
-<p><strong>The current version of <code>crystmatch</code> is <code>2.0.10</code>.</strong></p>
+<p><strong>The current version of <code>crystmatch</code> is <code>2.1.0</code>.</strong></p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>If you prefer using <code>conda</code>, you can install <code>crystmatch</code> by running:
@@ -714,6 +732,10 @@ pip3 install --upgrade crystmatch
 <li>
 <p><strong><code>--interpolate</code></strong></p>
 <p>Interpolate between two POSCAR files, like <code>nebmake.pl</code> provided by <a href="https://theory.cm.utexas.edu/vtsttools/scripts.html">VTST scripts</a>. The interpolated structures can be used for subsequent NEB calculations.</p>
+</li>
+<li>
+<p><strong><code>--polish</code></strong></p>
+<p>Adjust the number of images along the transition path stored in <code>00</code>, <code>01</code>, <code>02</code>, ..., to <code>N_IMAGES</code>. The new images will be stored in <code>IMAGES/00</code>, <code>IMAGES/01</code>, <code>IMAGES/02</code>, ..., and can be used for subsequent NEB calculations.</p>
 </li>
 </ol>
 <p><strong>We strongly recommend starting with the <a href="#examples">examples</a> provided below, and then see <a href="https://fangcheng-wang.github.io/crystmatch/cli/">all available options</a>.</strong> To see the help message, run:</p>
@@ -845,6 +867,11 @@ crystmatch -I POSCAR_I POSCAR_F 3
 <div class="highlight"><pre><span></span><code>crystmatch -I POSCAR_I POSCAR_F N_IMAGES
 </code></pre></div>
 </div>
+<h3 id="redistributing-images-along-the-transition-path">Redistributing images along the transition path</h3>
+<p>To create <code>N_IMAGES</code> images evenly distributed <strong>along the transition path</strong> stored in <code>00</code>, <code>01</code>, <code>02</code>, ..., run:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --polish N_IMAGES
+</code></pre></div>
+<p>This command is useful when you want to adjust the number of images after an NEB calculation. The new images will be stored in <code>IMAGES/00</code>, <code>IMAGES/01</code>, <code>IMAGES/02</code>, ..., and can be used for subsequent NEB calculations.</p>
 <h3 id="enumerating-csms-within-given-supercells">Enumerating CSMs within given supercells</h3>
 <p>To enumerate all CSMs with identical initial and final supercells as <code>POSCAR_I</code> and <code>POSCAR_F</code>, but different atomic correspondences, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --direct POSCAR_I POSCAR_F --all MAX_D
