@@ -742,16 +742,6 @@ pip3 install --upgrade crystmatch
 <div class="highlight"><pre><span></span><code>crystmatch --help
 </code></pre></div>
 <h2 id="examples">Examples</h2>
-<ul>
-<li><a href="#enumerating-representative-csms">Enumerating representative CSMs</a></li>
-<li><a href="#enumerating-all-csms">Enumerating all CSMs</a></li>
-<li><a href="#visualizing-csms-in-3d-interactive-plots">Visualizing CSMs in 3D interactive plots</a></li>
-<li><a href="#exporting-csms-as-poscar-or-xdatcar-files">Exporting CSMs as POSCAR or XDATCAR files</a></li>
-<li><a href="#interpolating-between-two-poscar-files-nebmake">Interpolating between two POSCAR files (nebmake)</a></li>
-<li><a href="#enumerating-csms-within-given-supercells">Enumerating CSMs within given supercells</a></li>
-<li><a href="#orientation-relationship-analysis">Orientation-relationship analysis</a></li>
-<li><a href="#computing-estimated-strain-energy-density">Computing estimated strain energy density</a></li>
-</ul>
 <h3 id="enumerating-representative-csms">Enumerating representative CSMs</h3>
 <p>To enumerate a list of representative CSMs (<em>each representing a unique deformation</em>) between two crystal structures given by POSCAR files <code>Graphite</code> and <code>Diamond</code>, with upper bounds <code>MAX_MU = 2</code> for multiplicity and <code>MAX_STRAIN = 0.4</code> for RMSS, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --enumerate Graphite Diamond 2 0.4
@@ -872,6 +862,37 @@ crystmatch -I POSCAR_I POSCAR_F 3
 <div class="highlight"><pre><span></span><code>crystmatch --polish N_IMAGES
 </code></pre></div>
 <p>This command is useful when you want to adjust the number of images after an NEB calculation. The new images will be stored in <code>IMAGES/00</code>, <code>IMAGES/01</code>, <code>IMAGES/02</code>, ..., and can be used for subsequent NEB calculations.</p>
+<p>For example, if you have performed an NEB calculation with <code>2</code> images, your repository should look like this:</p>
+<div class="highlight"><pre><span></span><code><span class="p">./</span>
+<span class="err">├──</span> <span class="n">00</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">├──</span> <span class="n">01</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">├──</span> <span class="n">CONTCAR</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="p">...</span>
+<span class="err">├──</span> <span class="n">02</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">├──</span> <span class="n">CONTCAR</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="p">...</span>
+<span class="err">└──</span> <span class="n">03</span><span class="p">/</span>
+    <span class="err">└──</span> <span class="n">POSCAR</span>
+</code></pre></div>
+<p>You can add one more image and redistribute all images by running:</p>
+<div class="highlight"><pre><span></span><code>crystmatch --polish 3
+</code></pre></div>
+<p>This will create a folder named <code>IMAGES/</code> containing the new images:</p>
+<div class="highlight"><pre><span></span><code><span class="p">./</span>
+<span class="err">├──</span> <span class="n">IMAGES</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">├──</span> <span class="n">00</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">│</span>   <span class="err">├──</span> <span class="n">01</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">│</span>   <span class="err">├──</span> <span class="n">02</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">│</span>   <span class="err">├──</span> <span class="n">03</span><span class="p">/</span>
+<span class="err">│</span>   <span class="err">│</span>   <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">│</span>   <span class="err">└──</span> <span class="n">04</span><span class="p">/</span>
+<span class="err">│</span>       <span class="err">└──</span> <span class="n">POSCAR</span>
+<span class="err">└──</span> <span class="p">...</span>
+</code></pre></div>
 <h3 id="enumerating-csms-within-given-supercells">Enumerating CSMs within given supercells</h3>
 <p>To enumerate all CSMs with identical initial and final supercells as <code>POSCAR_I</code> and <code>POSCAR_F</code>, but different atomic correspondences, run:</p>
 <div class="highlight"><pre><span></span><code>crystmatch --direct POSCAR_I POSCAR_F --all MAX_D
