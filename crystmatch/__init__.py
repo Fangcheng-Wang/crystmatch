@@ -26,7 +26,7 @@ from .enumeration import *
 from .analysis import *
 
 __name__ = "crystmatch"
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
@@ -480,6 +480,7 @@ def main():
         dirname = unique_filename("Creating new images in", "IMAGES", ext=False)
         makedirs(dirname, exist_ok=False)
         for i, cryst in enumerate(crystlist_new):
+            makedirs(f"{dirname}{sep}{i:02d}")
             save_poscar(f"{dirname}{sep}{i:02d}{sep}POSCAR", cryst, crystname=f"new image {i:02d}")
         return
     

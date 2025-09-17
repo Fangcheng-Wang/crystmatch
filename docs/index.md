@@ -40,7 +40,7 @@ Check whether `crystmatch` is successfully installed (the first run may take a f
 crystmatch --version
 ```
 
-**The current version of `crystmatch` is `2.1.0`.**
+**The current version of `crystmatch` is `2.1.1`.**
 
 !!! tip
     If you prefer using `conda`, you can install `crystmatch` by running:
@@ -115,15 +115,6 @@ crystmatch --help
 ```
 
 ## Examples
-
-- [Enumerating representative CSMs](#enumerating-representative-csms)
-- [Enumerating all CSMs](#enumerating-all-csms)
-- [Visualizing CSMs in 3D interactive plots](#visualizing-csms-in-3d-interactive-plots)
-- [Exporting CSMs as POSCAR or XDATCAR files](#exporting-csms-as-poscar-or-xdatcar-files)
-- [Interpolating between two POSCAR files (nebmake)](#interpolating-between-two-poscar-files-nebmake)
-- [Enumerating CSMs within given supercells](#enumerating-csms-within-given-supercells)
-- [Orientation-relationship analysis](#orientation-relationship-analysis)
-- [Computing estimated strain energy density](#computing-estimated-strain-energy-density)
 
 ### Enumerating representative CSMs
 
@@ -290,6 +281,46 @@ crystmatch --polish N_IMAGES
 ```
 
 This command is useful when you want to adjust the number of images after an NEB calculation. The new images will be stored in `IMAGES/00`, `IMAGES/01`, `IMAGES/02`, ..., and can be used for subsequent NEB calculations.
+
+For example, if you have performed an NEB calculation with `2` images, your repository should look like this:
+
+```powershell
+./
+├── 00/
+│   └── POSCAR
+├── 01/
+│   ├── CONTCAR
+│   └── ...
+├── 02/
+│   ├── CONTCAR
+│   └── ...
+└── 03/
+    └── POSCAR
+```
+
+You can add one more image and redistribute all images by running:
+
+```
+crystmatch --polish 3
+```
+
+This will create a folder named `IMAGES/` containing the new images:
+
+```powershell
+./
+├── IMAGES/
+│   ├── 00/
+│   │   └── POSCAR
+│   ├── 01/
+│   │   └── POSCAR
+│   ├── 02/
+│   │   └── POSCAR
+│   ├── 03/
+│   │   └── POSCAR
+│   └── 04/
+│       └── POSCAR
+└── ...
+```
 
 ### Enumerating CSMs within given supercells
 
