@@ -2,9 +2,10 @@
 
 ## Flowchart
 
+If you are not using `--interpolate` or `--polish`, the flowchart is as follows:
+
 ``` mermaid
 flowchart TB
-  modeI["if <code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'>--interpolate</code>, create **POSCAR** files and exit"] --> config;
   config["if <code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'>--extra</code>,<br>read **CSMCAR** file"] --> mode;
   mode{how to<br>**get CSMs**} --> |"<code style='color: #dd0099 !important; background-color: var(--md-code-bg-color); border-radius: .1rem; font-size: .85em; padding: 0 .2941176471em; font-family: monospace; word-break: break-word;'>--enumerate</code>"| modeE[enumerate a list of<br>**representative** CSMs];
   modeE --> all;
@@ -183,6 +184,10 @@ If you are not familiar with `crystmatch`, we recommend you first read the [tuto
         ```
         crystmatch -I POSCAR_I POSCAR_F N_IMAGES
         ```
+
+- `-P N_IMAGES`, `--polish N_IMAGES`
+
+    Create and evenly distribute `N_IMAGES` images along the transition path stored in `00`, `01`, `02`, ..., similar to `--interpolate` but not limited to the two endpoints. The new images will be stored in `IMAGES/00`, `IMAGES/01`, `IMAGES/02`, ..., and can be used for subsequent NEB calculations.
 
 - `-f`, `--fix-integer`
 

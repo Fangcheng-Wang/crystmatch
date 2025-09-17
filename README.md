@@ -12,7 +12,7 @@ The main functions of `crystmatch` are as follows:
 
 - **Analysis**:
     - Read a CSM from a pair of POSCAR files, and save CSMs in the same format.
-    - Calculate the root-mean-squared strain (RMSS), estimated strain energy density, and shuffle distance (RMSD) for each CSM.
+    - Calculate the root-mean-square strain (RMSS), estimated strain energy density, and shuffle distance (RMSD) for each CSM.
     - Benchmark each CSM by its deviation angle from a given orientation relationship.
     - Visualize the distribution of strain, shuffle distance, and multiplicity of CSMs in a 2D scatter plot.
     - Visualize a CSM in a 3D interactive plot.

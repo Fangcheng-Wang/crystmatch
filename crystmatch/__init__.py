@@ -26,7 +26,7 @@ from .enumeration import *
 from .analysis import *
 
 __name__ = "crystmatch"
-__version__ = "2.0.10"
+__version__ = "2.1.0"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
@@ -60,6 +60,8 @@ def main():
                         help="directly read a single CSM from POSCAR_I and POSCAR_F")
     parser.add_argument("-I", "--interpolate", nargs=3, type=str, metavar=('POSCAR_I', 'POSCAR_F', 'N_IMAGES'),
                         help="interpolate between POSCAR_I and POSCAR_F to generate N_IMAGES images for NEB calculation")
+    parser.add_argument("-P", "--polish", type=int, metavar="N_IMAGES",
+                        help="create and evenly distribute N_IMAGES images along the transition path stored in '00', '01', ...")
     parser.add_argument("-e", "--extra", type=str, metavar='CSMCAR',
                         help="load extra parameters from CSMCAR, including the elastic tensors, atomic weights, and orientation relationship used to benchmark CSMs")
     parser.add_argument("-a", "--all", type=float, metavar='MAX_D',
@@ -88,12 +90,21 @@ def main():
     args = parser.parse_args()
     
     # check if exactly one mode is specified
-    n_modes = sum(1 for x in [args.enumerate, args.read, args.direct, args.interpolate] if x is not None)
+    n_modes = sum(1 for x in [args.enumerate, args.read, args.direct, args.interpolate, args.polish] if x is not None)
     if n_modes >= 2:
         raise ValueError("Cannot choose more than one mode.")
     if n_modes == 0:
         raise ValueError("No mode is specified.")
-    mode = 'enumerate' if args.enumerate is not None else ('read' if args.read is not None else ('direct' if args.direct is not None else 'interpolate'))
+    if args.enumerate is not None:
+        mode = 'enumerate'
+    elif args.read is not None:
+        mode = 'read'
+    elif args.direct is not None:
+        mode = 'direct'
+    elif args.interpolate is not None:
+        mode = 'interpolate'
+    elif args.polish is not None:
+        mode = 'polish'
     
     # check if --read has duplicate indices
     if args.read is not None and len(set([int(i) for i in args.read[1:]])) != len(args.read[1:]):
@@ -145,7 +156,7 @@ def main():
 
         if voigtA is None and voigtB is None:
             strain = rmss
-            print("Using the root-mean-squared strain (RMSS) to quantify deformation.")
+            print("Using the root-mean-square strain (RMSS) to quantify deformation.")
         elif voigtA is not None and voigtB is not None:
             elasticA = voigt_to_tensor(voigtA, cryst=crystA, tol=tol)
             elasticB = voigt_to_tensor(voigtB, cryst=crystB, tol=tol)
@@ -157,7 +168,7 @@ def main():
         if max_mu < 1:
             raise ValueError("Multiplicity should be a positive integer.")
         if max_strain <= 0:
-            raise ValueError("Root-mean-squared strain should be a positive float.")
+            raise ValueError("Root-mean-square strain should be a positive float.")
         if max_mu >= 8 or (strain == rmss and max_strain > 0.4):
             print(f"Warning: Current MAX_MU = {max_mu:d} and MAX_STRAIN = {max_strain:.2f} may result in a large number of SLMs, which may take a very long time to enumerate.")
         
@@ -305,7 +316,7 @@ def main():
         print(f"\tmultiplicity (μ): {mu:d}")
         print(f"\tperiod: {zlcm * mu:d}")
         print(f"\tprincipal strains: {100 * ps[0]:.2f} %, {100 * ps[1]:.2f} %, {100 * ps[2]:.2f} %")
-        print(f"\troot-mean-squared strain (RMSS): {100 * rms_strain:.2f} %")
+        print(f"\troot-mean-square strain (RMSS): {100 * rms_strain:.2f} %")
         print(f"\tshuffle distance ({'RMSD' if np.allclose(ell, 2.0, atol=1e-6) else f'l={ell:.1f}'}): {d:.4f} Å")
         if not strain == rmss:
             w = strain(deformation_gradient(crystA, crystB, slm))
@@ -421,6 +432,55 @@ def main():
                 strain = rmss(cryst_list[i+1][0].T @ la.inv(cryst_list[i][0].T))
                 distance = csm_distance(cryst_list[i], cryst_list[i+1], slm_zero, p_zero, ks_zero, weight_func=weight_func, l=ell)
                 print(f"{i:02d}~{i+1:02d}\t{strain * 100:.2f}%\t{distance:.4f} Å")
+        return
+    
+    if mode == 'polish':
+
+        idx = 0
+        crystlist_old = []
+        while True:
+            path = f"{idx:02d}"
+            if not exists(path):
+                break
+            filename = path + sep + "CONTCAR"
+            if not exists(filename):
+                filename = path + sep + "POSCAR"
+            if not exists(filename):
+                raise FileNotFoundError(f"CONTCAR or POSCAR not found in {path}")
+            crystlist_old.append(load_poscar(filename, to_primitive=False, verbose=False))
+            print(f"Read {filename} ...")
+            idx += 1
+        n_im = args.polish
+        if n_im <= 0 or n_im > 99:
+            raise ValueError("Invalid number of images.")
+        
+        coord_old = np.linspace(0, 1, len(crystlist_old))
+        coord_new = np.linspace(0, 1, n_im + 2)
+        crystlist_new = []
+        for coo in coord_new:
+            if coo <= 1e-6:
+                crystlist_new.append(crystlist_old[0])
+            elif coo >= 1 - 1e-6:
+                crystlist_new.append(crystlist_old[-1])
+            else:
+                idx = np.nonzero(coord_old <= coo)[0][-1]
+                frac = (coo - coord_old[idx]) / (coord_old[idx+1] - coord_old[idx])
+                c0 = crystlist_old[idx][0].T
+                c1 = crystlist_old[idx+1][0].T
+                p0 = crystlist_old[idx][2].T
+                p1 = crystlist_old[idx+1][2].T
+                p1 = np.where(p1 - p0 > 0.5, p1 - 1, p1)
+                p1 = np.where(p1 - p0 < -0.5, p1 + 1, p1)
+                s = c1 @ la.inv(c0)
+                _, sigma, vT = la.svd(s)
+                c = vT.T @ np.diag(sigma ** frac) @ vT @ c0
+                p = p0 * (1-frac) + p1 * frac
+                crystlist_new.append((c.T, crystlist_old[idx][1], p.T))
+    
+        dirname = unique_filename("Creating new images in", "IMAGES", ext=False)
+        makedirs(dirname, exist_ok=False)
+        for i, cryst in enumerate(crystlist_new):
+            save_poscar(f"{dirname}{sep}{i:02d}{sep}POSCAR", cryst, crystname=f"new image {i:02d}")
         return
     
     print('\n', end='')   # simply a line break

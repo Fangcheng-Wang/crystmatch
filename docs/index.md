@@ -12,7 +12,7 @@
 
     - **Analysis**:
         - Read a CSM from a pair of POSCAR files, and save CSMs in the same format.
-        - Calculate the root-mean-squared strain (RMSS), estimated strain energy density, and shuffle distance (RMSD) for each CSM.
+        - Calculate the root-mean-square strain (RMSS), estimated strain energy density, and shuffle distance (RMSD) for each CSM.
         - Benchmark each CSM by its deviation angle from a given orientation relationship.
         - Visualize the distribution of strain, shuffle distance, and multiplicity of CSMs in a 2D scatter plot.
         - Visualize a CSM in a 3D interactive plot.
@@ -40,7 +40,7 @@ Check whether `crystmatch` is successfully installed (the first run may take a f
 crystmatch --version
 ```
 
-**The current version of `crystmatch` is `2.0.10`.**
+**The current version of `crystmatch` is `2.1.0`.**
 
 !!! tip
     If you prefer using `conda`, you can install `crystmatch` by running:
@@ -103,6 +103,10 @@ To run `crystmatch`, one of the following modes must be selected:
 4. **`--interpolate`**
     
     Interpolate between two POSCAR files, like `nebmake.pl` provided by [VTST scripts](https://theory.cm.utexas.edu/vtsttools/scripts.html). The interpolated structures can be used for subsequent NEB calculations.
+
+5. **`--polish`**
+
+    Adjust the number of images along the transition path stored in `00`, `01`, `02`, ..., to `N_IMAGES`. The new images will be stored in `IMAGES/00`, `IMAGES/01`, `IMAGES/02`, ..., and can be used for subsequent NEB calculations.
 
 **We strongly recommend starting with the [examples](#examples) provided below, and then see [all available options](https://fangcheng-wang.github.io/crystmatch/cli/).** To see the help message, run:
 
@@ -276,6 +280,16 @@ They can be directly used for subsequent [SSNEB calculations](https://theory.cm.
     ```
     crystmatch -I POSCAR_I POSCAR_F N_IMAGES
     ```
+
+### Redistributing images along the transition path
+
+To create `N_IMAGES` images evenly distributed **along the transition path** stored in `00`, `01`, `02`, ..., run:
+
+```
+crystmatch --polish N_IMAGES
+```
+
+This command is useful when you want to adjust the number of images after an NEB calculation. The new images will be stored in `IMAGES/00`, `IMAGES/01`, `IMAGES/02`, ..., and can be used for subsequent NEB calculations.
 
 ### Enumerating CSMs within given supercells
 

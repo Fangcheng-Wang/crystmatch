@@ -94,7 +94,7 @@ def load_poscar(
                 positions[i,:] = np.array(f.readline().split()[:3], dtype=float)
             elif unit.startswith(('C','c','K','k')):
                 positions[i,:] = np.dot(la.inv(lattice.transpose()), np.array(f.readline().split()[:3], dtype=float))
-    indsort = np.argsort(species)
+    indsort = np.argsort(species, stable=True)
     cryst = (lattice, species[indsort], positions[indsort])
 
     if verbose: print(f"\tSpace group: {get_spacegroup(cryst_to_spglib(cryst), symprec=tol)}.")
@@ -355,8 +355,8 @@ def create_common_supercell(
     speciesB_sup = np.tile(speciesB, la.det(mB).round().astype(int))
     pA_sup = (la.inv(mA) @ (pA.reshape(3,1,-1) + int_vec_inside(mA).reshape(3,-1,1)).reshape(3,-1))
     pB_sup = (la.inv(mB) @ (pB.reshape(3,1,-1) + int_vec_inside(mB).reshape(3,-1,1)).reshape(3,-1))
-    argsortA = np.argsort(speciesA_sup)
-    argsortB = np.argsort(speciesB_sup)
+    argsortA = np.argsort(speciesA_sup, stable=True)
+    argsortB = np.argsort(speciesB_sup, stable=True)
     if not (speciesA_sup[argsortA] == speciesB_sup[argsortB]).all():
         raise AssertionError("Species array is ill-sorted. Please report this bug to wfc@pku.edu.cn.")
     species_sup = speciesA_sup[argsortA]

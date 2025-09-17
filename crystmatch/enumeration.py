@@ -227,8 +227,8 @@ def optimize_pct_fixed(
     if enforce.shape[0] > 0:
         p[enforce[:,0]] = enforce[:,1]
         diff_frac = (pB[:,enforce[:,1]] - pA[:,enforce[:,0]]).reshape(3,-1,1) % 1.0 + DELTA_K.reshape(3,1,8)
-        norm_squared = np.sum(np.tensordot(c, diff_frac, axes=(1,0))**2, axis=0)
-        where_kij[enforce[:,0], enforce[:,1]] = np.argmin(norm_squared, axis=1)
+        norm_square = np.sum(np.tensordot(c, diff_frac, axes=(1,0))**2, axis=0)
+        where_kij[enforce[:,0], enforce[:,1]] = np.argmin(norm_square, axis=1)
     punish = _punishment_matrix(z, constraint.prevent, l=l)
     
     for s in np.unique(species):
@@ -239,9 +239,9 @@ def optimize_pct_fixed(
         col_ind = species == s
         col_ind[enforce[:,1]] = False
         diff_frac = (pB[:,col_ind].reshape(3,1,-1,1) - pA[:,row_ind].reshape(3,-1,1,1)) % 1.0 + DELTA_K
-        norm_squared = np.sum(np.tensordot(c, diff_frac, axes=(1,0))**2, axis=0)
-        where_kij[np.ix_(row_ind, col_ind)] = np.argmin(norm_squared, axis=2)
-        cost_matrix = np.min(norm_squared, axis=2) ** (l/2) + punish[np.ix_(row_ind, col_ind)]
+        norm_square = np.sum(np.tensordot(c, diff_frac, axes=(1,0))**2, axis=0)
+        where_kij[np.ix_(row_ind, col_ind)] = np.argmin(norm_square, axis=2)
+        cost_matrix = np.min(norm_square, axis=2) ** (l/2) + punish[np.ix_(row_ind, col_ind)]
         result = linear_sum_assignment(cost_matrix)[1]
         if cost_matrix[np.arange(zz),result].sum() >= IMPOSSIBLE_DISTANCE**l:         # all assignments of species s are prevented
             return IMPOSSIBLE_DISTANCE, None, None
@@ -452,8 +452,8 @@ def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2.0):
     """
     """
     k_grid = (-np.floor(pB[:,p] - pA).reshape(3,-1,1) + DELTA_K.reshape(3,1,-1)).round().astype(int)
-    norm_squared = (np.tensordot(c, (pB[:,p] - pA).reshape(3,-1,1) + k_grid, axes=(1,0))**2).sum(axis=0)
-    ks = k_grid[:,np.arange(len(p)),np.argmin(norm_squared, axis=1)]
+    norm_square = (np.tensordot(c, (pB[:,p] - pA).reshape(3,-1,1) + k_grid, axes=(1,0))**2).sum(axis=0)
+    ks = k_grid[:,np.arange(len(p)),np.argmin(norm_square, axis=1)]
     return pct_distance(c, pA, pB, p, ks, weights=weights, l=l, min_t0=False), ks
 
 def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2.0):
