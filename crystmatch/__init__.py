@@ -26,7 +26,7 @@ from .enumeration import *
 from .analysis import *
 
 __name__ = "crystmatch"
-__version__ = "2.1.1"
+__version__ = "2.1.2"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
@@ -400,7 +400,7 @@ def main():
         d0 = csm_distance(crystA_sup, crystB_sup, slm_zero, p_zero, ks_zero, weight_func=weight_func, l=ell)
 
         if not args.fix_integer:
-            _, _, c_sup_half, _, _ = create_common_supercell(crystA_sup, crystB_sup, slm_zero)
+            crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA_sup, crystB_sup, slm_zero)
             species = crystA_sup[1]
             weights = [weight_func[s] for s in species] if weight_func else None
             pA_sup = crystA_sup[2].T
@@ -409,8 +409,8 @@ def main():
             ind = np.argmin([res[0] for res in reslist])
             d, ks, t0 = reslist[ind]
             
-            crystB_sup = (crystB_sup[0], crystB_sup[1], crystB_sup[2] + ks.T + t0.round().astype(int).T)
-            assert np.allclose(csm_distance(crystA_sup, crystB_sup, slm_zero, p_zero, ks_zero, weight_func=weight_func, l=ell), d), "CT optimization failed. Please report this bug to wfc@pku.edu.cn."
+            crystB_sup = (crystB_sup[0], crystB_sup[1], crystB_sup[2] + ks.T + t0.T)
+            assert np.allclose(csm_distance(crystA_sup, crystB_sup, slm_zero, p_zero, ks_zero, weight_func=weight_func, l=ell), d, atol=tol), "CT optimization failed. Please report this bug to wfc@pku.edu.cn."
             if (not args.fix_integer) and d < d0 - tol:
                 print(f"\nBy adding and subtracting integers to fractional coordinates, the shuffle distance is reduced by {d0 - d:.4f} Å. You can use --fix-integer to prevent this.")
         
