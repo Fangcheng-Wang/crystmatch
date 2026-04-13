@@ -94,13 +94,14 @@ def enumerate_imt(
     mu : int
         The multiplicity of SLMs to enumerate.
     max_strain : float
-        The maximum strain energy density, with the same units as `strain`.
+        The maximum allowed value of `strain`, e.g. RMSS when `strain=rmss`.
     strain : Callable, optional
         How to quantify the strain, usually `rmss` or obtained via `strain_energy_func()`.
     tol : float, optional
         The tolerance for determining the pure rotation group of the crystal structures.
     max_iter : int, optional
-        The maximum number of consequtive iterations without finding any new SLMs.
+        The initial maximum number of consecutive iterations without finding any new
+        SLMs. This limit may be increased adaptively during the search.
     verbose : int, optional
         The level of verbosity.
     
@@ -211,11 +212,14 @@ def optimize_pct_fixed(
     Returns
     -------
     d_hat : float
-        The least shuffle distance.
-    p : (Z, ) array of ints
-        The permutation part of the PCT with the least shuffle distance.
-    ks : (3, Z) array of ints
+        The least shuffle distance, or `IMPOSSIBLE_DISTANCE` if no assignment
+        satisfies the constraint.
+    p : (Z, ) array of ints or None
+        The permutation part of the PCT with the least shuffle distance. Returns
+        None if the constraint is infeasible.
+    ks : (3, Z) array of ints or None
         The class-wise translation part of the PCT with the least shuffle distance.
+        Returns None if the constraint is infeasible.
     """
     z = len(species)
     if not (pA.shape[1] == z and pB.shape[1] == z): raise ValueError("Atom numbers do not match.")
@@ -277,10 +281,25 @@ def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight
         The final crystal structure, usually obtained by `load_poscar`.
     slm : slm
         The SLM, represented by a triplet of integer matrices like `(hA, hB, q)`.
-    constraint : 2-tuple of sets, optional
-        The permutation constraint used in the Murty's algorithm.
+    constraint : Constraint, optional
+        The permutation constraint used in Murty's algorithm.
     weight_func : dict, optional
-        
+        The weight function, with keys as atomic species. If None, all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation, must not be less than 1.
+    t_grid : int, optional
+        The number of Sobol-sequence trial translations used to initialize the optimization.
+
+    Returns
+    -------
+    d : float
+        The least shuffle distance found.
+    p : (Z, ) array of ints
+        The permutation part of the optimal PCT.
+    ks : (3, Z) array of ints
+        The class-wise translation part of the optimal PCT.
+    t0 : (3, 1) array
+        The optimal overall translation of the final structure.
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
     f = frac_cell(mA, mB)
@@ -294,7 +313,33 @@ def optimize_pct(crystA, crystB, slm, constraint=Constraint(set(),set()), weight
     return d, p, ks, t0
 
 def pct_fill(crystA, crystB, slm, max_d, p, ks0=None, weight_func=None, l=2.0, warning_threshold=5000):
-    """Returns all class-wise translations with permutation p that has d <= max_d, including ks0.
+    """Enumerate all class-wise translations for a fixed permutation below a distance cutoff.
+
+    Parameters
+    ----------
+    crystA, crystB : cryst
+        The initial and final crystal structures.
+    slm : slm
+        The SLM of the CSM.
+    max_d : float
+        The maximum allowed shuffle distance.
+    p : (Z, ) array of ints
+        The fixed permutation part of the PCT.
+    ks0 : (3, Z) array of ints, optional
+        A known valid class-wise translation to seed the flood fill. If None, one is
+        obtained by `optimize_ct`.
+    weight_func : dict, optional
+        The weight function, with keys as atomic species. If None, all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation.
+    warning_threshold : int, optional
+        Threshold above which a warning about the number of valid PCTs is printed.
+
+    Returns
+    -------
+    valid : (N, 3, Z) array of ints
+        All class-wise translations `ks` such that the PCT `(p, ks)` has shuffle
+        distance not larger than `max_d`.
     """
     z = p.shape[0]
     if z == 1: return np.array([ks0], dtype=int)
@@ -351,7 +396,20 @@ def is_compatible(p, constraint):
     return (p[enforce[:,0]] == enforce[:,1]).all() and (p[prevent[:,0]] != prevent[:,1]).all()
 
 def murty_split(node, p):
-    """
+    """Split a Murty node into child constraints after accepting one permutation.
+
+    Parameters
+    ----------
+    node : Constraint
+        The current Murty node, containing enforced and forbidden assignments.
+    p : (Z, ) array_like of ints
+        A permutation compatible with `node`.
+
+    Returns
+    -------
+    new_nodes : list of Constraint
+        Child nodes produced by successively enforcing earlier assignments in `p`
+        and forbidding the next one.
     """
     if not is_compatible(p, node): raise ValueError("The given permutation is not compatible with the given node.")
     new_nodes = []
@@ -366,7 +424,21 @@ def murty_split(node, p):
     return new_nodes
 
 def cong_permutations(p, crystA, crystB, slm):
-    """
+    """Return permutations congruent to `p` under common supercell translations.
+
+    Parameters
+    ----------
+    p : (Z, ) array_like of ints
+        The reference permutation.
+    crystA, crystB : cryst
+        The initial and final crystal structures.
+    slm : slm
+        The SLM defining the common supercell.
+
+    Returns
+    -------
+    plist : (N, Z) array of ints
+        The unique permutations congruent to `p`.
     """
     crystA_sup, crystB_sup, _, mA, mB = create_common_supercell(crystA, crystB, slm)
     pA_sup = crystA_sup[2].T
@@ -380,7 +452,35 @@ def cong_permutations(p, crystA, crystB, slm):
     return np.unique([kB[p[kA]] for kA in lA for kB in lB], axis=0)
 
 def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2.0, t_grid=16, non_cong=True, verbose=1, warning_threshold=5000):
-    """
+    """Enumerate PCTs for a fixed SLM with shuffle distance below a cutoff.
+
+    Parameters
+    ----------
+    crystA, crystB : cryst
+        The initial and final crystal structures.
+    slm : slm
+        The SLM whose compatible PCTs are to be enumerated.
+    max_d : float
+        The maximum allowed shuffle distance.
+    weight_func : dict, optional
+        The weight function, with keys as atomic species. If None, all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation.
+    t_grid : int, optional
+        The number of Sobol-sequence trial translations used in local optimization.
+    non_cong : bool, optional
+        If True, discard PCTs related by congruent permutations during the Murty search.
+    verbose : int, optional
+        The level of verbosity.
+    warning_threshold : int, optional
+        Threshold above which a warning about too many valid PCTs is printed during filling.
+
+    Returns
+    -------
+    pctlist : (N, Z, 4) array of ints
+        The enumerated PCTs encoded by `zip_pct`.
+    dlist : (N,) array of floats
+        The shuffle distances corresponding to `pctlist`.
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
     f = frac_cell(mA, mB)
@@ -449,7 +549,27 @@ def enumerate_pct(crystA, crystB, slm, max_d, weight_func=None, l=2.0, t_grid=16
     return pctlist, np.array(dlist)
 
 def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2.0):
-    """
+    """Minimize the shuffle distance with fixed permutation and fixed overall translation.
+
+    Parameters
+    ----------
+    c : (3, 3) array
+        The base matrix of the shuffle lattice.
+    pA, pB : (3, Z) array
+        The fractional coordinates of the atoms in the initial and final structures, respectively.
+    p : (Z, ) array of ints
+        The fixed permutation.
+    weights : (Z, ) array of floats, optional
+        The weights of each atom. If None, all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation.
+
+    Returns
+    -------
+    d_hat : float
+        The least shuffle distance for the fixed overall translation.
+    ks : (3, Z) array of ints
+        The class-wise translations minimizing the distance.
     """
     k_grid = (-np.floor(pB[:,p] - pA).reshape(3,-1,1) + DELTA_K.reshape(3,1,-1)).round().astype(int)
     norm_square = (np.tensordot(c, (pB[:,p] - pA).reshape(3,-1,1) + k_grid, axes=(1,0))**2).sum(axis=0)
@@ -457,7 +577,31 @@ def optimize_ct_fixed(c, pA, pB, p, weights=None, l=2.0):
     return pct_distance(c, pA, pB, p, ks, weights=weights, l=l, min_t0=False), ks
 
 def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2.0):
-    """
+    """Locally optimize class-wise and overall translations for a fixed permutation.
+
+    Parameters
+    ----------
+    c : (3, 3) array
+        The base matrix of the shuffle lattice.
+    pA, pB : (3, Z) array
+        The fractional coordinates of the atoms in the initial and final structures, respectively.
+    p : (Z, ) array of ints
+        The fixed permutation.
+    t : (3,) array_like
+        The initial guess for the overall translation.
+    weights : (Z, ) array of floats, optional
+        The weights of each atom. If None, all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation.
+
+    Returns
+    -------
+    d : float
+        The locally optimized shuffle distance.
+    ks : (3, Z) array of ints
+        The optimized class-wise translations.
+    t0 : (3, 1) array
+        The optimized overall translation.
     """
     t0 = t.reshape(3,1)
     n_iter = 0
@@ -470,7 +614,31 @@ def optimize_ct_local(c, pA, pB, p, t, weights=None, l=2.0):
     return d, ks, t0
 
 def optimize_ct(crystA, crystB, slm, p, weight_func=None, l=2.0, t_grid=64):
-    """
+    """Minimize the shuffle distance with fixed permutation and variable translations.
+
+    Parameters
+    ----------
+    crystA, crystB : cryst
+        The initial and final crystal structures.
+    slm : slm
+        The SLM of the CSM.
+    p : (Z, ) array of ints
+        The fixed permutation part of the PCT.
+    weight_func : dict, optional
+        The weight function, with keys as atomic species. If None, all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation.
+    t_grid : int, optional
+        The number of Sobol-sequence trial translations used to initialize the optimization.
+
+    Returns
+    -------
+    d : float
+        The least shuffle distance found.
+    ks : (3, Z) array of ints
+        The class-wise translations minimizing the distance.
+    t0 : (3, 1) array
+        The optimal overall translation of the final structure.
     """
     crystA_sup, crystB_sup, c_sup_half, mA, mB = create_common_supercell(crystA, crystB, slm)
     f = frac_cell(mA, mB)
@@ -509,7 +677,7 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     weight_func : dict, optional
         A dictionary of atomic weights for each species. If None, all atoms have the same weight.
     l : float, optional
-        The type of norm to be used for distance calculation.
+        The exponent of the l-norm used for distance calculation.
     t_grid : int, optional
         The number of grid points for PCT optimization.
     verbose : int, optional
@@ -519,8 +687,10 @@ def enumerate_rep_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     -------
     slmlist : (N, 3, 3, 3) array of ints
         The IMTs enumerated.
-    pct_arrs : list of (..., 4) arrays of ints
-        The PCTs of representative CSMs, where `...` is the number of CSMs with multiplicity `mu`.
+    pct_arrs : list
+        A list whose first element is the placeholder string `NPZ_ARR_COMMENT`, and
+        whose remaining elements are `(N_mu, mu * lcm(Z_A, Z_B), 4)` arrays storing
+        the representative PCTs of multiplicity `mu`.
     mulist : (N,) array of ints
         The multiplicities of the representative CSMs.
     strainlist : (N,) array of floats
@@ -618,7 +788,7 @@ def enumerate_all_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
     weight_func : dict, optional
         A dictionary of atomic weights for each species. If None, all atoms have the same weight.
     l : float, optional
-        The type of norm to be used for distance calculation.
+        The exponent of the l-norm used for distance calculation.
     t_grid : int, optional
         The number of grid points for PCT optimization.
     verbose : int, optional
@@ -630,8 +800,10 @@ def enumerate_all_csm(crystA: Cryst, crystB: Cryst, max_mu: int, max_strain: flo
         The IMTs enumerated.
     slm_ind : (N,) array of ints
         The indices of the IMTs of the CSMs.
-    pct_arrs : list of (..., 4) arrays of ints
-        The PCTs of the CSMs, where `...` is the number of CSMs with multiplicity `mu`.
+    pct_arrs : list
+        A list whose first element is the placeholder string `NPZ_ARR_COMMENT`, and
+        whose remaining elements are `(N_mu, mu * lcm(Z_A, Z_B), 4)` arrays storing
+        the PCTs of multiplicity `mu`.
     mulist : (N,) array of ints
         The multiplicities of the CSMs.
     strainlist : (N,) array of floats

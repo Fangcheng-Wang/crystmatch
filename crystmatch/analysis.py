@@ -26,7 +26,22 @@ __all__ = ["decompose_cryst", "csm_to_cryst", "cryst_to_csm", "csm_distance", "p
 np.set_printoptions(suppress=True)
 
 def decompose_cryst(cryst_sup, tol=1e-3):
-    """Compute the primitive `cryst_prim` and integer matrix `m` such that `c_sup = c_prim @ m` and `p_prim ∈ m @ p_sup (mod 1)`
+    """Compute the primitive cell and supercell transformation of a crystal structure.
+
+    Parameters
+    ----------
+    cryst_sup : cryst
+        The crystal structure to be decomposed, typically a supercell.
+    tol : float, optional
+        Tolerance for symmetry detection with `spglib`.
+
+    Returns
+    -------
+    cryst_prim : cryst
+        The primitive crystal structure associated with `cryst_sup`.
+    m : (3, 3) array of ints
+        The integer matrix satisfying `c_sup = c_prim @ m` and mapping primitive-cell
+        fractional coordinates to those in `cryst_sup`.
     """
     sym = get_symmetry_dataset(cryst_to_spglib(cryst_sup), symprec=tol)
     c_prim = sym.primitive_lattice.T
@@ -49,7 +64,7 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
     slm : slm
         The SLM of the CSM.
     p : (Z, ) array of ints
-        The permutaion of the shuffle.
+        The permutation of the shuffle.
     ks : (3, Z) array of ints
         The lattice-vector translations of the shuffle.
     orientation : str, optional
@@ -98,7 +113,27 @@ def csm_to_cryst(crystA: Cryst, crystB: Cryst, slm: SLM, p: NDArray[np.int32], k
     else: raise ValueError("'deformation' must be 'norot' or 'uspfixed'.")
 
 def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
-    """Return the primitive crysts and IMT and PCT representation of a CSM determined by a pair of crysts.
+    """Recover the primitive structures and CSM representation from two matched supercells.
+
+    Parameters
+    ----------
+    crystA_sup, crystB_sup : cryst
+        The initial and final crystal structures with an explicit atom-to-atom correspondence.
+    tol : float, optional
+        Tolerance used to identify primitive cells and match fractional coordinates.
+
+    Returns
+    -------
+    crystA : cryst
+        The primitive cell of the initial crystal structure.
+    crystB : cryst
+        The primitive cell of the final crystal structure.
+    slm : slm
+        The IMT representation of the SLM.
+    p : (Z, ) array of ints
+        The permutation part of the PCT.
+    ks : (3, Z) array of ints
+        The class-wise lattice-vector translations of the PCT.
     """
     crystA, mA0 = decompose_cryst(crystA_sup, tol=tol)
     crystB, mB0 = decompose_cryst(crystB_sup, tol=tol)
@@ -131,6 +166,33 @@ def cryst_to_csm(crystA_sup, crystB_sup, tol=1e-3):
 
 def csm_distance(crystA, crystB, slm, p, ks, weight_func=None, l=2.0, min_t0=True, return_t0=False):
     """Return the shuffle distance of a CSM.
+
+    Parameters
+    ----------
+    crystA, crystB : cryst
+        The initial and final crystal structures.
+    slm : slm
+        The SLM of the CSM.
+    p : (Z, ) array of ints
+        The permutation part of the PCT.
+    ks : (3, Z) array of ints
+        The class-wise lattice-vector translations of the PCT.
+    weight_func : dict, optional
+        The weight function used when calculating the shuffle distance, with keys as
+        atomic species. If None, all atoms have the same weight.
+    l : float, optional
+        The l-norm to be used for distance calculation. Default is 2.0.
+    min_t0 : bool, optional
+        Whether to optimize the overall translation of the final structure.
+    return_t0 : bool, optional
+        Whether to also return the optimal overall translation.
+
+    Returns
+    -------
+    d : float
+        The shuffle distance of the CSM.
+    t0 : (3, 1) array, optional
+        The optimal overall translation. Only returned if `return_t0` is True.
     """
     crystA_sup, crystB_sup, c_sup_half, _, _ = create_common_supercell(crystA, crystB, slm)
     pA_sup = crystA_sup[2].T
@@ -148,7 +210,27 @@ def _is_translation_element(t, pA, pB, p, ks):
     return (p[pAt] == pBt[p]).all() and (ks[:,pAt] + ksAt == ks + ksBt).all()
 
 def primitive_shuffle(crystA, crystB, slm0, p0, ks0):
-    """Identify the primitive (with minimal multiplicity) IMT and PCT representations of a CSM.
+    """Reduce a CSM to its primitive IMT and PCT representation, i.e., the representation with minimal multiplicity.
+
+    Parameters
+    ----------
+    crystA, crystB : cryst
+        The initial and final primitive crystal structures.
+    slm0 : slm
+        The original IMT representation of the SLM.
+    p0 : (Z, ) array of ints
+        The permutation part of the original PCT.
+    ks0 : (3, Z) array of ints
+        The class-wise lattice-vector translations of the original PCT.
+
+    Returns
+    -------
+    slm : slm
+        The IMT representation of the SLM with minimal multiplicity.
+    p : (Z1, ) array of ints
+        The permutation part of the new PCT.
+    ks : (3, Z1) array of ints
+        The class-wise lattice-vector translations of the new PCT.
     """
     crystA_sup0, crystB_sup0, _, mA0, mB0 = create_common_supercell(crystA, crystB, slm0)
     pA_sup0 = crystA_sup0[2].T
@@ -215,7 +297,18 @@ def orient_matrix(vi: ArrayLike, vf: ArrayLike, wi: ArrayLike, wf: ArrayLike) ->
     return r
 
 def rot_usp(s):
-    """The rotation that the uniformly scaled plane undergoes.
+    """Return the rotation associated with the uniformly scaled plane.
+
+    Parameters
+    ----------
+    s : (3, 3) or (..., 3, 3) array
+        One or more deformation-gradient matrices.
+
+    Returns
+    -------
+    rH : (3, 3) or (..., 3, 3) array
+        The rotation matrix, or matrices, describing the rotation of the uniformly
+        scaled plane for each deformation gradient.
     """
     _, sigma, vT = la.svd(s, compute_uv=True)
     levi_civita = np.array([[[0,0,0],[0,0,-1],[0,1,0]],[[0,0,1],[0,0,0],[-1,0,0]],[[0,-1,0],[1,0,0],[0,0,0]]])
@@ -267,9 +360,9 @@ def deviation_angle(
         A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
     r : (3, 3) array
         A rotation matrix representing the given orientation relationship.
-    orientation : str, optional
-        The orientation of the final structure, either 'norot' or 'uspfixed', which means that the deformation is rotation-free \
-            or fixing the uniformly scaled plane (USP). When 'uspfixed', two final structures are returned since there are two USPs.
+    orientation : {'norot', 'uspfixed'}
+        The convention used to compare the final structure orientation: rotation-free
+        (`'norot'`) or uniformly-scaled-plane-fixed (`'uspfixed'`).
 
     Returns
     -------
@@ -302,7 +395,26 @@ def visualize_slmlist(
     cmap : colors.Colormap = plt.get_cmap('viridis'),
     cbarlabel: str = None
 ) -> None:
-    """Scatter plot of the CSMs with colorbar.
+    """Create a scatter plot of CSM properties.
+
+    Parameters
+    ----------
+    filename : str or None
+        The output filename. If None, the figure is displayed instead of being saved.
+    strainlist : array_like
+        The strain values plotted on the x-axis.
+    dlist : array_like
+        The shuffle distances plotted on the y-axis.
+    colorlist : array_like, optional
+        Values used to color each point. If None, all points use the same color.
+    cmap : matplotlib.colors.Colormap, optional
+        The colormap used for the scatter plot.
+    cbarlabel : str, optional
+        The label shown beside the colorbar when `colorlist` is provided.
+
+    Returns
+    -------
+    None
     """
     if len(dlist) == 0:
         raise ValueError("The CSM list is empty.")
@@ -341,6 +453,22 @@ def visualize_slmlist(
     return
 
 def visualize_pctlist(filename, pctlist, dlist):
+    """Create a scatter plot of shuffle distances grouped by permutation.
+
+    Parameters
+    ----------
+    filename : str or None
+        The output filename. If None, the figure is displayed instead of being saved.
+    pctlist : (N, Z, 4) array-like
+        A list of PCT arrays, where the first column stores the permutation and the
+        remaining columns store the class-wise translations.
+    dlist : (N,) array-like
+        The shuffle distances corresponding to `pctlist`.
+
+    Returns
+    -------
+    None
+    """
     _, ind = np.unique([pct[:,0] for pct in pctlist], axis=0, return_inverse=True)
     d_min = []
     for i in range(ind.max()+1):
@@ -402,8 +530,38 @@ def visualize_csm(
     crystA, crystB, slm, p, ks, weight_func=None, l=2.0, tol=1e-3,
     cluster_size=1.2, show_conventional=True, label=None
 ):
-    """Use with `%matplotlib widget` in Jupyter notebook (need to install `ipympl`) to interactively visualize the shuffling process.
+    """Interactively visualize the shuffling process of a CSM in 3D.
+
+    Parameters
+    ----------
+    crystA, crystB : cryst
+        The initial and final primitive crystal structures.
+    slm : slm
+        The SLM of the CSM.
+    p : (Z, ) array of ints
+        The permutation part of the PCT.
+    ks : (3, Z) array of ints
+        The class-wise lattice-vector translations of the PCT.
+    weight_func : dict, optional
+        The weight function used when determining the optimal overall translation.
+    l : float, optional
+        The l-norm used for distance calculation.
+    tol : float, optional
+        Tolerance for symmetry detection.
+    cluster_size : float, optional
+        Radius multiplier controlling how many periodic images are shown around the
+        central cell.
+    show_conventional : bool, optional
+        Whether to display the conventional cell axes of each structure.
+    label : str, optional
+        Extra text shown in the lower-left corner of the left panel.
+
+    Returns
+    -------
+    None
     """
+    crystA_tmp, crystB_tmp = csm_to_cryst(crystA, crystB, slm, p, ks, orientation='norot', use_medium_cell=False, min_t0=False, weight_func=weight_func)
+    crystA, crystB, slm, p, ks = cryst_to_csm(crystA_tmp, crystB_tmp, tol=tol)
     crystA_sup, crystB_sup, c_half, _, _ = create_common_supercell(crystA, crystB, slm)
     weights = [weight_func[s] for s in crystA_sup[1]] if weight_func else None
     species_unique, numbers, counts = np.unique(crystA_sup[1], return_inverse=True, return_counts=True)
@@ -492,6 +650,20 @@ def _species_to_poscar(species: NDArray[np.str_]) -> tuple[NDArray[np.str_], NDA
     return species[np.sort(sp_idx)], sp_counts
 
 def save_csv(filename, table):
+    """Save a summary table of CSM properties to a CSV file.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the CSV file to create.
+    table : Table
+        A `(data, header)` pair containing the numeric table and the corresponding
+        column names.
+
+    Returns
+    -------
+    None
+    """
     data, header = table
     if header[0] != 'csm_id': raise ValueError("The first column of the table must be 'csm_id'.")
     unit = {'csm_id': 1, 'slm_id': 1, 'mu': 1, 'period': 1, 'w': 1, 'rmss': 0.01, 'd': 1, 'angle': np.pi / 180}
@@ -501,12 +673,57 @@ def save_csv(filename, table):
     return
 
 def save_npz(filename, crystA, crystB, slmlist, slm_ind, pct_arrs, table):
+    """Save CSM data and metadata to a `.npz` archive.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the archive file to create.
+    crystA, crystB : cryst
+        The initial and final primitive crystal structures.
+    slmlist : (N, 3, 3, 3) array of ints
+        The list of SLMs stored in the archive.
+    slm_ind : (M,) array of ints
+        The indices mapping each stored CSM to its SLM in `slmlist`.
+    pct_arrs : list of arrays
+        The grouped PCT arrays, organized by multiplicity.
+    table : Table
+        A `(data, header)` pair containing summary information for the stored CSMs.
+
+    Returns
+    -------
+    None
+    """
     metadata = np.array([table.header, crystA, crystB], dtype=object)
     if not pct_arrs[0] == NPZ_ARR_COMMENT: raise ValueError("The first element of 'pct_arrs' should be a placeholder.")
     np.savez(filename, *pct_arrs, metadata=metadata, slmlist=slmlist, slm_ind=slm_ind, table=table.data)
     return
 
 def load_npz(filename, verbose=True):
+    """Load CSM data and metadata from a `.npz` archive.
+
+    Parameters
+    ----------
+    filename : str
+        The name of the archive file to read.
+    verbose : bool, optional
+        Whether to print a summary of the loaded content.
+
+    Returns
+    -------
+    crystA : cryst
+        The initial primitive crystal structure.
+    crystB : cryst
+        The final primitive crystal structure.
+    slmlist : (N, 3, 3, 3) array of ints
+        The stored SLMs.
+    slm_ind : (M,) array of ints
+        The indices mapping each stored CSM to an element of `slmlist`.
+    pct_arrs : list of arrays
+        The grouped PCT arrays, organized by multiplicity.
+    table : Table
+        A summary table loaded from the archive.
+    """
     npz = np.load(filename, allow_pickle=True)
     header, crystA, crystB = npz['metadata']
     slmlist = npz['slmlist']
@@ -521,6 +738,31 @@ def load_npz(filename, verbose=True):
     return crystA, crystB, slmlist, slm_ind, pct_arrs, Table(data, header)
 
 def unzip_csm(csm_ind, crystA, crystB, slmlist, slm_ind, pct_arrs):
+    """Extract the SLM and PCT of one CSM from grouped archive arrays.
+
+    Parameters
+    ----------
+    csm_ind : int
+        The index of the CSM to extract.
+    crystA, crystB : cryst
+        The initial and final primitive crystal structures used to determine
+        multiplicity.
+    slmlist : (N, 3, 3, 3) array of ints
+        The stored SLMs.
+    slm_ind : (M,) array of ints
+        The indices mapping each CSM to its SLM in `slmlist`.
+    pct_arrs : list of arrays
+        The grouped PCT arrays, organized by multiplicity.
+
+    Returns
+    -------
+    slm : slm
+        The SLM of the selected CSM.
+    p : (Z, ) array of ints
+        The permutation part of the PCT.
+    ks : (3, Z) array of ints
+        The class-wise lattice-vector translations of the PCT.
+    """
     slm = slmlist[slm_ind[csm_ind]]
     mu = imt_multiplicity(crystA, crystB, slm)
     ind_arr = (imt_multiplicity(crystA, crystB, slmlist[slm_ind[:csm_ind]]) == mu).sum()
@@ -537,12 +779,21 @@ def save_poscar(
 
     Parameters
     ----------
-    filename : str
-        The name of the file to save, must not already exist in current directory. If `filename = None`, a string will be returned instead.
+    filename : str or None
+        The name of the file to save, which must not already exist in the current
+        directory. If `filename` is None, the POSCAR content is returned as a string
+        instead of being written to disk.
     cryst : cryst
         The crystal structure to be saved, consisting of the lattice vectors, species, and positions.
     crystname : str, optional
-        A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
+        A system description to write to the comment line of the POSCAR file. If
+        `crystname` is None, a blank comment line is used.
+
+    Returns
+    -------
+    result : str or None
+        The POSCAR content as a string when `filename` is None`; otherwise None after
+        the file has been written.
     """
     species_name, species_counts = _species_to_poscar(cryst[1])
     content = crystname if crystname is not None else ""
@@ -561,7 +812,19 @@ def save_poscar(
         return content
 
 def nebmake(crystA_sup, crystB_sup, n_im):
-    """
+    """Interpolate crystal structures along a transition path.
+
+    Parameters
+    ----------
+    crystA_sup, crystB_sup : cryst
+        The initial and final crystal structures with the same atom ordering.
+    n_im : int
+        The number of intermediate images to generate.
+
+    Returns
+    -------
+    crystlist : list of cryst
+        The full list of interpolated structures, including both endpoints.
     """
     if not (crystA_sup[1] == crystB_sup[1]).all():
         raise ValueError("Atomic species of crystA and crystB must be the same.")
@@ -598,11 +861,16 @@ def save_xdatcar(
     filename : str
         The name of the file to save, must not already exist in current directory.
     crystA_sup, crystB_sup : cryst
-        The initial and final crystal structures with specified atomic correspondence, usually obtained by `minimize_rmsd`.
+        The initial and final crystal structures with specified atomic correspondence.
     n_im : int, optional
-        Number of images to generate.
+        Number of images to generate. Default is 50.
     crystname : str, optional
-        A system description to write to the comment line of the POSCAR file. If `crystname = None`, `filename` will be used.
+        A system description to write to the comment line of each XDATCAR frame. If
+        `crystname` is None, the stem of `filename` is used.
+
+    Returns
+    -------
+    None
     """
     crystlist = nebmake(crystA_sup, crystB_sup, n_im)
     content = crystname

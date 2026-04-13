@@ -115,18 +115,22 @@ def load_csmcar(
     Parameters
     ----------
     filename : str
-        The name of the POSCAR file to be read.
+        The name of the CSMCAR file to be read.
     verbose : bool, optional
         If True, print verbose output during loading.
 
     Returns
     -------
-    voigtA, voigtB : (6, 6) array
-        The loaded elastic tensor for the initial and final structure, in Voigt notation (ordered as XX, YY, ZZ, YZ, ZX, XY).
-    weight_func : dict
-        The loaded weight function for the shuffle distance.
-    ori_rel : (2, 2, 3) array
-        The two loaded parallelisms, representing the orientation relationship between the initial and final structure.
+    voigtA, voigtB : (6, 6) array or None
+        The elastic tensor for the initial and final structure, in Voigt notation
+        (ordered as XX, YY, ZZ, YZ, ZX, XY). If the corresponding block is absent,
+        the returned value is None.
+    weight_func : dict or None
+        The loaded weight function for the shuffle distance. Returns None if no
+        atomic-weight block is present.
+    ori_rel : (2, 2, 3) array or None
+        The two loaded parallelisms representing the orientation relationship
+        between the initial and final structure. Returns None if not provided.
     """
     with open(filename, mode='r') as f:
         if verbose: print(f"Loading crystmatch parameters from file '{filename}' ...")
@@ -297,7 +301,11 @@ def check_stoichiometry(
     Parameters
     ----------
     speciesA, speciesB : array-like
-        The species lists to be checked, which should be 1D arrays of atomic species.
+        The species lists to be checked, typically 1D arrays of atomic-species labels.
+
+    Returns
+    -------
+    None
     """
     spA, ctA = np.unique(speciesA, return_counts=True)
     spB, ctB = np.unique(speciesB, return_counts=True)
@@ -430,7 +438,7 @@ def deformation_gradient(
     crystA, crystB : cryst
         The initial and final structures.
     slmlist : list of slm
-        A list of uuLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
+        A list of SLMs, each represented by a triplet of integer matrices like `(hA, hB, q)`.
     
     Returns
     -------
@@ -659,8 +667,8 @@ def hnf(
     -------
     h : (M, N) array of ints
         The column-style Hermite normal form of `m`.
-    q : (N, N) array of ints
-        The unimodular matrix satisfying `m` = `h @ q`. Only returned if `return_q` is True.
+    q : (N, N) array of ints, optional
+        The unimodular matrix satisfying `m = h @ q`. Only returned if `return_q` is True.
     """
     if not m.dtype == int: raise TypeError(f"Input matrix must be integer:\n{m}")
     if not la.matrix_rank(m, tol=1e-6) == m.shape[0]: raise ValueError(f"Input matrix must be full-row-rank:\n{m}")
