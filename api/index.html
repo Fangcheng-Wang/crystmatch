@@ -735,9 +735,54 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#crystmatch.visualize_pctlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      visualize_pctlist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crystmatch.visualize_csm" class="md-nav__link">
     <span class="md-ellipsis">
       visualize_csm
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.save_csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_csv
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.save_npz" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_npz
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.load_npz" class="md-nav__link">
+    <span class="md-ellipsis">
+      load_npz
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.unzip_csm" class="md-nav__link">
+    <span class="md-ellipsis">
+      unzip_csm
     </span>
   </a>
   
@@ -765,6 +810,15 @@
   <a href="#crystmatch.save_xdatcar" class="md-nav__link">
     <span class="md-ellipsis">
       save_xdatcar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.main" class="md-nav__link">
+    <span class="md-ellipsis">
+      main
     </span>
   </a>
   
@@ -1247,9 +1301,54 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#crystmatch.visualize_pctlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      visualize_pctlist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crystmatch.visualize_csm" class="md-nav__link">
     <span class="md-ellipsis">
       visualize_csm
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.save_csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_csv
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.save_npz" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_npz
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.load_npz" class="md-nav__link">
+    <span class="md-ellipsis">
+      load_npz
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.unzip_csm" class="md-nav__link">
+    <span class="md-ellipsis">
+      unzip_csm
     </span>
   </a>
   
@@ -1277,6 +1376,15 @@
   <a href="#crystmatch.save_xdatcar" class="md-nav__link">
     <span class="md-ellipsis">
       save_xdatcar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crystmatch.main" class="md-nav__link">
+    <span class="md-ellipsis">
+      main
     </span>
   </a>
   
@@ -1518,7 +1626,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The name of the POSCAR file to be read.</p>
+                <p>The name of the CSMCAR file to be read.</p>
               </div>
             </td>
             <td>
@@ -1556,31 +1664,35 @@
       <tbody>
           <tr class="doc-section-item">
 <td></td>            <td>
-                  <code>voigtA, voigtB : (6, 6) array</code>
+                  <code>voigtA, voigtB : (6, 6) array or None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The loaded elastic tensor for the initial and final structure, in Voigt notation (ordered as XX, YY, ZZ, YZ, ZX, XY).</p>
+                <p>The elastic tensor for the initial and final structure, in Voigt notation
+(ordered as XX, YY, ZZ, YZ, ZX, XY). If the corresponding block is absent,
+the returned value is None.</p>
               </div>
             </td>
           </tr>
           <tr class="doc-section-item">
 <td><code>weight_func</code></td>            <td>
-                  <code><span title="dict">dict</span></code>
+                  <code><span title="dict">dict</span> or None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The loaded weight function for the shuffle distance.</p>
+                <p>The loaded weight function for the shuffle distance. Returns None if no
+atomic-weight block is present.</p>
               </div>
             </td>
           </tr>
           <tr class="doc-section-item">
 <td><code>ori_rel</code></td>            <td>
-                  <code>(2, 2, 3) array</code>
+                  <code>(2, 2, 3) array or None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The two loaded parallelisms, representing the orientation relationship between the initial and final structure.</p>
+                <p>The two loaded parallelisms representing the orientation relationship
+between the initial and final structure. Returns None if not provided.</p>
               </div>
             </td>
           </tr>
@@ -2004,7 +2116,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The species lists to be checked, which should be 1D arrays of atomic species.</p>
+                <p>The species lists to be checked, typically 1D arrays of atomic-species labels.</p>
               </div>
             </td>
             <td>
@@ -2020,11 +2132,34 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The species lists to be checked, which should be 1D arrays of atomic species.</p>
+                <p>The species lists to be checked, typically 1D arrays of atomic-species labels.</p>
               </div>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
             </td>
           </tr>
       </tbody>
@@ -2437,7 +2572,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A list of uuLMs, each represented by a triplet of integer matrices like <code>(hA, hB, q)</code>.</p>
+                <p>A list of SLMs, each represented by a triplet of integer matrices like <code>(hA, hB, q)</code>.</p>
               </div>
             </td>
             <td>
@@ -3120,11 +3255,11 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
           </tr>
           <tr class="doc-section-item">
 <td><code>q</code></td>            <td>
-                  <code>(N, N) array of ints</code>
+                  <code>(N, N) array of ints, optional</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The unimodular matrix satisfying <code>m</code> = <code>h @ q</code>. Only returned if <code>return_q</code> is True.</p>
+                <p>The unimodular matrix satisfying <code>m = h @ q</code>. Only returned if <code>return_q</code> is True.</p>
               </div>
             </td>
           </tr>
@@ -3838,7 +3973,7 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The maximum strain energy density, with the same units as <code>strain</code>.</p>
+                <p>The maximum allowed value of <code>strain</code>, e.g. RMSS when <code>strain=rmss</code>.</p>
               </div>
             </td>
             <td>
@@ -3886,7 +4021,8 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The maximum number of consequtive iterations without finding any new SLMs.</p>
+                <p>The initial maximum number of consecutive iterations without finding any new
+SLMs. This limit may be increased adaptively during the search.</p>
               </div>
             </td>
             <td>
@@ -4096,27 +4232,30 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The least shuffle distance.</p>
+                <p>The least shuffle distance, or <code>IMPOSSIBLE_DISTANCE</code> if no assignment
+satisfies the constraint.</p>
               </div>
             </td>
           </tr>
           <tr class="doc-section-item">
 <td><code>p</code></td>            <td>
-                  <code>(Z, ) array of ints</code>
+                  <code>(Z, ) array of ints or None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The permutation part of the PCT with the least shuffle distance.</p>
+                <p>The permutation part of the PCT with the least shuffle distance. Returns
+None if the constraint is infeasible.</p>
               </div>
             </td>
           </tr>
           <tr class="doc-section-item">
 <td><code>ks</code></td>            <td>
-                  <code>(3, Z) array of ints</code>
+                  <code>(3, Z) array of ints or None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The class-wise translation part of the PCT with the least shuffle distance.</p>
+                <p>The class-wise translation part of the PCT with the least shuffle distance.
+Returns None if the constraint is infeasible.</p>
               </div>
             </td>
           </tr>
@@ -4206,11 +4345,11 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
                 <code>constraint</code>
             </td>
             <td>
-                  <code>2-tuple of sets</code>
+                  <code><span title="crystmatch.enumeration.Constraint">Constraint</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The permutation constraint used in the Murty's algorithm.</p>
+                <p>The permutation constraint used in Murty's algorithm.</p>
               </div>
             </td>
             <td>
@@ -4226,11 +4365,96 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                
+                <p>The weight function, with keys as atomic species. If None, all atoms have the same weight.</p>
               </div>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>l</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The l-norm to be used for distance calculation, must not be less than 1.</p>
+              </div>
+            </td>
+            <td>
+                  <code>2.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>t_grid</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of Sobol-sequence trial translations used to initialize the optimization.</p>
+              </div>
+            </td>
+            <td>
+                  <code>64</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>d</code></td>            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The least shuffle distance found.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>p</code></td>            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The permutation part of the optimal PCT.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>ks</code></td>            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise translation part of the optimal PCT.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>t0</code></td>            <td>
+                  <code>(3, 1) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The optimal overall translation of the final structure.</p>
+              </div>
             </td>
           </tr>
       </tbody>
@@ -4252,7 +4476,191 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
-        <p>Returns all class-wise translations with permutation p that has d &lt;= max_d, including ks0.</p>
+        <p>Enumerate all class-wise translations for a fixed permutation below a distance cutoff.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm</code>
+            </td>
+            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The SLM of the CSM.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_d</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The maximum allowed shuffle distance.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>p</code>
+            </td>
+            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The fixed permutation part of the PCT.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ks0</code>
+            </td>
+            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A known valid class-wise translation to seed the flood fill. If None, one is
+obtained by <code>optimize_ct</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>weight_func</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The weight function, with keys as atomic species. If None, all atoms have the same weight.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>l</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The l-norm to be used for distance calculation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>2.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>warning_threshold</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Threshold above which a warning about the number of valid PCTs is printed.</p>
+              </div>
+            </td>
+            <td>
+                  <code>5000</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>valid</code></td>            <td>
+                  <code>(N, 3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>All class-wise translations <code>ks</code> such that the PCT <code>(p, ks)</code> has shuffle
+distance not larger than <code>max_d</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -4270,6 +4678,79 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
+        <p>Split a Murty node into child constraints after accepting one permutation.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>node</code>
+            </td>
+            <td>
+                  <code><span title="crystmatch.enumeration.Constraint">Constraint</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The current Murty node, containing enforced and forbidden assignments.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>p</code>
+            </td>
+            <td>
+                  <code>(Z, ) array_like of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A permutation compatible with <code>node</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>new_nodes</code></td>            <td>
+                  <code>list of Constraint</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Child nodes produced by successively enforcing earlier assignments in <code>p</code>
+and forbidding the next one.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
 
     </div>
 
@@ -4285,6 +4766,110 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
 
     <div class="doc doc-contents ">
+
+        <p>Return permutations congruent to <code>p</code> under common supercell translations.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>p</code>
+            </td>
+            <td>
+                  <code>(Z, ) array_like of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The reference permutation.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm</code>
+            </td>
+            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The SLM defining the common supercell.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>plist</code></td>            <td>
+                  <code>(N, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The unique permutations congruent to <code>p</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -4302,6 +4887,216 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
+        <p>Enumerate PCTs for a fixed SLM with shuffle distance below a cutoff.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm</code>
+            </td>
+            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The SLM whose compatible PCTs are to be enumerated.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_d</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The maximum allowed shuffle distance.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>weight_func</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The weight function, with keys as atomic species. If None, all atoms have the same weight.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>l</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The l-norm to be used for distance calculation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>2.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>t_grid</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of Sobol-sequence trial translations used in local optimization.</p>
+              </div>
+            </td>
+            <td>
+                  <code>16</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>non_cong</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, discard PCTs related by congruent permutations during the Murty search.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The level of verbosity.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>warning_threshold</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Threshold above which a warning about too many valid PCTs is printed during filling.</p>
+              </div>
+            </td>
+            <td>
+                  <code>5000</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>pctlist</code></td>            <td>
+                  <code>(N, Z, 4) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The enumerated PCTs encoded by <code>zip_pct</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>dlist</code></td>            <td>
+                  <code>(N,) array of floats</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The shuffle distances corresponding to <code>pctlist</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
 
     </div>
 
@@ -4318,6 +5113,152 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
+        <p>Minimize the shuffle distance with fixed permutation and fixed overall translation.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>c</code>
+            </td>
+            <td>
+                  <code>(3, 3) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The base matrix of the shuffle lattice.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pA</code>
+            </td>
+            <td>
+                  <code>(3, Z) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The fractional coordinates of the atoms in the initial and final structures, respectively.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pB</code>
+            </td>
+            <td>
+                  <code>(3, Z) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The fractional coordinates of the atoms in the initial and final structures, respectively.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>p</code>
+            </td>
+            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The fixed permutation.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>weights</code>
+            </td>
+            <td>
+                  <code>(Z, ) array of floats</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The weights of each atom. If None, all atoms have the same weight.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>l</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The l-norm to be used for distance calculation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>2.0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>d_hat</code></td>            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The least shuffle distance for the fixed overall translation.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>ks</code></td>            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise translations minimizing the distance.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
 
     </div>
 
@@ -4333,6 +5274,178 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
 
     <div class="doc doc-contents ">
+
+        <p>Minimize the shuffle distance with fixed permutation and variable translations.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm</code>
+            </td>
+            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The SLM of the CSM.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>p</code>
+            </td>
+            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The fixed permutation part of the PCT.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>weight_func</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The weight function, with keys as atomic species. If None, all atoms have the same weight.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>l</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The l-norm to be used for distance calculation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>2.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>t_grid</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of Sobol-sequence trial translations used to initialize the optimization.</p>
+              </div>
+            </td>
+            <td>
+                  <code>64</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>d</code></td>            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The least shuffle distance found.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>ks</code></td>            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise translations minimizing the distance.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>t0</code></td>            <td>
+                  <code>(3, 1) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The optimal overall translation of the final structure.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -4501,7 +5614,7 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The type of norm to be used for distance calculation.</p>
+                <p>The exponent of the l-norm used for distance calculation.</p>
               </div>
             </td>
             <td>
@@ -4565,11 +5678,13 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
           </tr>
           <tr class="doc-section-item">
 <td><code>pct_arrs</code></td>            <td>
-                  <code>list of (..., 4) arrays of ints</code>
+                  <code><span title="list">list</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The PCTs of representative CSMs, where <code>...</code> is the number of CSMs with multiplicity <code>mu</code>.</p>
+                <p>A list whose first element is the placeholder string <code>NPZ_ARR_COMMENT</code>, and
+whose remaining elements are <code>(N_mu, mu * lcm(Z_A, Z_B), 4)</code> arrays storing
+the representative PCTs of multiplicity <code>mu</code>.</p>
               </div>
             </td>
           </tr>
@@ -4789,7 +5904,7 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The type of norm to be used for distance calculation.</p>
+                <p>The exponent of the l-norm used for distance calculation.</p>
               </div>
             </td>
             <td>
@@ -4863,11 +5978,13 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
           </tr>
           <tr class="doc-section-item">
 <td><code>pct_arrs</code></td>            <td>
-                  <code>list of (..., 4) arrays of ints</code>
+                  <code><span title="list">list</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The PCTs of the CSMs, where <code>...</code> is the number of CSMs with multiplicity <code>mu</code>.</p>
+                <p>A list whose first element is the placeholder string <code>NPZ_ARR_COMMENT</code>, and
+whose remaining elements are <code>(N_mu, mu * lcm(Z_A, Z_B), 4)</code> arrays storing
+the PCTs of multiplicity <code>mu</code>.</p>
               </div>
             </td>
           </tr>
@@ -4920,7 +6037,88 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
-        <p>Compute the primitive <code>cryst_prim</code> and integer matrix <code>m</code> such that <code>c_sup = c_prim @ m</code> and <code>p_prim ∈ m @ p_sup (mod 1)</code></p>
+        <p>Compute the primitive cell and supercell transformation of a crystal structure.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>cryst_sup</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The crystal structure to be decomposed, typically a supercell.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tolerance for symmetry detection with <code>spglib</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.001</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>cryst_prim</code></td>            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitive crystal structure associated with <code>cryst_sup</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>m</code></td>            <td>
+                  <code>(3, 3) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The integer matrix satisfying <code>c_sup = c_prim @ m</code> and mapping primitive-cell
+fractional coordinates to those in <code>cryst_sup</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -5009,7 +6207,7 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The permutaion of the shuffle.</p>
+                <p>The permutation of the shuffle.</p>
               </div>
             </td>
             <td>
@@ -5174,7 +6372,133 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
-        <p>Return the primitive crysts and IMT and PCT representation of a CSM determined by a pair of crysts.</p>
+        <p>Recover the primitive structures and CSM representation from two matched supercells.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA_sup</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures with an explicit atom-to-atom correspondence.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB_sup</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures with an explicit atom-to-atom correspondence.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tolerance used to identify primitive cells and match fractional coordinates.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.001</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>crystA</code></td>            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitive cell of the initial crystal structure.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>crystB</code></td>            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The primitive cell of the final crystal structure.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>slm</code></td>            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The IMT representation of the SLM.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>p</code></td>            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The permutation part of the PCT.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>ks</code></td>            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise lattice-vector translations of the PCT.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -5195,6 +6519,199 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
         <p>Return the shuffle distance of a CSM.</p>
 
 
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm</code>
+            </td>
+            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The SLM of the CSM.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>p</code>
+            </td>
+            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The permutation part of the PCT.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ks</code>
+            </td>
+            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise lattice-vector translations of the PCT.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>weight_func</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The weight function used when calculating the shuffle distance, with keys as
+atomic species. If None, all atoms have the same weight.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>l</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The l-norm to be used for distance calculation. Default is 2.0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>2.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>min_t0</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to optimize the overall translation of the final structure.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>return_t0</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to also return the optimal overall translation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>d</code></td>            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The shuffle distance of the CSM.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>t0</code></td>            <td>
+                  <code>(3, 1) array, optional</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The optimal overall translation. Only returned if <code>return_t0</code> is True.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
     </div>
 
 </div>
@@ -5210,7 +6727,145 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
-        <p>Identify the primitive (with minimal multiplicity) IMT and PCT representations of a CSM.</p>
+        <p>Reduce a CSM to its primitive IMT and PCT representation, i.e., the representation with minimal multiplicity.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final primitive crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final primitive crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm0</code>
+            </td>
+            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The original IMT representation of the SLM.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>p0</code>
+            </td>
+            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The permutation part of the original PCT.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ks0</code>
+            </td>
+            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise lattice-vector translations of the original PCT.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>slm</code></td>            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The IMT representation of the SLM with minimal multiplicity.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>p</code></td>            <td>
+                  <code>(Z1, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The permutation part of the new PCT.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>ks</code></td>            <td>
+                  <code>(3, Z1) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise lattice-vector translations of the new PCT.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -5348,7 +7003,62 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
-        <p>The rotation that the uniformly scaled plane undergoes.</p>
+        <p>Return the rotation associated with the uniformly scaled plane.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>s</code>
+            </td>
+            <td>
+                  <code>(3, 3) or (..., 3, 3) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>One or more deformation-gradient matrices.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>rH</code></td>            <td>
+                  <code>(3, 3) or (..., 3, 3) array</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The rotation matrix, or matrices, describing the rotation of the uniformly
+scaled plane for each deformation gradient.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -5553,15 +7263,16 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
                 <code>orientation</code>
             </td>
             <td>
-                  <code><span title="str">str</span></code>
+                  <code>(<span title="norot">norot</span>, <span title="uspfixed">uspfixed</span>)</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The orientation of the final structure, either 'norot' or 'uspfixed', which means that the deformation is rotation-free             or fixing the uniformly scaled plane (USP). When 'uspfixed', two final structures are returned since there are two USPs.</p>
+                <p>The convention used to compare the final structure orientation: rotation-free
+(<code>'norot'</code>) or uniformly-scaled-plane-fixed (<code>'uspfixed'</code>).</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>&#39;norot&#39;</code>
             </td>
           </tr>
       </tbody>
@@ -5606,7 +7317,246 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
-        <p>Scatter plot of the CSMs with colorbar.</p>
+        <p>Create a scatter plot of CSM properties.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The output filename. If None, the figure is displayed instead of being saved.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>strainlist</code>
+            </td>
+            <td>
+                  <code><span title="array_like">array_like</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The strain values plotted on the x-axis.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dlist</code>
+            </td>
+            <td>
+                  <code><span title="array_like">array_like</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The shuffle distances plotted on the y-axis.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>colorlist</code>
+            </td>
+            <td>
+                  <code><span title="array_like">array_like</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Values used to color each point. If None, all points use the same color.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cmap</code>
+            </td>
+            <td>
+                  <code><span title="matplotlib.colors.Colormap">Colormap</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The colormap used for the scatter plot.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="crystmatch.utilities.plt.get_cmap">get_cmap</span>(&#39;viridis&#39;)</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cbarlabel</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The label shown beside the colorbar when <code>colorlist</code> is provided.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.visualize_pctlist" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">visualize_pctlist</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">pctlist</span><span class="p">,</span> <span class="n">dlist</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create a scatter plot of shuffle distances grouped by permutation.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The output filename. If None, the figure is displayed instead of being saved.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pctlist</code>
+            </td>
+            <td>
+                  <code>(N, Z, 4) array-like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of PCT arrays, where the first column stores the permutation and the
+remaining columns store the class-wise translations.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dlist</code>
+            </td>
+            <td>
+                  <code>(N,) array-like</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The shuffle distances corresponding to <code>pctlist</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -5624,7 +7574,791 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
     <div class="doc doc-contents ">
 
-        <p>Use with <code>%matplotlib widget</code> in Jupyter notebook (need to install <code>ipympl</code>) to interactively visualize the shuffling process.</p>
+        <p>Interactively visualize the shuffling process of a CSM in 3D.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final primitive crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final primitive crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm</code>
+            </td>
+            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The SLM of the CSM.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>p</code>
+            </td>
+            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The permutation part of the PCT.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ks</code>
+            </td>
+            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise lattice-vector translations of the PCT.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>weight_func</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The weight function used when determining the optimal overall translation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>l</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The l-norm used for distance calculation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>2.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tol</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tolerance for symmetry detection.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.001</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cluster_size</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Radius multiplier controlling how many periodic images are shown around the
+central cell.</p>
+              </div>
+            </td>
+            <td>
+                  <code>1.2</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>show_conventional</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to display the conventional cell axes of each structure.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>label</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extra text shown in the lower-left corner of the left panel.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.save_csv" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">save_csv</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Save a summary table of CSM properties to a CSV file.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the CSV file to create.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>table</code>
+            </td>
+            <td>
+                  <code><span title="crystmatch.utilities.Table">Table</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <code>(data, header)</code> pair containing the numeric table and the corresponding
+column names.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.save_npz" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">save_npz</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">slmlist</span><span class="p">,</span> <span class="n">slm_ind</span><span class="p">,</span> <span class="n">pct_arrs</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Save CSM data and metadata to a <code>.npz</code> archive.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the archive file to create.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final primitive crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final primitive crystal structures.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slmlist</code>
+            </td>
+            <td>
+                  <code>(N, 3, 3, 3) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The list of SLMs stored in the archive.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm_ind</code>
+            </td>
+            <td>
+                  <code>(M,) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The indices mapping each stored CSM to its SLM in <code>slmlist</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pct_arrs</code>
+            </td>
+            <td>
+                  <code>list of arrays</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The grouped PCT arrays, organized by multiplicity.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>table</code>
+            </td>
+            <td>
+                  <code><span title="crystmatch.utilities.Table">Table</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <code>(data, header)</code> pair containing summary information for the stored CSMs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.load_npz" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">load_npz</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Load CSM data and metadata from a <code>.npz</code> archive.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the archive file to read.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to print a summary of the loaded content.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>crystA</code></td>            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial primitive crystal structure.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>crystB</code></td>            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The final primitive crystal structure.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>slmlist</code></td>            <td>
+                  <code>(N, 3, 3, 3) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The stored SLMs.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>slm_ind</code></td>            <td>
+                  <code>(M,) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The indices mapping each stored CSM to an element of <code>slmlist</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>pct_arrs</code></td>            <td>
+                  <code>list of arrays</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The grouped PCT arrays, organized by multiplicity.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>table</code></td>            <td>
+                  <code><span title="crystmatch.utilities.Table">Table</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A summary table loaded from the archive.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.unzip_csm" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">unzip_csm</span><span class="p">(</span><span class="n">csm_ind</span><span class="p">,</span> <span class="n">crystA</span><span class="p">,</span> <span class="n">crystB</span><span class="p">,</span> <span class="n">slmlist</span><span class="p">,</span> <span class="n">slm_ind</span><span class="p">,</span> <span class="n">pct_arrs</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Extract the SLM and PCT of one CSM from grouped archive arrays.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>csm_ind</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The index of the CSM to extract.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final primitive crystal structures used to determine
+multiplicity.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final primitive crystal structures used to determine
+multiplicity.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slmlist</code>
+            </td>
+            <td>
+                  <code>(N, 3, 3, 3) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The stored SLMs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>slm_ind</code>
+            </td>
+            <td>
+                  <code>(M,) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The indices mapping each CSM to its SLM in <code>slmlist</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pct_arrs</code>
+            </td>
+            <td>
+                  <code>list of arrays</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The grouped PCT arrays, organized by multiplicity.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>slm</code></td>            <td>
+                  <code><span title="slm">slm</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The SLM of the selected CSM.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>p</code></td>            <td>
+                  <code>(Z, ) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The permutation part of the PCT.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>ks</code></td>            <td>
+                  <code>(3, Z) array of ints</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-wise lattice-vector translations of the PCT.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -5661,11 +8395,13 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
                 <code>filename</code>
             </td>
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="str">str</span> or None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The name of the file to save, must not already exist in current directory. If <code>filename = None</code>, a string will be returned instead.</p>
+                <p>The name of the file to save, which must not already exist in the current
+directory. If <code>filename</code> is None, the POSCAR content is returned as a string
+instead of being written to disk.</p>
               </div>
             </td>
             <td>
@@ -5697,11 +8433,36 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A system description to write to the comment line of the POSCAR file. If <code>crystname = None</code>, <code>filename</code> will be used.</p>
+                <p>A system description to write to the comment line of the POSCAR file. If
+<code>crystname</code> is None, a blank comment line is used.</p>
               </div>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>result</code></td>            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The POSCAR content as a string when <code>filename</code> is None`; otherwise None after
+the file has been written.</p>
+              </div>
             </td>
           </tr>
       </tbody>
@@ -5722,6 +8483,94 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
 
 
     <div class="doc doc-contents ">
+
+        <p>Interpolate crystal structures along a transition path.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystA_sup</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures with the same atom ordering.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crystB_sup</code>
+            </td>
+            <td>
+                  <code><span title="cryst">cryst</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The initial and final crystal structures with the same atom ordering.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_im</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of intermediate images to generate.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>crystlist</code></td>            <td>
+                  <code>list of cryst</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The full list of interpolated structures, including both endpoints.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
@@ -5778,7 +8627,7 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The initial and final crystal structures with specified atomic correspondence, usually obtained by <code>minimize_rmsd</code>.</p>
+                <p>The initial and final crystal structures with specified atomic correspondence.</p>
               </div>
             </td>
             <td>
@@ -5794,7 +8643,7 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The initial and final crystal structures with specified atomic correspondence, usually obtained by <code>minimize_rmsd</code>.</p>
+                <p>The initial and final crystal structures with specified atomic correspondence.</p>
               </div>
             </td>
             <td>
@@ -5810,7 +8659,7 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Number of images to generate.</p>
+                <p>Number of images to generate. Default is 50.</p>
               </div>
             </td>
             <td>
@@ -5826,11 +8675,76 @@ This function is provided by @norok2 on StackOverflow: https://stackoverflow.com
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A system description to write to the comment line of the POSCAR file. If <code>crystname = None</code>, <code>filename</code> will be used.</p>
+                <p>A system description to write to the comment line of each XDATCAR frame. If
+<code>crystname</code> is None, the stem of <code>filename</code> is used.</p>
               </div>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="crystmatch.main" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">main</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Run the <code>crystmatch</code> command-line interface.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
             </td>
           </tr>
       </tbody>
