@@ -33,7 +33,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    install_requires=["numpy", "scipy", "spglib", "numba", "matplotlib", "tqdm"],
+    install_requires=["numpy>=1.20", "scipy>=1.7", "spglib", "numba", "matplotlib", "tqdm"],
     packages=setuptools.find_packages(),
     python_requires=">=3.9",
     entry_points={

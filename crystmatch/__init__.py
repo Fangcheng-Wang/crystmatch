@@ -26,13 +26,13 @@ from .enumeration import *
 from .analysis import *
 
 __name__ = "crystmatch"
-__version__ = "2.1.3"
+__version__ = "2.1.4"
 __author__ = "Fang-Cheng Wang"
 __email__ = "wfc@pku.edu.cn"
 __description__ = "Enumerating and analyzing crystal-structure matches for solid-solid phase transitions."
 __url__ = "https://fangcheng-wang.github.io/crystmatch/"
 __epilog__ = "The current version is v" + __version__ + ". To get the latest version, please run:\
-\n\n\t$ pip3 install --upgrade crystmatch\n\nWe also recommend you to see the documentation at:\
+\n\n\t$ python3 -m pip install --upgrade crystmatch\n\nWe also recommend you to see the documentation at:\
 \n\n\t" + __url__ + "\n\nIf you use crystmatch in your research, please cite one of the following paper:\
 \n\n\t[1] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review Letters 132, 086101 (2024) (https://arxiv.org/abs/2305.05278)\
 \n\t[2] FC Wang, QJ Ye, YC Zhu, and XZ Li, Physical Review B 112, 144108 (2025) (https://arxiv.org/abs/2506.05105)\

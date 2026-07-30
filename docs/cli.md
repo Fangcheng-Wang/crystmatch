@@ -111,7 +111,7 @@ To benchmark CSMs with a given orientation relationship, two parameters must be 
         crystmatch --read CSMLIST.npz 0 --interact
         ```
 
-        to check if the conventional $\mathbf{a}, \mathbf{b}, \mathbf{c}$ is the same as you expect.
+        to check if the conventional $\mathbf{a}, \mathbf{b}, \mathbf{c}$ (visualized in the interactive plot as dark gray arrows) is the same as you expect.
 
 2. The assumption used to determine the orientation of the final structure, must be one of the following:
 

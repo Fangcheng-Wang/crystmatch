@@ -30,8 +30,7 @@ python3 --version
 To install the latest version of `crystmatch`, run:
 
 ```
-pip3 install --upgrade numpy scipy spglib numba matplotlib
-pip3 install --upgrade crystmatch
+python3 -m pip install --upgrade crystmatch
 ```
 
 Check whether `crystmatch` is successfully installed:
@@ -64,15 +63,19 @@ If you use `crystmatch` in your research, please cite one of the following paper
 
 - **[Classification and Enumeration of Solid-Solid Phase Transition Mechanisms](https://arxiv.org/abs/2506.05105)**
 
-    *Under review* (2025)
+    *Physical Review B* **112**, 144108 (2025)
 
     ```
     @article{wang2025classification,
-        title={Classification and Enumeration of Solid-Solid Phase Transition Mechanisms},
+        title={Classification and enumeration of solid-solid phase transition mechanisms},
         author={Wang, Fang-Cheng and Ye, Qi-Jun and Zhu, Yu-Cheng and Li, Xin-Zheng},
-        journal={arXiv:2506.05105},
+        journal={Physical Review B},
+        volume={112},
+        number={14},
+        pages={144108},
         year={2025},
-        doi={10.48550/arXiv.2506.05105}
+        publisher={APS},
+        doi={10.1103/lw16-4gny}
     }
     ```
 

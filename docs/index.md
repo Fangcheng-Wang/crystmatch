@@ -13,7 +13,8 @@
     - **Analysis**:
         - Read a CSM from a pair of POSCAR files, and save CSMs in the same format.
         - Calculate the root-mean-square strain (RMSS), estimated strain energy density, and shuffle distance (RMSD) for each CSM.
-        - Benchmark each CSM by its deviation angle from a given orientation relationship.
+        - Identify the smallest period (multiplicity) and the orientation relationship (OR) of a given CSM.
+        - Benchmark each CSM by its deviation angle from a given OR.
         - Visualize the distribution of strain, shuffle distance, and multiplicity of CSMs in a 2D scatter plot.
         - Visualize a CSM in a 3D interactive plot.
     
@@ -30,8 +31,7 @@ python3 --version
 To install the latest version of `crystmatch`, run:
 
 ```
-pip3 install --upgrade numpy scipy spglib numba matplotlib
-pip3 install --upgrade crystmatch
+python3 -m pip install --upgrade crystmatch
 ```
 
 Check whether `crystmatch` is successfully installed (the first run may take a few minutes to compile the required modules):
@@ -40,7 +40,7 @@ Check whether `crystmatch` is successfully installed (the first run may take a f
 crystmatch --version
 ```
 
-**The current version of `crystmatch` is `2.1.3`.**
+**The current version of `crystmatch` is `{{ crystmatch_version }}`.**
 
 !!! tip
     If you prefer using `conda`, you can install `crystmatch` by running:
@@ -76,15 +76,15 @@ If you use `crystmatch` in your research, please cite one of the following paper
 
     ```
     @article{wang2025classification,
-    title={Classification and enumeration of solid-solid phase transition mechanisms},
-    author={Wang, Fang-Cheng and Ye, Qi-Jun and Zhu, Yu-Cheng and Li, Xin-Zheng},
-    journal={Physical Review B},
-    volume={112},
-    number={14},
-    pages={144108},
-    year={2025},
-    publisher={APS},
-    doi={10.1103/lw16-4gny}
+        title={Classification and enumeration of solid-solid phase transition mechanisms},
+        author={Wang, Fang-Cheng and Ye, Qi-Jun and Zhu, Yu-Cheng and Li, Xin-Zheng},
+        journal={Physical Review B},
+        volume={112},
+        number={14},
+        pages={144108},
+        year={2025},
+        publisher={APS},
+        doi={10.1103/lw16-4gny}
     }
     ```
 

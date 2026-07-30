@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use Crystmatch in your research, please cite the article below."
+title: "Crystmatch"
+type: software
+authors:
+  - family-names: "Wang"
+    given-names: "Fang-Cheng"
+    email: "wfc@pku.edu.cn"
+version: "2.1.4"
+license: "GPL-3.0-or-later"
+repository-code: "https://github.com/Fangcheng-Wang/crystmatch"
+url: "https://fangcheng-wang.github.io/crystmatch/"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Wang"
+      given-names: "Fang-Cheng"
+    - family-names: "Ye"
+      given-names: "Qi-Jun"
+    - family-names: "Zhu"
+      given-names: "Yu-Cheng"
+    - family-names: "Li"
+      given-names: "Xin-Zheng"
+  title: "Crystal-Structure Matches in Solid-Solid Phase Transitions"
+  journal: "Physical Review Letters"
+  year: 2024
+  volume: 132
+  issue: 8
+  start: "086101"
+  doi: "10.1103/PhysRevLett.132.086101"
